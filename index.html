@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3A56D4">
+<meta name="color-scheme" content="light only">
+<title>SABOSSE</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="Sabosse">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+/* ============================================================
+   SABOSSE — jetons de conception
+   Mêmes règles que RHABDO : fond clair, cartes blanches, une
+   seule couleur de signal. Accent indigo pour distinguer les
+   deux applications sur l'écran d'accueil.
+   ============================================================ */
+:root{
+  --fond:#F4F5F7; --surface:#FFFFFF; --surface-2:#EDEFF3; --filet:#E1E5EA;
+  --texte:#14171C; --texte-2:#5F6A7B; --texte-3:#9AA3B2;
+  --accent:#3A56D4; --accent-doux:#E7EBFC;
+  --faite:#00A08C; --reportee:#F2A104; --annulee:#D14343; --retard:#D14343;
+  --ombre:0 1px 2px rgba(20,23,28,.06), 0 4px 14px rgba(20,23,28,.05);
+  --corps:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --r-s:10px; --r-m:16px; --r-l:22px;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--fond);color-scheme:light;color:var(--texte);font-family:var(--corps);
+  font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,select{font-family:inherit;font-size:16px;color:var(--texte);background:var(--surface);
+  border:1px solid var(--filet);border-radius:var(--r-s);padding:11px 12px;width:100%;appearance:none}
+select{background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%235F6A7B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M4 6.5l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px}
+input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-doux)}
+
+#app{display:flex;flex-direction:column;height:100dvh}
+#entete{flex:0 0 auto;padding:calc(var(--safe-t) + 12px) 16px 12px;display:flex;align-items:center;
+  gap:12px;background:var(--surface);border-bottom:1px solid var(--filet)}
+#entete .glyphe{width:36px;height:36px;flex:0 0 auto;border-radius:var(--r-s);background:var(--accent);
+  color:#fff;display:grid;place-items:center;font-size:17px;font-weight:800}
+#entete .titres{flex:1;min-width:0}
+#entete .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);font-weight:600}
+#entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
+#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);
+  border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
+#barre button{padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:var(--texte-3);transition:color .15s}
+#barre button .ic{font-size:20px;line-height:1;filter:grayscale(1) opacity(.55)}
+#barre button .lb{font-size:10px;font-weight:600}
+#barre button[aria-current="page"]{color:var(--accent)}
+#barre button[aria-current="page"] .ic{filter:none}
+
+.etiquette{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--texte-3);font-weight:600;margin:0 0 8px}
+.carte{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:15px;
+  box-shadow:var(--ombre)}
+.champ{margin-bottom:12px}
+.champ label{display:block;font-size:12.5px;font-weight:600;color:var(--texte-2);margin-bottom:6px}
+.bouton{display:block;width:100%;padding:16px;border-radius:99px;background:var(--surface-2);
+  font-weight:700;font-size:16px;letter-spacing:-.01em;transition:transform .08s}
+.bouton:active{transform:scale(.98)}
+.bouton.principal{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(58,86,212,.28)}
+.bouton.discret{background:transparent;border:1.5px solid var(--filet);color:var(--texte-2);
+  font-weight:600;font-size:14.5px;padding:13px}
+.vide{text-align:center;padding:52px 20px;color:var(--texte-2)}
+.vide .gros{font-size:38px;margin-bottom:12px}
+.vide p{margin:0 0 4px}
+
+/* --- agenda --- */
+.jour{margin-bottom:16px}
+.jour > h2{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--texte-2);
+  display:flex;align-items:baseline;gap:8px}
+.jour > h2 .compte{font-family:var(--mono);font-size:11px;color:var(--texte-3);font-weight:500}
+.jour.retard > h2{color:var(--retard)}
+.rev{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:13px 15px;
+  margin-bottom:8px;box-shadow:var(--ombre)}
+.rev .haut{display:flex;align-items:center;gap:10px}
+.rev .code{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.rev .matiere{font-size:12.5px;color:var(--texte-2);flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.puce{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.rev .rang{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--texte-3);
+  background:var(--surface-2);border-radius:99px;padding:3px 8px;flex:0 0 auto}
+.rev .rang.ancrage{color:var(--accent);background:var(--accent-doux)}
+.rev .note{font-size:11.5px;color:var(--reportee);font-weight:600;margin-top:6px}
+.rev .cmds{display:flex;gap:7px;margin-top:11px}
+.rev .cmds button{flex:1;padding:9px 6px;border-radius:99px;background:var(--surface-2);
+  font-size:12.5px;font-weight:600;color:var(--texte-2)}
+.rev .cmds button.ok{background:var(--faite);color:#fff}
+
+/* --- aperçu de l'échéancier --- */
+.apercu{margin-top:12px}
+.apercu .l{display:flex;align-items:baseline;gap:10px;padding:7px 0;
+  border-bottom:1px solid var(--filet);font-size:13px}
+.apercu .l:last-child{border-bottom:0}
+.apercu .l .r{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--texte-3);
+  min-width:56px}
+.apercu .l .r.ancrage{color:var(--accent)}
+.apercu .l .d{font-variant-numeric:tabular-nums}
+
+/* --- liste des cours --- */
+.ligne{display:flex;align-items:center;gap:12px;padding:12px 15px;background:var(--surface);
+  border:1px solid var(--filet);border-radius:var(--r-m);margin-bottom:8px;box-shadow:var(--ombre)}
+.ligne .txt{flex:1;min-width:0}
+.ligne .txt b{display:block;font-family:var(--mono);font-size:14px;font-weight:700}
+.ligne .txt span{display:block;font-size:12px;color:var(--texte-2)}
+.ligne .sup{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-s);
+  background:var(--surface-2);color:var(--texte-3);font-size:15px}
+
+/* --- statistiques --- */
+.tuiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+.tuile{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:13px 15px;box-shadow:var(--ombre)}
+.tuile b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.tuile span{display:block;font-size:11.5px;font-weight:600;color:var(--texte-2);margin-top:2px}
+.tuile.faite b{color:var(--faite)} .tuile.reportee b{color:var(--reportee)}
+.tuile.annulee b{color:var(--annulee)} .tuile.venir b{color:var(--accent)}
+.tab .l{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:baseline;
+  padding:9px 0;border-bottom:1px solid var(--filet);font-size:13px}
+.tab .l:last-child{border-bottom:0}
+.tab .l.entete{padding-top:0;font-size:9px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--texte-3);font-weight:700}
+.tab .l .n{display:flex;align-items:center;gap:8px;min-width:0}
+.tab .l .n span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab .l .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:34px;text-align:right}
+.tab .l.entete .v{font-weight:700}
+
+/* --- report --- */
+#voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;align-items:flex-end;z-index:20}
+#voile.on{display:flex}
+#voile .feuille{width:100%;background:var(--surface);border-radius:var(--r-l) var(--r-l) 0 0;
+  padding:20px 16px calc(20px + var(--safe-b))}
+#voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+#voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
+#toast{position:fixed;left:50%;bottom:calc(78px + var(--safe-b));transform:translateX(-50%);
+  background:var(--texte);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;
+  border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="entete">
+    <div class="glyphe">S</div>
+    <div class="titres">
+      <div class="eyebrow">Réactivation mémorielle</div>
+      <h1>SABOSSE</h1>
+    </div>
+  </header>
+  <main id="vue"></main>
+  <nav id="barre">
+    <button data-vue="agenda"><span class="ic">📅</span><span class="lb">Agenda</span></button>
+    <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
+    <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
+  </nav>
+</div>
+<div id="voile"><div class="feuille">
+  <h3>Reporter la révision</h3>
+  <p id="voile-info"></p>
+  <input type="date" id="voile-date">
+  <div style="display:flex;gap:9px;margin-top:14px">
+    <button class="bouton discret" id="voile-annuler" style="flex:1">Fermer</button>
+    <button class="bouton principal" id="voile-ok" style="flex:1;padding:13px;font-size:14.5px">Reporter</button>
+  </div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+const VERSION = 'v1 · 3 septembre 2026';
+
+/* ============================================================
+   Matières
+   ============================================================ */
+const MATIERES = [
+  {code:'ANG', nom:'Anglais',                        c:'#3A56D4'},
+  {code:'MAT', nom:'Mathématiques',                  c:'#D14343'},
+  {code:'HIS', nom:'Histoire',                       c:'#8B4FD6'},
+  {code:'GEO', nom:'Géographie',                     c:'#00A08C'},
+  {code:'FRA', nom:'Français',                       c:'#E07B00'},
+  {code:'PHY', nom:'Physique Chimie',                c:'#0088A8'},
+  {code:'MUS', nom:'Musique',                        c:'#C2185B'},
+  {code:'ART', nom:'Arts plastiques',                c:'#6D8B00'},
+  {code:'SVT', nom:'Sciences de la vie et de la Terre', c:'#2E7D32'}
+];
+const parCode = {};
+MATIERES.forEach(m => parCode[m.code] = m);
+
+/* ============================================================
+   Dates — tout se calcule sur des dates locales à midi, pour
+   qu'un changement d'heure ne décale jamais une échéance.
+   ============================================================ */
+function dDe(iso){
+  const p = iso.split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2], 12, 0, 0, 0);
+}
+function isoDe(d){
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + j;
+}
+function plus(d, n){
+  const r = new Date(d.getTime());
+  r.setDate(r.getDate() + n);
+  return r;
+}
+function aujourdhui(){
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0, 0);
+}
+const JOURS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const MOIS  = ['janvier','février','mars','avril','mai','juin',
+               'juillet','août','septembre','octobre','novembre','décembre'];
+function libelleJour(iso){
+  const d = dDe(iso);
+  return JOURS[d.getDay()] + ' ' + d.getDate() + ' ' + MOIS[d.getMonth()] +
+         (d.getFullYear() !== aujourdhui().getFullYear() ? ' ' + d.getFullYear() : '');
+}
+function libelleCourt(iso){
+  const d = dDe(iso);
+  return String(d.getDate()).padStart(2,'0') + '/' +
+         String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+
+/* Fin de l'année scolaire : le 1er juillet qui suit la date du cours. */
+function finAnnee(d){
+  const juillet = new Date(d.getFullYear(), 6, 1, 12, 0, 0, 0);
+  return d < juillet ? juillet : new Date(d.getFullYear() + 1, 6, 1, 12, 0, 0, 0);
+}
+
+/* ============================================================
+   Échéancier
+   Un ancrage : le premier samedi qui suit la date du cours.
+   Puis le cycle J+7, J+14, J+21, J+28, puis tous les 28 jours,
+   toujours compté depuis la date du cours, jusqu'au 1er juillet.
+   ============================================================ */
+function echeancier(dateISO){
+  const d = dDe(dateISO);
+  const fin = finAnnee(d);
+  const sortie = [];
+
+  let samedi = plus(d, 1);
+  while (samedi.getDay() !== 6) samedi = plus(samedi, 1);
+  if (samedi <= fin) sortie.push({rang:'Ancrage', ancrage:true, date:isoDe(samedi)});
+
+  const deltas = [7, 14, 21, 28];
+  for (let x = 56; plus(d, x) <= fin; x += 28) deltas.push(x);
+  deltas.forEach(x => {
+    const q = plus(d, x);
+    if (q > fin) return;
+    const jour = isoDe(q);
+    const deja = sortie.find(e => e.date === jour);
+    if (deja) { deja.rang = deja.rang + ' · J+' + x; return; }
+    sortie.push({rang:'J+' + x, ancrage:false, date:jour});
+  });
+
+  sortie.sort((a, b) => a.date < b.date ? -1 : 1);
+  return sortie;
+}
+
+/* ============================================================
+   Stockage
+   ============================================================ */
+const CLE = 'sabosse';
+const Store = {
+  dispo: true,
+  lire(){
+    try {
+      const brut = localStorage.getItem(CLE);
+      if (!brut) return {cours:[], revisions:[]};
+      const o = JSON.parse(brut);
+      return {cours: o.cours || [], revisions: o.revisions || []};
+    } catch (e) { this.dispo = false; return {cours:[], revisions:[]}; }
+  },
+  ecrire(db){
+    try { localStorage.setItem(CLE, JSON.stringify(db)); }
+    catch (e) { this.dispo = false; toast('Stockage indisponible.'); }
+  }
+};
+let DB = Store.lire();
+function sauver(){ Store.ecrire(DB); }
+
+function idCours(code, num, date){ return code + '-' + num + '-' + date; }
+function refCours(c){ return c.code + '-' + c.numero; }
+function trouverCours(id){ return DB.cours.find(c => c.id === id); }
+
+function ajouterCours(code, numero, dateISO){
+  const id = idCours(code, numero, dateISO);
+  if (DB.cours.some(c => c.id === id)) return false;
+  DB.cours.push({id, code, numero, date: dateISO});
+  echeancier(dateISO).forEach((e, i) => {
+    DB.revisions.push({
+      id: id + '#' + i,
+      cours: id,
+      rang: e.rang,
+      ancrage: e.ancrage,
+      prevue: e.date,
+      date: e.date,
+      statut: 'aFaire'
+    });
+  });
+  sauver();
+  return true;
+}
+
+function supprimerCours(id){
+  DB.cours = DB.cours.filter(c => c.id !== id);
+  DB.revisions = DB.revisions.filter(r => r.cours !== id);
+  sauver();
+}
+
+/* ============================================================
+   Rendu
+   ============================================================ */
+let vueActive = 'agenda';
+const vue = document.getElementById('vue');
+
+function ech(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function rendre(){
+  document.querySelectorAll('#barre button').forEach(b => {
+    if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
+  else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
+  else vue.innerHTML = vueStats();
+  vue.scrollTop = 0;
+}
+
+/* --- Agenda ------------------------------------------------ */
+function vueAgenda(){
+  const attente = DB.revisions
+    .filter(r => r.statut === 'aFaire' || r.statut === 'reportee')
+    .sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
+
+  if (!attente.length) {
+    return '<div class="vide"><div class="gros">📅</div>' +
+      '<p><b>Aucune révision planifiée.</b></p>' +
+      '<p>Ajoute un cours pour lancer son échéancier.</p></div>';
+  }
+
+  const auj = isoDe(aujourdhui());
+  const groupes = [];
+  attente.forEach(r => {
+    let g = groupes.find(x => x.date === r.date);
+    if (!g) { g = {date: r.date, items: []}; groupes.push(g); }
+    g.items.push(r);
+  });
+
+  let html = '';
+  groupes.forEach(g => {
+    const retard = g.date < auj;
+    const titre = g.date === auj ? "Aujourd'hui" :
+                  (retard ? 'En retard · ' + libelleJour(g.date) : libelleJour(g.date));
+    html += '<section class="jour' + (retard ? ' retard' : '') + '">' +
+            '<h2>' + titre + '<span class="compte">' + g.items.length + '</span></h2>';
+    g.items.forEach(r => {
+      const c = trouverCours(r.cours);
+      if (!c) return;
+      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+      html += '<article class="rev">' +
+        '<div class="haut">' +
+          '<i class="puce" style="background:' + m.c + '"></i>' +
+          '<b class="code">' + ech(refCours(c)) + '</b>' +
+          '<span class="matiere">' + ech(m.nom) + '</span>' +
+          '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(r.rang) + '</span>' +
+        '</div>' +
+        (r.statut === 'reportee'
+          ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
+        '<div class="cmds">' +
+          '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>' +
+          '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
+          '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
+        '</div></article>';
+    });
+    html += '</section>';
+  });
+  return html;
+}
+
+/* --- Ajout ------------------------------------------------- */
+function vueAjout(){
+  let opts = '<option value="">Choisir une matière</option>';
+  MATIERES.forEach(m => {
+    opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>';
+  });
+
+  let html =
+    '<p class="etiquette">Nouveau cours</p>' +
+    '<div class="carte">' +
+      '<div class="champ"><label for="f-mat">Matière</label>' +
+        '<select id="f-mat">' + opts + '</select></div>' +
+      '<div class="champ"><label for="f-num">Numéro du cours</label>' +
+        '<input type="text" id="f-num" inputmode="numeric" maxlength="3" placeholder="001"></div>' +
+      '<div class="champ" style="margin-bottom:0"><label for="f-date">Date du cours</label>' +
+        '<input type="date" id="f-date" value="' + isoDe(aujourdhui()) + '"></div>' +
+      '<div class="apercu" id="apercu"></div>' +
+    '</div>' +
+    '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>';
+
+  if (DB.cours.length) {
+    const tries = DB.cours.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+    html += '<p class="etiquette" style="margin-top:22px">Cours enregistrés · ' + tries.length + '</p>';
+    tries.forEach(c => {
+      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+      const reste = DB.revisions.filter(r =>
+        r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
+      html += '<div class="ligne">' +
+        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+        '<span>' + ech(m.nom) + ' · encodé le ' + libelleCourt(c.date) +
+        ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div>' +
+        '<button class="sup" data-act="suppr" data-id="' + c.id + '">✕</button></div>';
+    });
+  }
+  return html;
+}
+
+function majApercu(){
+  const zone = document.getElementById('apercu');
+  if (!zone) return;
+  const date = (document.getElementById('f-date') || {}).value;
+  if (!date) { zone.innerHTML = ''; return; }
+  const liste = echeancier(date);
+  let html = '<p class="etiquette" style="margin:14px 0 4px">Échéancier · ' +
+             liste.length + ' révisions</p>';
+  liste.forEach(e => {
+    html += '<div class="l"><span class="r' + (e.ancrage ? ' ancrage' : '') + '">' +
+            ech(e.rang) + '</span><span class="d">' + libelleJour(e.date) + '</span></div>';
+  });
+  zone.innerHTML = html;
+}
+
+/* --- Statistiques ------------------------------------------ */
+function vueStats(){
+  if (!DB.revisions.length) {
+    return '<div class="vide"><div class="gros">📊</div>' +
+      '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
+      '<p>Les statistiques arrivent avec le premier cours.</p></div>';
+  }
+  const n = s => DB.revisions.filter(r => r.statut === s).length;
+  const faites = n('faite'), reportees = n('reportee'),
+        annulees = n('annulee'), venir = n('aFaire');
+  const traitees = faites + annulees;
+  const taux = traitees ? Math.round(faites / traitees * 100) : 0;
+
+  let html =
+    '<div class="tuiles">' +
+      '<div class="tuile faite"><b>' + faites + '</b><span>Faites</span></div>' +
+      '<div class="tuile reportee"><b>' + reportees + '</b><span>Reportées</span></div>' +
+      '<div class="tuile annulee"><b>' + annulees + '</b><span>Annulées</span></div>' +
+      '<div class="tuile venir"><b>' + venir + '</b><span>À venir</span></div>' +
+    '</div>' +
+    '<p class="etiquette">Réalisation</p>' +
+    '<div class="carte" style="margin-bottom:20px">' +
+      '<div style="display:flex;align-items:baseline;gap:10px">' +
+      '<b style="font-size:30px;font-weight:800;letter-spacing:-.03em;' +
+      'font-variant-numeric:tabular-nums;color:var(--faite)">' + taux + '&nbsp;%</b>' +
+      '<span style="font-size:13px;color:var(--texte-2)">des ' + traitees +
+      ' révisions échues ont été faites</span></div></div>';
+
+  const lignes = [];
+  MATIERES.forEach(m => {
+    const ids = DB.cours.filter(c => c.code === m.code).map(c => c.id);
+    if (!ids.length) return;
+    const revs = DB.revisions.filter(r => ids.indexOf(r.cours) !== -1);
+    lignes.push({
+      m: m,
+      cours: ids.length,
+      faites: revs.filter(r => r.statut === 'faite').length,
+      annulees: revs.filter(r => r.statut === 'annulee').length
+    });
+  });
+
+  html += '<p class="etiquette">Par matière</p><div class="carte tab">' +
+    '<div class="l entete"><span class="n">Matière</span>' +
+    '<span class="v">Cours</span><span class="v">Faites</span><span class="v">Annul.</span></div>';
+  lignes.forEach(l => {
+    html += '<div class="l"><span class="n">' +
+      '<i class="puce" style="background:' + l.m.c + '"></i>' +
+      '<span>' + ech(l.m.nom) + '</span></span>' +
+      '<span class="v">' + l.cours + '</span>' +
+      '<span class="v">' + l.faites + '</span>' +
+      '<span class="v">' + l.annulees + '</span></div>';
+  });
+  html += '</div>' +
+    '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
+    'SABOSSE ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
+  return html;
+}
+
+/* ============================================================
+   Actions
+   ============================================================ */
+let minuteurToast;
+function toast(txt){
+  const t = document.getElementById('toast');
+  t.textContent = txt;
+  t.classList.add('on');
+  clearTimeout(minuteurToast);
+  minuteurToast = setTimeout(() => t.classList.remove('on'), 1900);
+}
+
+function marquer(id, statut){
+  const r = DB.revisions.find(x => x.id === id);
+  if (!r) return;
+  r.statut = statut;
+  sauver();
+  rendre();
+  toast(statut === 'faite' ? 'Révision faite.' : 'Révision annulée.');
+}
+
+let reportEnCours = null;
+const voile = document.getElementById('voile');
+
+function ouvrirReport(id){
+  const r = DB.revisions.find(x => x.id === id);
+  if (!r) return;
+  const c = trouverCours(r.cours);
+  reportEnCours = id;
+  document.getElementById('voile-info').textContent =
+    (c ? refCours(c) + ' · ' : '') + r.rang + ' · prévue le ' + libelleCourt(r.date);
+  document.getElementById('voile-date').value = isoDe(plus(dDe(r.date), 7));
+  voile.classList.add('on');
+}
+function fermerReport(){ voile.classList.remove('on'); reportEnCours = null; }
+
+document.getElementById('voile-annuler').addEventListener('click', fermerReport);
+voile.addEventListener('click', e => { if (e.target === voile) fermerReport(); });
+document.getElementById('voile-ok').addEventListener('click', () => {
+  const d = document.getElementById('voile-date').value;
+  if (!d || !reportEnCours) return;
+  const r = DB.revisions.find(x => x.id === reportEnCours);
+  if (r) { r.date = d; r.statut = 'reportee'; sauver(); }
+  fermerReport();
+  rendre();
+  toast('Reportée au ' + libelleCourt(d) + '.');
+});
+
+vue.addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === 'faite')    marquer(id, 'faite');
+  else if (act === 'annuler')  marquer(id, 'annulee');
+  else if (act === 'reporter') ouvrirReport(id);
+  else if (act === 'suppr') {
+    const c = trouverCours(id);
+    if (c && confirm('Supprimer ' + refCours(c) + ' et toutes ses révisions ?')) {
+      supprimerCours(id); rendre(); toast('Cours supprimé.');
+    }
+  }
+});
+
+vue.addEventListener('input', e => {
+  if (e.target.id === 'f-date') majApercu();
+  if (e.target.id === 'f-num') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+});
+
+vue.addEventListener('click', e => {
+  if (e.target.id !== 'f-ok') return;
+  const code = document.getElementById('f-mat').value;
+  let num = document.getElementById('f-num').value.replace(/\D/g, '');
+  const date = document.getElementById('f-date').value;
+  if (!code) { toast('Choisis une matière.'); return; }
+  if (!num)  { toast('Indique le numéro du cours.'); return; }
+  if (!date) { toast('Indique la date du cours.'); return; }
+  num = num.padStart(3, '0');
+  if (!ajouterCours(code, num, date)) { toast('Ce cours est déjà enregistré.'); return; }
+  vueActive = 'agenda';
+  rendre();
+  toast(code + '-' + num + ' planifié.');
+});
+
+document.getElementById('barre').addEventListener('click', e => {
+  const b = e.target.closest('button[data-vue]');
+  if (!b) return;
+  vueActive = b.dataset.vue;
+  rendre();
+});
+
+rendre();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

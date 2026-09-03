@@ -1,0 +1,16 @@
+{
+  "name": "SABOSSE",
+  "short_name": "Sabosse",
+  "description": "Échéancier de réactivation mémorielle",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F5F7",
+  "theme_color": "#3A56D4",
+  "lang": "fr",
+  "icons": [
+    { "src": "icone-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
