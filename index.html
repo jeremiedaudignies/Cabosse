@@ -39,6 +39,14 @@ input,select{font-family:inherit;font-size:16px;color:var(--texte);background:va
 select{background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%235F6A7B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M4 6.5l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px}
 input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-doux)}
+input[type="checkbox"]{width:22px;height:22px;flex:0 0 auto;padding:0;border-radius:7px;
+  border:1.5px solid var(--filet);background:var(--surface);cursor:pointer;appearance:none;
+  transition:background-color .15s,border-color .15s}
+input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(--accent);
+  background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round' d='M3.2 8.4l3.4 3.4L12.8 5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:center;background-size:14px 14px}
+.check-ligne{display:flex;align-items:center;gap:10px;padding:2px 0 12px}
+.check-ligne span{font-size:13px;color:var(--texte-2);font-weight:600}
 
 #app{display:flex;flex-direction:column;height:100dvh}
 #entete{flex:0 0 auto;padding:calc(var(--safe-t) + 12px) 16px 12px;display:flex;align-items:center;
@@ -80,7 +88,7 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .jour{margin-bottom:16px}
 .jour > h2{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--texte-2);
   display:flex;align-items:baseline;gap:8px}
-.jour > h2 .compte{font-family:var(--mono);font-size:11px;color:var(--texte-3);font-weight:500}
+.compte{font-family:var(--mono);font-size:11px;color:var(--texte-3);font-weight:500}
 .jour.retard > h2{color:var(--retard)}
 .rev{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:13px 15px;
   margin-bottom:8px;box-shadow:var(--ombre)}
@@ -97,6 +105,36 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .rev .cmds button{flex:1;padding:9px 6px;border-radius:99px;background:var(--surface-2);
   font-size:12.5px;font-weight:600;color:var(--texte-2)}
 .rev .cmds button.ok{background:var(--faite);color:#fff}
+.rev .cmds button.verrou{opacity:.4;cursor:not-allowed}
+
+/* --- carte de repos du dimanche --- */
+.rev.repos{display:flex;align-items:center;justify-content:center;padding:16px 15px}
+.repos-corps{display:flex;flex-direction:column;align-items:center;gap:6px}
+.repos-ic{font-size:26px;line-height:1}
+.repos-txt{font-size:13.5px;font-weight:700;color:var(--texte-2)}
+.rev.repos.succes .repos-txt{color:var(--faite)}
+.rev.repos.succes .repos-ic{animation:repos-pop .5s ease}
+@keyframes repos-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+
+/* --- section pliable (semaines suivantes, historique) --- */
+details.pliable{margin:4px 0 16px;border:1px solid var(--filet);border-radius:var(--r-m);
+  background:var(--surface);box-shadow:var(--ombre);overflow:hidden}
+details.pliable summary{padding:14px 15px;font-size:13px;font-weight:700;color:var(--texte-2);
+  list-style:none;position:relative;padding-right:34px;cursor:pointer}
+details.pliable summary::-webkit-details-marker{display:none}
+details.pliable summary::after{content:"+";font-size:18px;color:var(--texte-3);
+  position:absolute;right:15px;top:50%;transform:translateY(-50%)}
+details.pliable[open] summary::after{content:"\2013"}
+details.pliable summary .compte{margin-left:6px}
+details.pliable .contenu-pliable{padding:0 15px 15px}
+details.pliable .contenu-pliable .jour{margin-bottom:14px}
+.hist-l{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--filet)}
+.hist-l:last-child{border-bottom:0}
+.hist-l .txt{flex:1;min-width:0}
+.hist-l .txt b{display:block;font-family:var(--mono);font-size:13px;font-weight:700}
+.hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
+.hist-l button{flex:0 0 auto;padding:7px 12px;border-radius:99px;background:var(--surface-2);
+  font-size:11.5px;font-weight:600;color:var(--texte-2)}
 
 /* --- aperçu de l'échéancier --- */
 .apercu{margin-top:12px}
@@ -136,13 +174,14 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
 .tab .l .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:34px;text-align:right}
 .tab .l.entete .v{font-weight:700}
 
-/* --- report --- */
-#voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;align-items:flex-end;z-index:20}
-#voile.on{display:flex}
-#voile .feuille{width:100%;background:var(--surface);border-radius:var(--r-l) var(--r-l) 0 0;
-  padding:20px 16px calc(20px + var(--safe-b))}
-#voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
-#voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
+/* --- report et confirmation --- */
+#voile,#confirm-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
+  align-items:flex-end;z-index:20}
+#voile.on,#confirm-voile.on{display:flex}
+#voile .feuille,#confirm-voile .feuille{width:100%;background:var(--surface);
+  border-radius:var(--r-l) var(--r-l) 0 0;padding:20px 16px calc(20px + var(--safe-b))}
+#voile h3,#confirm-voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+#voile p,#confirm-voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
 #toast{position:fixed;left:50%;bottom:calc(78px + var(--safe-b));transform:translateX(-50%);
   background:var(--texte);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;
   border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
@@ -174,11 +213,19 @@ input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 
     <button class="bouton principal" id="voile-ok" style="flex:1;padding:13px;font-size:14.5px">Reporter</button>
   </div>
 </div></div>
+<div id="confirm-voile"><div class="feuille">
+  <h3 id="confirm-titre"></h3>
+  <p id="confirm-info"></p>
+  <div style="display:flex;gap:9px">
+    <button class="bouton discret" id="confirm-non" style="flex:1">Annuler</button>
+    <button class="bouton principal" id="confirm-oui" style="flex:1;padding:13px;font-size:14.5px">Confirmer</button>
+  </div>
+</div></div>
 <div id="toast"></div>
 
 <script>
 'use strict';
-const VERSION = 'v1 · 3 septembre 2026';
+const VERSION = 'v2 · 3 septembre 2026';
 
 /* ============================================================
    Matières
@@ -233,6 +280,19 @@ function libelleCourt(iso){
          String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 }
 
+/* Semaine du lundi au dimanche, quel que soit le jour de départ. */
+function lundiDe(d){
+  const jsem = d.getDay();
+  return plus(d, jsem === 0 ? -6 : 1 - jsem);
+}
+function dimancheDe(d){ return plus(lundiDe(d), 6); }
+
+/* Une révision n'est validable que si son échéance est dépassée,
+   ou à sept jours au plus. Au-delà, le bouton « Faite » est verrouillé
+   pour éviter une validation par anticipation excessive. */
+function joursAvant(iso){ return Math.round((dDe(iso) - aujourdhui()) / 86400000); }
+function estValidable(iso){ return joursAvant(iso) <= 7; }
+
 /* Fin de l'année scolaire : le 1er juillet qui suit la date du cours. */
 function finAnnee(d){
   const juillet = new Date(d.getFullYear(), 6, 1, 12, 0, 0, 0);
@@ -276,12 +336,17 @@ const CLE = 'sabosse';
 const Store = {
   dispo: true,
   lire(){
+    const defaut = {cours:[], revisions:[], reglages:{afficherAncrage:true}};
     try {
       const brut = localStorage.getItem(CLE);
-      if (!brut) return {cours:[], revisions:[]};
+      if (!brut) return defaut;
       const o = JSON.parse(brut);
-      return {cours: o.cours || [], revisions: o.revisions || []};
-    } catch (e) { this.dispo = false; return {cours:[], revisions:[]}; }
+      return {
+        cours: o.cours || [],
+        revisions: o.revisions || [],
+        reglages: Object.assign({afficherAncrage:true}, o.reglages || {})
+      };
+    } catch (e) { this.dispo = false; return defaut; }
   },
   ecrire(db){
     try { localStorage.setItem(CLE, JSON.stringify(db)); }
@@ -342,53 +407,118 @@ function rendre(){
 }
 
 /* --- Agenda ------------------------------------------------ */
-function vueAgenda(){
-  const attente = DB.revisions
-    .filter(r => r.statut === 'aFaire' || r.statut === 'reportee')
-    .sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
 
-  if (!attente.length) {
+/* Une carte de révision, réutilisée pour les retards, la semaine
+   en cours, la semaine prochaine et le repli « Semaines suivantes ». */
+function carteRevision(r){
+  const c = trouverCours(r.cours);
+  if (!c) return '';
+  const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+  const validable = estValidable(r.date);
+  const boutonFaite = validable
+    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>'
+    : '<button class="verrou" disabled>Faite</button>';
+  return '<article class="rev">' +
+    '<div class="haut">' +
+      '<i class="puce" style="background:' + m.c + '"></i>' +
+      '<b class="code">' + ech(refCours(c)) + '</b>' +
+      '<span class="matiere">' + ech(m.nom) + '</span>' +
+      '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(r.rang) + '</span>' +
+    '</div>' +
+    (r.statut === 'reportee'
+      ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
+    (!validable
+      ? '<div class="note" style="color:var(--texte-3)">Validable à partir du ' +
+        libelleCourt(isoDe(plus(dDe(r.date), -7))) + '</div>' : '') +
+    '<div class="cmds">' + boutonFaite +
+      '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
+      '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
+    '</div></article>';
+}
+
+/* La carte du dimanche : un bilan de la semaine écoulée (lundi à
+   samedi), pas une révision. Succès si plus aucune n'est en attente. */
+function carteRepos(dimancheISO){
+  const lundi = isoDe(plus(dDe(dimancheISO), -6));
+  const semaine = DB.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
+  const reste = semaine.some(r => r.statut === 'aFaire' || r.statut === 'reportee');
+  return '<article class="rev repos' + (reste ? '' : ' succes') + '">' +
+    '<div class="repos-corps">' +
+      '<span class="repos-ic">' + (reste ? '📚' : '🏆') + '</span>' +
+      '<span class="repos-txt">' + (reste ? 'Encore un peu de boulot' : 'Repos du champion') + '</span>' +
+    '</div></article>';
+}
+
+function grouperParDate(liste){
+  const g = [];
+  liste.forEach(r => {
+    let e = g.find(x => x.date === r.date);
+    if (!e) { e = {date: r.date, items: []}; g.push(e); }
+    e.items.push(r);
+  });
+  return g;
+}
+
+function vueAgenda(){
+  if (!DB.cours.length) {
     return '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>Ajoute un cours pour lancer son échéancier.</p></div>';
   }
 
-  const auj = isoDe(aujourdhui());
-  const groupes = [];
-  attente.forEach(r => {
-    let g = groupes.find(x => x.date === r.date);
-    if (!g) { g = {date: r.date, items: []}; groupes.push(g); }
-    g.items.push(r);
-  });
+  const auj = aujourdhui();
+  const ajISO = isoDe(auj);
+  const dimActuel = isoDe(dimancheDe(auj));
+  const dimSuivant = isoDe(plus(dimancheDe(auj), 7));
+
+  const enAttente = DB.revisions.filter(r =>
+    (r.statut === 'aFaire' || r.statut === 'reportee') &&
+    (DB.reglages.afficherAncrage || !r.ancrage));
+
+  const retard   = enAttente.filter(r => r.date < ajISO);
+  const proches  = enAttente.filter(r => r.date >= ajISO && r.date <= dimSuivant);
+  const plusTard = enAttente.filter(r => r.date > dimSuivant);
 
   let html = '';
-  groupes.forEach(g => {
-    const retard = g.date < auj;
-    const titre = g.date === auj ? "Aujourd'hui" :
-                  (retard ? 'En retard · ' + libelleJour(g.date) : libelleJour(g.date));
-    html += '<section class="jour' + (retard ? ' retard' : '') + '">' +
-            '<h2>' + titre + '<span class="compte">' + g.items.length + '</span></h2>';
-    g.items.forEach(r => {
-      const c = trouverCours(r.cours);
-      if (!c) return;
-      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
-      html += '<article class="rev">' +
-        '<div class="haut">' +
-          '<i class="puce" style="background:' + m.c + '"></i>' +
-          '<b class="code">' + ech(refCours(c)) + '</b>' +
-          '<span class="matiere">' + ech(m.nom) + '</span>' +
-          '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(r.rang) + '</span>' +
-        '</div>' +
-        (r.statut === 'reportee'
-          ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
-        '<div class="cmds">' +
-          '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>' +
-          '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
-          '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
-        '</div></article>';
+
+  if (retard.length) {
+    grouperParDate(retard).forEach(g => {
+      html += '<section class="jour retard"><h2>En retard · ' + libelleJour(g.date) +
+        '<span class="compte">' + g.items.length + '</span></h2>';
+      g.items.forEach(r => html += carteRevision(r));
+      html += '</section>';
     });
+  }
+
+  const grProches = grouperParDate(proches);
+  [dimActuel, dimSuivant].forEach(dim => {
+    if (!grProches.find(g => g.date === dim)) grProches.push({date: dim, items: []});
+  });
+  grProches.sort((a, b) => a.date < b.date ? -1 : 1);
+
+  grProches.forEach(g => {
+    const estDimanche = g.date === dimActuel || g.date === dimSuivant;
+    const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
+    html += '<section class="jour"><h2>' + titre +
+      (g.items.length ? '<span class="compte">' + g.items.length + '</span>' : '') + '</h2>';
+    g.items.forEach(r => html += carteRevision(r));
+    if (estDimanche) html += carteRepos(g.date);
     html += '</section>';
   });
+
+  if (plusTard.length) {
+    html += '<details class="pliable">' +
+      '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
+      '<div class="contenu-pliable">';
+    grouperParDate(plusTard).forEach(g => {
+      html += '<section class="jour"><h2>' + libelleJour(g.date) +
+        '<span class="compte">' + g.items.length + '</span></h2>';
+      g.items.forEach(r => html += carteRevision(r));
+      html += '</section>';
+    });
+    html += '</div></details>';
+  }
+
   return html;
 }
 
@@ -408,6 +538,9 @@ function vueAjout(){
         '<input type="text" id="f-num" inputmode="numeric" maxlength="3" placeholder="001"></div>' +
       '<div class="champ" style="margin-bottom:0"><label for="f-date">Date du cours</label>' +
         '<input type="date" id="f-date" value="' + isoDe(aujourdhui()) + '"></div>' +
+      '<label class="check-ligne" style="margin-top:12px">' +
+        '<input type="checkbox" id="f-ancrage"' + (DB.reglages.afficherAncrage ? ' checked' : '') + '>' +
+        '<span>Afficher la révision d\u2019ancrage (samedi)</span></label>' +
       '<div class="apercu" id="apercu"></div>' +
     '</div>' +
     '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>';
@@ -435,7 +568,8 @@ function majApercu(){
   if (!zone) return;
   const date = (document.getElementById('f-date') || {}).value;
   if (!date) { zone.innerHTML = ''; return; }
-  const liste = echeancier(date);
+  let liste = echeancier(date);
+  if (!DB.reglages.afficherAncrage) liste = liste.filter(e => !e.ancrage);
   let html = '<p class="etiquette" style="margin:14px 0 4px">Échéancier · ' +
              liste.length + ' révisions</p>';
   liste.forEach(e => {
@@ -497,7 +631,30 @@ function vueStats(){
       '<span class="v">' + l.faites + '</span>' +
       '<span class="v">' + l.annulees + '</span></div>';
   });
-  html += '</div>' +
+  html += '</div>';
+
+  const historique = DB.revisions
+    .filter(r => r.statut === 'faite' || r.statut === 'annulee')
+    .sort((a, b) => a.date < b.date ? 1 : -1);
+  if (historique.length) {
+    html += '<details class="pliable" style="margin-top:20px">' +
+      '<summary>Historique<span class="compte">' + historique.length + '</span></summary>' +
+      '<div class="contenu-pliable"><div class="carte" style="padding:5px 15px">';
+    historique.forEach(r => {
+      const c = trouverCours(r.cours);
+      if (!c) return;
+      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+      html += '<div class="hist-l">' +
+        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+        '<span>' + ech(r.rang) + ' · ' + libelleCourt(r.date) + ' · ' +
+        (r.statut === 'faite' ? 'Faite' : 'Annulée') + '</span></div>' +
+        '<button data-act="reactiver" data-id="' + r.id + '">Réactiver</button></div>';
+    });
+    html += '</div></div></details>';
+  }
+
+  html +=
     '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
     'SABOSSE ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
   return html;
@@ -551,13 +708,43 @@ document.getElementById('voile-ok').addEventListener('click', () => {
   toast('Reportée au ' + libelleCourt(d) + '.');
 });
 
+/* Confirmation, requise avant de marquer une révision faite ou
+   annulée : les deux actions sont difficiles à annuler par erreur. */
+let actionEnCours = null;
+const confirmVoile = document.getElementById('confirm-voile');
+
+function demanderConfirmation(id, statut){
+  const r = DB.revisions.find(x => x.id === id);
+  if (!r) return;
+  const c = trouverCours(r.cours);
+  actionEnCours = {id: id, statut: statut};
+  document.getElementById('confirm-titre').textContent =
+    statut === 'faite' ? 'Marquer comme faite ?' : 'Annuler cette révision ?';
+  document.getElementById('confirm-info').textContent =
+    (c ? refCours(c) + ' · ' : '') + r.rang + ' · ' + libelleJour(r.date);
+  confirmVoile.classList.add('on');
+}
+function fermerConfirmation(){ confirmVoile.classList.remove('on'); actionEnCours = null; }
+
+document.getElementById('confirm-non').addEventListener('click', fermerConfirmation);
+confirmVoile.addEventListener('click', e => { if (e.target === confirmVoile) fermerConfirmation(); });
+document.getElementById('confirm-oui').addEventListener('click', () => {
+  if (!actionEnCours) return;
+  marquer(actionEnCours.id, actionEnCours.statut);
+  fermerConfirmation();
+});
+
 vue.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]');
   if (!b) return;
   const act = b.dataset.act, id = b.dataset.id;
-  if (act === 'faite')    marquer(id, 'faite');
-  else if (act === 'annuler')  marquer(id, 'annulee');
+  if (act === 'faite')         demanderConfirmation(id, 'faite');
+  else if (act === 'annuler')  demanderConfirmation(id, 'annulee');
   else if (act === 'reporter') ouvrirReport(id);
+  else if (act === 'reactiver') {
+    const r = DB.revisions.find(x => x.id === id);
+    if (r) { r.statut = 'aFaire'; sauver(); rendre(); toast('Révision remise en attente.'); }
+  }
   else if (act === 'suppr') {
     const c = trouverCours(id);
     if (c && confirm('Supprimer ' + refCours(c) + ' et toutes ses révisions ?')) {
@@ -569,6 +756,13 @@ vue.addEventListener('click', e => {
 vue.addEventListener('input', e => {
   if (e.target.id === 'f-date') majApercu();
   if (e.target.id === 'f-num') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+});
+
+vue.addEventListener('change', e => {
+  if (e.target.id !== 'f-ancrage') return;
+  DB.reglages.afficherAncrage = e.target.checked;
+  sauver();
+  majApercu();
 });
 
 vue.addEventListener('click', e => {
