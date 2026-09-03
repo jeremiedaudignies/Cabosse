@@ -58,6 +58,9 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--accent);font-weight:600}
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#btn-imprimer{flex:0 0 auto;width:36px;height:36px;border-radius:var(--r-s);
+  background:var(--surface-2);font-size:17px;display:flex;align-items:center;justify-content:center}
+#impression{display:none}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
 #barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
@@ -112,6 +115,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .repos-corps{display:flex;flex-direction:column;align-items:center;gap:6px}
 .repos-ic{font-size:26px;line-height:1}
 .repos-txt{font-size:13.5px;font-weight:700;color:var(--texte-2)}
+.repos-detail{font-size:11.5px;color:var(--texte-3);font-weight:600;text-align:center;max-width:220px}
 .rev.repos.succes .repos-txt{color:var(--faite)}
 .rev.repos.succes .repos-ic{animation:repos-pop .5s ease}
 @keyframes repos-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
@@ -155,6 +159,19 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .ligne .sup{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-s);
   background:var(--surface-2);color:var(--texte-3);font-size:15px}
 
+/* --- gestion des matières --- */
+.mat-l{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--filet)}
+.mat-l:last-child{border-bottom:0}
+.mat-nom{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mat-nom b{font-family:var(--mono)}
+.mini{flex:0 0 auto;width:30px;height:30px;border-radius:var(--r-s);background:var(--surface-2);
+  color:var(--texte-2);font-size:14px}
+.mini.sup{color:var(--annulee)}
+.mini.ok{color:#fff;background:var(--faite)}
+.mat-edit input[type="text"]{flex:1;padding:8px 10px;font-size:13px}
+input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radius:var(--r-s);
+  border:1.5px solid var(--filet);background:var(--surface);cursor:pointer}
+
 /* --- statistiques --- */
 .tuiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
 .tuile{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
@@ -164,6 +181,8 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .tuile span{display:block;font-size:11.5px;font-weight:600;color:var(--texte-2);margin-top:2px}
 .tuile.faite b{color:var(--faite)} .tuile.reportee b{color:var(--reportee)}
 .tuile.annulee b{color:var(--annulee)} .tuile.venir b{color:var(--accent)}
+.carte.graf{margin-bottom:12px;padding:13px 14px 6px}
+.graf-titre{margin:0 0 6px;font-size:12px;font-weight:700;color:var(--texte-2)}
 .tab .l{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:baseline;
   padding:9px 0;border-bottom:1px solid var(--filet);font-size:13px}
 .tab .l:last-child{border-bottom:0}
@@ -186,6 +205,28 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
   background:var(--texte);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;
   border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
 #toast.on{opacity:1}
+
+/* --- feuille imprimable --- */
+@media print{
+  body *{visibility:hidden}
+  #impression, #impression *{visibility:visible}
+  #impression{display:block;position:absolute;left:0;top:0;width:100%}
+  @page{size:A4;margin:11mm}
+}
+.pr-page{font-family:var(--corps);color:#000;font-size:8.3px;line-height:1.25}
+.pr-entete{font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid #000}
+.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+.pr-jour{margin-bottom:7px;break-inside:avoid}
+.pr-jour h3{margin:0 0 2px;font-size:9px;font-weight:800;text-transform:uppercase;
+  border-bottom:1px solid #000;padding-bottom:1px;letter-spacing:.02em}
+.pr-vide{margin:0 0 3px;color:#888;font-size:8px}
+.pr-item{margin-bottom:3px}
+.pr-nom{font-weight:700}
+.pr-mat,.pr-rang{font-weight:400;color:#444}
+.pr-cases{display:flex;gap:9px;margin:1px 0 3px;flex-wrap:wrap}
+.pr-c{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.pr-c i,.pr-nouveau i{display:inline-block;width:7px;height:7px;border:1px solid #000;flex:0 0 auto}
+.pr-nouveau{display:flex;align-items:center;gap:4px;margin-top:2px;color:#333;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -196,6 +237,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
       <div class="eyebrow">Réactivation mémorielle</div>
       <h1>SABOSSE</h1>
     </div>
+    <button id="btn-imprimer" title="Imprimer le planning des 2 semaines" aria-label="Imprimer">🖨️</button>
   </header>
   <main id="vue"></main>
   <nav id="barre">
@@ -216,21 +258,21 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 <div id="confirm-voile"><div class="feuille">
   <h3 id="confirm-titre"></h3>
   <p id="confirm-info"></p>
-  <div style="display:flex;gap:9px">
-    <button class="bouton discret" id="confirm-non" style="flex:1">Annuler</button>
-    <button class="bouton principal" id="confirm-oui" style="flex:1;padding:13px;font-size:14.5px">Confirmer</button>
-  </div>
+  <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
+  <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
 </div></div>
 <div id="toast"></div>
+<div id="impression"></div>
 
 <script>
 'use strict';
-const VERSION = 'v3 · 3 septembre 2026';
+const VERSION = 'v5 · 3 septembre 2026';
 
 /* ============================================================
-   Matières
+   Matières — liste par défaut au premier lancement, éditable
+   ensuite depuis la vue Ajout (DB.matieres fait foi une fois créé).
    ============================================================ */
-const MATIERES = [
+const MATIERES_DEFAUT = [
   {code:'ANG', nom:'Anglais',                        c:'#3A56D4'},
   {code:'MAT', nom:'Mathématiques',                  c:'#D14343'},
   {code:'HIS', nom:'Histoire',                       c:'#8B4FD6'},
@@ -241,8 +283,9 @@ const MATIERES = [
   {code:'ART', nom:'Arts plastiques',                c:'#6D8B00'},
   {code:'SVT', nom:'Sciences de la vie et de la Terre', c:'#2E7D32'}
 ];
-const parCode = {};
-MATIERES.forEach(m => parCode[m.code] = m);
+function matiereDe(code){
+  return DB.matieres.find(m => m.code === code) || {nom: code, c: '#9AA3B2'};
+}
 
 /* ============================================================
    Dates — tout se calcule sur des dates locales à midi, pour
@@ -336,7 +379,8 @@ const CLE = 'sabosse';
 const Store = {
   dispo: true,
   lire(){
-    const defaut = {cours:[], revisions:[], reglages:{afficherAncrage:true}};
+    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(),
+                    reglages:{afficherAncrage:true, prenom:''}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
@@ -344,7 +388,8 @@ const Store = {
       return {
         cours: o.cours || [],
         revisions: o.revisions || [],
-        reglages: Object.assign({afficherAncrage:true}, o.reglages || {})
+        matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
+        reglages: Object.assign({afficherAncrage:true, prenom:''}, o.reglages || {})
       };
     } catch (e) { this.dispo = false; return defaut; }
   },
@@ -389,6 +434,19 @@ function supprimerCours(id){
    Rendu
    ============================================================ */
 let vueActive = 'agenda';
+
+/* Mémorise, pour la session, quels panneaux repliables sont ouverts,
+   pour qu'une action à l'intérieur (ajouter, réactiver…) ne referme
+   pas le panneau au moment où la vue se redessine. */
+let sectionsOuvertes = {};
+function ouvert(cle){ return sectionsOuvertes[cle] ? ' open' : ''; }
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (d && d.matches && d.matches('details.pliable[data-cle]')) {
+    sectionsOuvertes[d.dataset.cle] = d.open;
+  }
+}, true);
+
 const vue = document.getElementById('vue');
 
 function ech(s){
@@ -408,12 +466,18 @@ function rendre(){
 
 /* --- Agenda ------------------------------------------------ */
 
+/* L'ancrage du samedi s'affiche sous un nom plus engageant que
+   « Ancrage », y compris quand il coïncide avec une échéance J+x. */
+function libelleRang(rang){
+  return rang.replace(/^Ancrage/, 'Nouveau !');
+}
+
 /* Une carte de révision, réutilisée pour les retards, la semaine
    en cours, la semaine prochaine et le repli « Semaines suivantes ». */
 function carteRevision(r){
   const c = trouverCours(r.cours);
   if (!c) return '';
-  const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+  const m = matiereDe(c.code);
   const validable = estValidable(r.date);
   const boutonFaite = validable
     ? '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>'
@@ -423,7 +487,7 @@ function carteRevision(r){
       '<i class="puce" style="background:' + m.c + '"></i>' +
       '<b class="code">' + ech(refCours(c)) + '</b>' +
       '<span class="matiere">' + ech(m.nom) + '</span>' +
-      '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(r.rang) + '</span>' +
+      '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(libelleRang(r.rang)) + '</span>' +
     '</div>' +
     (r.statut === 'reportee'
       ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
@@ -437,15 +501,27 @@ function carteRevision(r){
 }
 
 /* La carte du dimanche : un bilan de la semaine écoulée (lundi à
-   samedi), pas une révision. Succès si plus aucune n'est en attente. */
+   samedi), pas une révision. Succès si plus aucune n'est en attente.
+   N'apparaît que pour le dimanche de la semaine en cours : l'afficher
+   aussi pour la semaine prochaine doublonnerait le même message. */
 function carteRepos(dimancheISO){
   const lundi = isoDe(plus(dDe(dimancheISO), -6));
-  const semaine = DB.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
-  const reste = semaine.some(r => r.statut === 'aFaire' || r.statut === 'reportee');
-  return '<article class="rev repos' + (reste ? '' : ' succes') + '">' +
+  let semaine = DB.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
+  if (!DB.reglages.afficherAncrage) semaine = semaine.filter(r => !r.ancrage);
+  const total = semaine.length;
+  const reste = semaine.filter(r => r.statut === 'aFaire' || r.statut === 'reportee').length;
+  const succes = reste === 0;
+  let detail = '';
+  if (!succes) {
+    const prenom = (DB.reglages.prenom || '').trim();
+    detail = '<span class="repos-detail">il reste ' + reste + ' révision' + (reste > 1 ? 's' : '') +
+      ' sur ' + total + (prenom ? ', courage ' + ech(prenom) : '') + '.</span>';
+  }
+  return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
     '<div class="repos-corps">' +
-      '<span class="repos-ic">' + (reste ? '📚' : '🏆') + '</span>' +
-      '<span class="repos-txt">' + (reste ? 'Encore un peu de boulot' : 'Repos du champion') + '</span>' +
+      '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
+      '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
+      detail +
     '</div></article>';
 }
 
@@ -491,23 +567,20 @@ function vueAgenda(){
   }
 
   const grProches = grouperParDate(proches);
-  [dimActuel, dimSuivant].forEach(dim => {
-    if (!grProches.find(g => g.date === dim)) grProches.push({date: dim, items: []});
-  });
+  if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
   grProches.sort((a, b) => a.date < b.date ? -1 : 1);
 
   grProches.forEach(g => {
-    const estDimanche = g.date === dimActuel || g.date === dimSuivant;
     const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
     html += '<section class="jour"><h2>' + titre +
       (g.items.length ? '<span class="compte">' + g.items.length + '</span>' : '') + '</h2>';
     g.items.forEach(r => html += carteRevision(r));
-    if (estDimanche) html += carteRepos(g.date);
+    if (g.date === dimActuel) html += carteRepos(g.date);
     html += '</section>';
   });
 
   if (plusTard.length) {
-    html += '<details class="pliable">' +
+    html += '<details class="pliable" data-cle="semaines"' + ouvert('semaines') + '>' +
       '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
       '<div class="contenu-pliable">';
     grouperParDate(plusTard).forEach(g => {
@@ -523,9 +596,11 @@ function vueAgenda(){
 }
 
 /* --- Ajout ------------------------------------------------- */
+let matiereEnEdition = null;
+
 function vueAjout(){
   let opts = '<option value="">Choisir une matière</option>';
-  MATIERES.forEach(m => {
+  DB.matieres.forEach(m => {
     opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>';
   });
 
@@ -538,18 +613,25 @@ function vueAjout(){
         '<input type="text" id="f-num" inputmode="numeric" maxlength="3" placeholder="001"></div>' +
       '<div class="champ" style="margin-bottom:0"><label for="f-date">Date du cours</label>' +
         '<input type="date" id="f-date" value="' + isoDe(aujourdhui()) + '"></div>' +
-      '<label class="check-ligne" style="margin-top:12px">' +
-        '<input type="checkbox" id="f-ancrage"' + (DB.reglages.afficherAncrage ? ' checked' : '') + '>' +
-        '<span>Afficher la révision d\u2019ancrage (samedi)</span></label>' +
-      '<div class="apercu" id="apercu"></div>' +
     '</div>' +
-    '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>';
+    '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>' +
+    '<label class="check-ligne" style="margin-top:16px">' +
+      '<input type="checkbox" id="f-ancrage"' + (DB.reglages.afficherAncrage ? ' checked' : '') + '>' +
+      '<span>Afficher la révision d\u2019ancrage (samedi)</span></label>' +
+    '<details class="pliable" data-cle="echeancier"' + ouvert('echeancier') + ' style="margin-top:6px">' +
+      '<summary>Échéancier prévisionnel<span class="compte" id="apercu-compte"></span></summary>' +
+      '<div class="contenu-pliable"><div class="apercu" id="apercu"></div></div>' +
+    '</details>' +
+    '<details class="pliable" data-cle="matieres"' + ouvert('matieres') + '>' +
+      '<summary>Gérer les matières</summary>' +
+      '<div class="contenu-pliable">' + carteMatieres() + '</div>' +
+    '</details>';
 
   if (DB.cours.length) {
     const tries = DB.cours.slice().sort((a, b) => a.date < b.date ? 1 : -1);
     html += '<p class="etiquette" style="margin-top:22px">Cours enregistrés · ' + tries.length + '</p>';
     tries.forEach(c => {
-      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+      const m = matiereDe(c.code);
       const reste = DB.revisions.filter(r =>
         r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
       html += '<div class="ligne">' +
@@ -563,32 +645,140 @@ function vueAjout(){
   return html;
 }
 
+/* Liste, ajout, édition et suppression des matières. Le code n'est
+   modifiable qu'à la création : il sert d'identifiant aux cours. */
+function carteMatieres(){
+  let html = '<div class="carte" style="padding:5px 15px">';
+  DB.matieres.forEach(m => {
+    if (matiereEnEdition === m.code) {
+      html += '<div class="mat-l mat-edit">' +
+        '<input type="color" id="me-couleur" value="' + m.c + '">' +
+        '<input type="text" id="me-nom" value="' + ech(m.nom) + '">' +
+        '<button class="mini ok" data-act="matiere-enregistrer" data-id="' + m.code + '">\u2713</button>' +
+        '<button class="mini" data-act="matiere-annuler-edition">\u2715</button>' +
+      '</div>';
+    } else {
+      html += '<div class="mat-l">' +
+        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<span class="mat-nom"><b>' + ech(m.code) + '</b> · ' + ech(m.nom) + '</span>' +
+        '<button class="mini" data-act="matiere-editer" data-id="' + m.code + '">\u270E</button>' +
+        '<button class="mini sup" data-act="matiere-suppr" data-id="' + m.code + '">\u2715</button>' +
+      '</div>';
+    }
+  });
+  html += '</div>' +
+    '<div class="carte" style="margin-top:8px">' +
+      '<div class="champ"><label for="nm-code">Code (3-4 lettres)</label>' +
+        '<input type="text" id="nm-code" maxlength="4" placeholder="ex. SVT"></div>' +
+      '<div class="champ" style="margin-bottom:0"><label for="nm-nom">Nom complet</label>' +
+        '<input type="text" id="nm-nom" placeholder="ex. Sciences"></div>' +
+    '</div>' +
+    '<label class="check-ligne" style="margin-top:10px">' +
+      '<input type="color" id="nm-couleur" value="#3A56D4">' +
+      '<span>Couleur de la pastille</span></label>' +
+    '<button class="bouton discret" data-act="matiere-ajouter" style="margin-top:8px">Ajouter une matière</button>';
+  return html;
+}
+
 function majApercu(){
   const zone = document.getElementById('apercu');
+  const compte = document.getElementById('apercu-compte');
   if (!zone) return;
   const date = (document.getElementById('f-date') || {}).value;
-  if (!date) { zone.innerHTML = ''; return; }
+  if (!date) { zone.innerHTML = ''; if (compte) compte.textContent = ''; return; }
   let liste = echeancier(date);
   if (!DB.reglages.afficherAncrage) liste = liste.filter(e => !e.ancrage);
-  let html = '<p class="etiquette" style="margin:14px 0 4px">Échéancier · ' +
-             liste.length + ' révisions</p>';
+  if (compte) compte.textContent = liste.length + ' révision' + (liste.length > 1 ? 's' : '');
+  let html = '';
   liste.forEach(e => {
     html += '<div class="l"><span class="r' + (e.ancrage ? ' ancrage' : '') + '">' +
-            ech(e.rang) + '</span><span class="d">' + libelleJour(e.date) + '</span></div>';
+            ech(libelleRang(e.rang)) + '</span><span class="d">' + libelleJour(e.date) + '</span></div>';
   });
   zone.innerHTML = html;
 }
 
 /* --- Paramètres avancés ------------------------------------- */
 function blocParametres(){
-  return '<details class="pliable" style="margin-top:20px">' +
+  return '<details class="pliable" data-cle="parametres"' + ouvert('parametres') + ' style="margin-top:20px">' +
     '<summary>Paramètres avancés</summary>' +
     '<div class="contenu-pliable">' +
+      '<div class="champ" style="margin-top:12px"><label for="f-prenom">Prénom affiché dans l\u2019agenda</label>' +
+        '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
       '<button class="bouton discret" data-act="maj" style="margin-top:8px">Forcer la mise à jour</button>' +
     '</div></details>';
+}
+
+/* Semaine du lundi au dimanche, courte : « DD/MM » pour l'axe des graphiques. */
+function libelleAxe(iso){
+  const d = dDe(iso);
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+/* Quatre indicateurs, semaine par semaine, calés sur la date de
+   révision (r.date) — celle qui compte aujourd'hui, y compris après
+   un report. Fenêtre bornée à 12 semaines pour rester lisible. */
+function calculerSemaines(){
+  if (!DB.cours.length) return {semaines:[], nouveaux:[], revises:[], pourcentages:[], annules:[]};
+  const lundiCourant = lundiDe(aujourdhui());
+  const premiereISO = DB.cours.map(c => isoDe(lundiDe(dDe(c.date))))
+    .reduce((a, b) => a < b ? a : b);
+  let debut = dDe(premiereISO);
+  const limite = plus(lundiCourant, -11 * 7);
+  if (debut < limite) debut = limite;
+
+  const semaines = [];
+  for (let d = debut; d <= lundiCourant; d = plus(d, 7)) semaines.push(isoDe(d));
+
+  const nouveaux = [], revises = [], pourcentages = [], annules = [];
+  semaines.forEach(lundiISO => {
+    const dimISO = isoDe(plus(dDe(lundiISO), 6));
+    const nC = DB.cours.filter(c => c.date >= lundiISO && c.date <= dimISO).length;
+    const revsSemaine = DB.revisions.filter(r => r.date >= lundiISO && r.date <= dimISO);
+    const nRevisees = revsSemaine.filter(r => r.statut === 'faite').length;
+    const nAnnulees = revsSemaine.filter(r => r.statut === 'annulee').length;
+    const planifiees = revsSemaine.length;
+    nouveaux.push(nC);
+    revises.push(nRevisees);
+    annules.push(nAnnulees);
+    pourcentages.push(planifiees ? Math.round(nRevisees / planifiees * 100) : 0);
+  });
+  return {semaines: semaines, nouveaux: nouveaux, revises: revises,
+          pourcentages: pourcentages, annules: annules};
+}
+
+/* Petit histogramme SVG autonome, sans bibliothèque : une barre par
+   semaine, sa valeur au-dessus, l'étiquette de semaine en dessous. */
+function graphiqueBarres(labels, valeurs, options){
+  options = options || {};
+  const larg = 640, haut = 118, margeHaut = 16, margeBas = 22;
+  const zoneH = haut - margeHaut - margeBas;
+  const n = Math.max(valeurs.length, 1);
+  const pas = larg / n;
+  const largBarre = Math.min(30, pas * 0.55);
+  const maxVal = options.max || Math.max(1, Math.max.apply(null, valeurs));
+  const couleur = options.couleur || 'var(--accent)';
+  let barres = '';
+  valeurs.forEach((v, i) => {
+    const h = (v / maxVal) * zoneH;
+    const x = i * pas + (pas - largBarre) / 2;
+    const y = margeHaut + (zoneH - h);
+    barres += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + largBarre.toFixed(1) +
+      '" height="' + Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + couleur + '"></rect>';
+    if (v > 0) {
+      barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (y - 4).toFixed(1) +
+        '" text-anchor="middle" font-size="9" font-family="var(--mono)" fill="var(--texte-2)">' +
+        v + (options.suffixe || '') + '</text>';
+    }
+    barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (haut - 6) +
+      '" text-anchor="middle" font-size="8" font-family="var(--mono)" fill="var(--texte-3)">' +
+      ech(labels[i]) + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
+    '<line x1="0" y1="' + (margeHaut + zoneH) + '" x2="' + larg + '" y2="' + (margeHaut + zoneH) +
+    '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
 }
 
 /* --- Statistiques ------------------------------------------ */
@@ -620,8 +810,22 @@ function vueStats(){
       '<span style="font-size:13px;color:var(--texte-2)">des ' + traitees +
       ' révisions échues ont été faites</span></div></div>';
 
+  const s7 = calculerSemaines();
+  if (s7.semaines.length) {
+    const labels = s7.semaines.map(libelleAxe);
+    html += '<p class="etiquette">Évolution hebdomadaire</p>' +
+      '<div class="carte graf"><p class="graf-titre">Nouveaux cours</p>' +
+        graphiqueBarres(labels, s7.nouveaux, {couleur: 'var(--accent)'}) + '</div>' +
+      '<div class="carte graf"><p class="graf-titre">Révisions faites</p>' +
+        graphiqueBarres(labels, s7.revises, {couleur: 'var(--faite)'}) + '</div>' +
+      '<div class="carte graf"><p class="graf-titre">Taux de révision sur le planifié</p>' +
+        graphiqueBarres(labels, s7.pourcentages, {couleur: 'var(--faite)', suffixe: '%', max: 100}) + '</div>' +
+      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Révisions annulées</p>' +
+        graphiqueBarres(labels, s7.annules, {couleur: 'var(--annulee)'}) + '</div>';
+  }
+
   const lignes = [];
-  MATIERES.forEach(m => {
+  DB.matieres.forEach(m => {
     const ids = DB.cours.filter(c => c.code === m.code).map(c => c.id);
     if (!ids.length) return;
     const revs = DB.revisions.filter(r => ids.indexOf(r.cours) !== -1);
@@ -650,17 +854,17 @@ function vueStats(){
     .filter(r => r.statut === 'faite' || r.statut === 'annulee')
     .sort((a, b) => a.date < b.date ? 1 : -1);
   if (historique.length) {
-    html += '<details class="pliable" style="margin-top:20px">' +
+    html += '<details class="pliable" data-cle="historique"' + ouvert('historique') + ' style="margin-top:20px">' +
       '<summary>Historique<span class="compte">' + historique.length + '</span></summary>' +
       '<div class="contenu-pliable"><div class="carte" style="padding:5px 15px">';
     historique.forEach(r => {
       const c = trouverCours(r.cours);
       if (!c) return;
-      const m = parCode[c.code] || {nom: c.code, c: '#9AA3B2'};
+      const m = matiereDe(c.code);
       html += '<div class="hist-l">' +
         '<i class="puce" style="background:' + m.c + '"></i>' +
         '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
-        '<span>' + ech(r.rang) + ' · ' + libelleCourt(r.date) + ' · ' +
+        '<span>' + ech(libelleRang(r.rang)) + ' · ' + libelleCourt(r.date) + ' · ' +
         (r.statut === 'faite' ? 'Faite' : 'Annulée') + '</span></div>' +
         '<button data-act="reactiver" data-id="' + r.id + '">Réactiver</button></div>';
     });
@@ -686,6 +890,64 @@ function toast(txt){
   clearTimeout(minuteurToast);
   minuteurToast = setTimeout(() => t.classList.remove('on'), 1900);
 }
+
+/* --- Impression du planning à 2 semaines -------------------- */
+
+/* Une colonne par semaine, du lundi au dimanche, en partant du
+   lundi de la semaine en cours — y compris les jours déjà passés
+   cette semaine, puisqu'une révision en retard reste à cocher. */
+function planningImpression(){
+  const debut = lundiDe(aujourdhui());
+  const jours = [];
+  for (let i = 0; i < 14; i++) jours.push(isoDe(plus(debut, i)));
+
+  const revs = DB.revisions.filter(r =>
+    (r.statut === 'aFaire' || r.statut === 'reportee') &&
+    jours.indexOf(r.date) !== -1 &&
+    (DB.reglages.afficherAncrage || !r.ancrage));
+
+  function colonne(liste){
+    let html = '';
+    liste.forEach(iso => {
+      const d = dDe(iso);
+      const nomJour = JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
+      html += '<div class="pr-jour"><h3>' + nomJour + ' ' + libelleCourt(iso) + '</h3>';
+      const items = revs.filter(r => r.date === iso);
+      if (!items.length) html += '<p class="pr-vide">—</p>';
+      items.forEach(r => {
+        const c = trouverCours(r.cours);
+        if (!c) return;
+        const m = matiereDe(c.code);
+        html += '<div class="pr-item"><div class="pr-nom">' + ech(refCours(c)) +
+          ' <span class="pr-mat">' + ech(m.nom) + '</span> ' +
+          '<span class="pr-rang">' + ech(libelleRang(r.rang)) + '</span></div>' +
+          '<div class="pr-cases">' +
+            '<span class="pr-c"><i></i>Fait</span>' +
+            '<span class="pr-c"><i></i>Annulé</span>' +
+            '<span class="pr-c"><i></i>Reporté au&nbsp;______</span>' +
+          '</div></div>';
+      });
+      html += '<div class="pr-nouveau"><i></i>Nouveau à encoder&nbsp;: ______________________</div>';
+      html += '</div>';
+    });
+    return html;
+  }
+
+  return '<div class="pr-page">' +
+    '<div class="pr-entete">SABOSSE · planning du ' + libelleCourt(jours[0]) +
+    ' au ' + libelleCourt(jours[13]) + '</div>' +
+    '<div class="pr-grille">' +
+      '<div class="pr-col">' + colonne(jours.slice(0, 7)) + '</div>' +
+      '<div class="pr-col">' + colonne(jours.slice(7, 14)) + '</div>' +
+    '</div></div>';
+}
+
+function imprimerPlanning(){
+  document.getElementById('impression').innerHTML = planningImpression();
+  window.print();
+}
+
+document.getElementById('btn-imprimer').addEventListener('click', imprimerPlanning);
 
 /* Vide le cache du service worker puis recharge : utile quand
    l'app affiche encore une version périmée sur l'écran d'accueil. */
@@ -728,7 +990,8 @@ function importerSauvegarde(fichier){
     DB = {
       cours: o.cours,
       revisions: o.revisions,
-      reglages: Object.assign({afficherAncrage: true}, o.reglages || {})
+      matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
+      reglages: Object.assign({afficherAncrage: true, prenom: ''}, o.reglages || {})
     };
     sauver();
     rendre();
@@ -746,6 +1009,59 @@ function marquer(id, statut){
   toast(statut === 'faite' ? 'Révision faite.' : 'Révision annulée.');
 }
 
+/* Annule toute la série encore en attente d'un cours (aFaire ou
+   reportée) — les révisions déjà faites ne sont jamais touchées. */
+function annulerSerie(id){
+  const r = DB.revisions.find(x => x.id === id);
+  if (!r) return;
+  const n = DB.revisions.filter(x =>
+    x.cours === r.cours && (x.statut === 'aFaire' || x.statut === 'reportee')).length;
+  DB.revisions.forEach(x => {
+    if (x.cours === r.cours && (x.statut === 'aFaire' || x.statut === 'reportee')) x.statut = 'annulee';
+  });
+  sauver();
+  rendre();
+  toast(n + ' révision' + (n > 1 ? 's' : '') + ' annulée' + (n > 1 ? 's' : '') + '.');
+}
+
+/* Gestion des matières : le code identifie les cours existants et
+   n'est donc modifiable qu'à la création, jamais en édition. */
+function ajouterMatiere(code, nom, couleur){
+  code = code.toUpperCase().trim();
+  nom = nom.trim();
+  if (!code || !nom) { toast('Code et nom requis.'); return; }
+  if (DB.matieres.some(m => m.code === code)) { toast('Ce code existe déjà.'); return; }
+  DB.matieres.push({code: code, nom: nom, c: couleur});
+  sauver();
+  rendre();
+  toast(code + ' ajoutée.');
+}
+
+function modifierMatiere(code, nom, couleur){
+  const m = DB.matieres.find(x => x.code === code);
+  if (!m) return;
+  nom = nom.trim();
+  if (!nom) { toast('Le nom ne peut pas être vide.'); return; }
+  m.nom = nom;
+  m.c = couleur;
+  matiereEnEdition = null;
+  sauver();
+  rendre();
+  toast('Matière modifiée.');
+}
+
+function supprimerMatiere(code){
+  const nb = DB.cours.filter(c => c.code === code).length;
+  const msg = nb
+    ? 'Supprimer ' + code + ' ? ' + nb + ' cours l\u2019utilisent encore et garderont ce code.'
+    : 'Supprimer la matière ' + code + ' ?';
+  if (!confirm(msg)) return;
+  DB.matieres = DB.matieres.filter(m => m.code !== code);
+  sauver();
+  rendre();
+  toast('Matière supprimée.');
+}
+
 let reportEnCours = null;
 const voile = document.getElementById('voile');
 
@@ -755,7 +1071,7 @@ function ouvrirReport(id){
   const c = trouverCours(r.cours);
   reportEnCours = id;
   document.getElementById('voile-info').textContent =
-    (c ? refCours(c) + ' · ' : '') + r.rang + ' · prévue le ' + libelleCourt(r.date);
+    (c ? refCours(c) + ' · ' : '') + libelleRang(r.rang) + ' · prévue le ' + libelleCourt(r.date);
   document.getElementById('voile-date').value = isoDe(plus(dDe(r.date), 7));
   voile.classList.add('on');
 }
@@ -774,7 +1090,8 @@ document.getElementById('voile-ok').addEventListener('click', () => {
 });
 
 /* Confirmation, requise avant de marquer une révision faite ou
-   annulée : les deux actions sont difficiles à annuler par erreur. */
+   annulée. Pour une annulation, deux issues possibles : cette seule
+   révision, ou toute la série encore en attente pour ce cours. */
 let actionEnCours = null;
 const confirmVoile = document.getElementById('confirm-voile');
 
@@ -782,20 +1099,33 @@ function demanderConfirmation(id, statut){
   const r = DB.revisions.find(x => x.id === id);
   if (!r) return;
   const c = trouverCours(r.cours);
-  actionEnCours = {id: id, statut: statut};
-  document.getElementById('confirm-titre').textContent =
-    statut === 'faite' ? 'Marquer comme faite ?' : 'Annuler cette révision ?';
+  actionEnCours = {id: id};
+  const actions = document.getElementById('confirm-actions');
+  if (statut === 'faite') {
+    document.getElementById('confirm-titre').textContent = 'Marquer comme faite ?';
+    actions.innerHTML = '<button class="bouton principal" data-confirm="faite">Confirmer</button>';
+  } else {
+    document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
+    actions.innerHTML =
+      '<button class="bouton discret" data-confirm="annulee-une">Cette révision seule</button>' +
+      '<button class="bouton principal" style="background:var(--annulee);box-shadow:none" ' +
+      'data-confirm="annulee-serie">Toute la série ' + (c ? ech(refCours(c)) : '') + '</button>';
+  }
   document.getElementById('confirm-info').textContent =
-    (c ? refCours(c) + ' · ' : '') + r.rang + ' · ' + libelleJour(r.date);
+    (c ? refCours(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date);
   confirmVoile.classList.add('on');
 }
 function fermerConfirmation(){ confirmVoile.classList.remove('on'); actionEnCours = null; }
 
 document.getElementById('confirm-non').addEventListener('click', fermerConfirmation);
-confirmVoile.addEventListener('click', e => { if (e.target === confirmVoile) fermerConfirmation(); });
-document.getElementById('confirm-oui').addEventListener('click', () => {
-  if (!actionEnCours) return;
-  marquer(actionEnCours.id, actionEnCours.statut);
+confirmVoile.addEventListener('click', e => {
+  if (e.target === confirmVoile) { fermerConfirmation(); return; }
+  const b = e.target.closest('button[data-confirm]');
+  if (!b || !actionEnCours) return;
+  const type = b.dataset.confirm;
+  if (type === 'faite')              marquer(actionEnCours.id, 'faite');
+  else if (type === 'annulee-une')   marquer(actionEnCours.id, 'annulee');
+  else if (type === 'annulee-serie') annulerSerie(actionEnCours.id);
   fermerConfirmation();
 });
 
@@ -818,6 +1148,20 @@ vue.addEventListener('click', e => {
   else if (act === 'maj') {
     if (confirm('Forcer la mise à jour ? L\'application va se recharger.')) forcerMiseAJour();
   }
+  else if (act === 'matiere-editer') { matiereEnEdition = id; rendre(); }
+  else if (act === 'matiere-annuler-edition') { matiereEnEdition = null; rendre(); }
+  else if (act === 'matiere-enregistrer') {
+    const nom = document.getElementById('me-nom').value;
+    const couleur = document.getElementById('me-couleur').value;
+    modifierMatiere(id, nom, couleur);
+  }
+  else if (act === 'matiere-suppr') supprimerMatiere(id);
+  else if (act === 'matiere-ajouter') {
+    const code = document.getElementById('nm-code').value;
+    const nom = document.getElementById('nm-nom').value;
+    const couleur = document.getElementById('nm-couleur').value;
+    ajouterMatiere(code, nom, couleur);
+  }
   else if (act === 'suppr') {
     const c = trouverCours(id);
     if (c && confirm('Supprimer ' + refCours(c) + ' et toutes ses révisions ?')) {
@@ -836,6 +1180,11 @@ vue.addEventListener('change', e => {
     DB.reglages.afficherAncrage = e.target.checked;
     sauver();
     majApercu();
+    return;
+  }
+  if (e.target.id === 'f-prenom') {
+    DB.reglages.prenom = e.target.value;
+    sauver();
     return;
   }
   if (e.target.id === 'fichier-import' && e.target.files && e.target.files[0]) {
