@@ -225,7 +225,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 
 <script>
 'use strict';
-const VERSION = 'v2 · 3 septembre 2026';
+const VERSION = 'v3 · 3 septembre 2026';
 
 /* ============================================================
    Matières
@@ -579,12 +579,25 @@ function majApercu(){
   zone.innerHTML = html;
 }
 
+/* --- Paramètres avancés ------------------------------------- */
+function blocParametres(){
+  return '<details class="pliable" style="margin-top:20px">' +
+    '<summary>Paramètres avancés</summary>' +
+    '<div class="contenu-pliable">' +
+      '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
+      '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
+      '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
+      '<button class="bouton discret" data-act="maj" style="margin-top:8px">Forcer la mise à jour</button>' +
+    '</div></details>';
+}
+
 /* --- Statistiques ------------------------------------------ */
 function vueStats(){
   if (!DB.revisions.length) {
     return '<div class="vide"><div class="gros">📊</div>' +
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
-      '<p>Les statistiques arrivent avec le premier cours.</p></div>';
+      '<p>Les statistiques arrivent avec le premier cours.</p></div>' +
+      blocParametres();
   }
   const n = s => DB.revisions.filter(r => r.statut === s).length;
   const faites = n('faite'), reportees = n('reportee'),
@@ -654,6 +667,8 @@ function vueStats(){
     html += '</div></div></details>';
   }
 
+  html += blocParametres();
+
   html +=
     '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
     'SABOSSE ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
@@ -670,6 +685,56 @@ function toast(txt){
   t.classList.add('on');
   clearTimeout(minuteurToast);
   minuteurToast = setTimeout(() => t.classList.remove('on'), 1900);
+}
+
+/* Vide le cache du service worker puis recharge : utile quand
+   l'app affiche encore une version périmée sur l'écran d'accueil. */
+async function forcerMiseAJour(){
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) await r.unregister();
+    }
+    if ('caches' in window) {
+      const cles = await caches.keys();
+      for (const c of cles) await caches.delete(c);
+    }
+  } catch (e) { /* on recharge quand même */ }
+  location.reload();
+}
+
+function exporterSauvegarde(){
+  try {
+    const blob = new Blob([JSON.stringify(DB)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sabosse-' + isoDe(aujourdhui()) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Sauvegarde exportée.');
+  } catch (e) { toast('Export impossible.'); }
+}
+
+function importerSauvegarde(fichier){
+  const lecteur = new FileReader();
+  lecteur.onload = () => {
+    let o;
+    try { o = JSON.parse(lecteur.result); }
+    catch (e) { toast('Fichier illisible.'); return; }
+    if (!o || !Array.isArray(o.cours) || !Array.isArray(o.revisions)) {
+      toast('Fichier invalide.'); return;
+    }
+    if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+    DB = {
+      cours: o.cours,
+      revisions: o.revisions,
+      reglages: Object.assign({afficherAncrage: true}, o.reglages || {})
+    };
+    sauver();
+    rendre();
+    toast('Sauvegarde restaurée.');
+  };
+  lecteur.readAsText(fichier);
 }
 
 function marquer(id, statut){
@@ -745,6 +810,14 @@ vue.addEventListener('click', e => {
     const r = DB.revisions.find(x => x.id === id);
     if (r) { r.statut = 'aFaire'; sauver(); rendre(); toast('Révision remise en attente.'); }
   }
+  else if (act === 'export') exporterSauvegarde();
+  else if (act === 'importDeclencheur') {
+    const f = document.getElementById('fichier-import');
+    if (f) f.click();
+  }
+  else if (act === 'maj') {
+    if (confirm('Forcer la mise à jour ? L\'application va se recharger.')) forcerMiseAJour();
+  }
   else if (act === 'suppr') {
     const c = trouverCours(id);
     if (c && confirm('Supprimer ' + refCours(c) + ' et toutes ses révisions ?')) {
@@ -759,10 +832,16 @@ vue.addEventListener('input', e => {
 });
 
 vue.addEventListener('change', e => {
-  if (e.target.id !== 'f-ancrage') return;
-  DB.reglages.afficherAncrage = e.target.checked;
-  sauver();
-  majApercu();
+  if (e.target.id === 'f-ancrage') {
+    DB.reglages.afficherAncrage = e.target.checked;
+    sauver();
+    majApercu();
+    return;
+  }
+  if (e.target.id === 'fichier-import' && e.target.files && e.target.files[0]) {
+    importerSauvegarde(e.target.files[0]);
+    e.target.value = '';
+  }
 });
 
 vue.addEventListener('click', e => {
