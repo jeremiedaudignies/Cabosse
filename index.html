@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#3A56D4">
+<meta name="theme-color" content="#B33A1E">
 <meta name="color-scheme" content="light only">
-<title>SABOSSE</title>
+<title>Cabosse</title>
 <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-title" content="Sabosse">
+<meta name="apple-mobile-web-app-title" content="Cabosse">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
 /* ============================================================
-   SABOSSE — jetons de conception
+   Cabosse — jetons de conception
    Mêmes règles que RHABDO : fond clair, cartes blanches, une
    seule couleur de signal. Accent indigo pour distinguer les
    deux applications sur l'écran d'accueil.
@@ -34,11 +34,12 @@ html,body{margin:0;padding:0;height:100%}
 body{background:var(--fond);color-scheme:light;color:var(--texte);font-family:var(--corps);
   font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer}
-input,select{font-family:inherit;font-size:16px;color:var(--texte);background:var(--surface);
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--texte);background:var(--surface);
   border:1px solid var(--filet);border-radius:var(--r-s);padding:11px 12px;width:100%;appearance:none}
+textarea{resize:vertical;min-height:64px;line-height:1.4}
 select{background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%235F6A7B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' d='M4 6.5l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:36px}
-input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-doux)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-doux)}
 input[type="checkbox"]{width:22px;height:22px;flex:0 0 auto;padding:0;border-radius:7px;
   border:1.5px solid var(--filet);background:var(--surface);cursor:pointer;appearance:none;
   transition:background-color .15s,border-color .15s}
@@ -51,7 +52,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #app{display:flex;flex-direction:column;height:100dvh}
 #entete{flex:0 0 auto;padding:calc(var(--safe-t) + 12px) 16px 12px;display:flex;align-items:center;
   gap:12px;background:var(--surface);border-bottom:1px solid var(--filet)}
-#entete .glyphe{width:36px;height:36px;flex:0 0 auto;border-radius:var(--r-s);background:var(--accent);
+#entete .glyphe{width:36px;height:36px;flex:0 0 auto;border-radius:var(--r-s);background:#B33A1E;
   color:#fff;display:grid;place-items:center;font-size:17px;font-weight:800}
 #entete .titres{flex:1;min-width:0}
 #entete .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
@@ -61,8 +62,13 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #btn-imprimer{flex:0 0 auto;width:36px;height:36px;border-radius:var(--r-s);
   background:var(--surface-2);font-size:17px;display:flex;align-items:center;justify-content:center}
 #impression{display:none}
+#bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
+  border-bottom:1px solid var(--filet)}
+#bascule-profil .seg{flex:1;padding:8px 6px;border-radius:99px;background:var(--surface-2);
+  font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
-#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);
+#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
 #barre button{padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
   color:var(--texte-3);transition:color .15s}
@@ -86,6 +92,8 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .vide{text-align:center;padding:52px 20px;color:var(--texte-2)}
 .vide .gros{font-size:38px;margin-bottom:12px}
 .vide p{margin:0 0 4px}
+.suivi-banniere{background:var(--accent-doux);color:var(--accent);font-size:12px;font-weight:700;
+  text-align:center;padding:9px 12px;border-radius:var(--r-m);margin-bottom:14px}
 
 /* --- agenda --- */
 .jour{margin-bottom:16px}
@@ -139,6 +147,38 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
 .hist-l button{flex:0 0 auto;padding:7px 12px;border-radius:99px;background:var(--surface-2);
   font-size:11.5px;font-weight:600;color:var(--texte-2)}
+.hist-l button.sup{color:var(--annulee);padding:7px 10px}
+.hist-groupe{margin-bottom:14px}
+.hist-groupe:last-child{margin-bottom:0}
+.hist-entete{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.hist-entete span{flex:1;min-width:0;font-size:12.5px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-suppr-serie{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--annulee)}
+.sync-code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:var(--r-s);
+  padding:10px 12px;word-break:break-all}
+.parametres-verrou{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:20px}
+.parametres-verrou .ic{font-size:20px;flex:0 0 auto}
+.parametres-verrou .txt{flex:1;min-width:0}
+.parametres-verrou .txt b{display:block;font-size:13px;font-weight:700}
+.parametres-verrou .txt span{font-size:11.5px;color:var(--texte-2)}
+
+/* --- chat --- */
+#chat-fil{display:flex;flex-direction:column;gap:12px;min-height:calc(100dvh - 320px)}
+.vide-chat{text-align:center;color:var(--texte-3);font-size:13px;padding:24px 0;margin:auto}
+.msg{display:flex;flex-direction:column;align-items:flex-start;max-width:82%}
+.msg.moi{align-self:flex-end;align-items:flex-end}
+.msg-auteur{font-size:10.5px;font-weight:700;color:var(--texte-3);margin:0 0 2px 3px}
+.msg-bulle{background:var(--surface);border:1px solid var(--filet);border-radius:16px 16px 16px 4px;
+  padding:9px 13px;font-size:14px;line-height:1.4;box-shadow:var(--ombre);word-break:break-word;white-space:pre-wrap}
+.msg.moi .msg-bulle{background:var(--accent);color:#fff;border-color:var(--accent);
+  border-radius:16px 16px 4px 16px}
+.msg-heure{font-size:10px;color:var(--texte-3);margin:3px 4px 0}
+.chat-bas{position:sticky;bottom:0;background:var(--fond);padding-top:10px;margin-top:14px}
+.chat-nom{display:block;font-size:11px;font-weight:600;color:var(--accent);margin-bottom:6px}
+.chat-saisie{display:flex;gap:8px;align-items:flex-end}
+.chat-saisie input{flex:1}
+.chat-saisie button{flex:0 0 auto;width:44px;height:44px;border-radius:99px;background:var(--accent);
+  color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center}
 
 /* --- aperçu de l'échéancier --- */
 .apercu{margin-top:12px}
@@ -193,14 +233,17 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .tab .l .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:34px;text-align:right}
 .tab .l.entete .v{font-weight:700}
 
-/* --- report et confirmation --- */
-#voile,#confirm-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
+/* --- report, confirmation et note --- */
+#voile,#confirm-voile,#note-voile,#motdepasse-voile,#chatnom-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
   align-items:flex-end;z-index:20}
-#voile.on,#confirm-voile.on{display:flex}
-#voile .feuille,#confirm-voile .feuille{width:100%;background:var(--surface);
+#voile.on,#confirm-voile.on,#note-voile.on,#motdepasse-voile.on,#chatnom-voile.on{display:flex}
+#voile .feuille,#confirm-voile .feuille,#note-voile .feuille,#motdepasse-voile .feuille,#chatnom-voile .feuille{width:100%;background:var(--surface);
   border-radius:var(--r-l) var(--r-l) 0 0;padding:20px 16px calc(20px + var(--safe-b))}
-#voile h3,#confirm-voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
-#voile p,#confirm-voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
+#voile h3,#confirm-voile h3,#note-voile h3,#motdepasse-voile h3,#chatnom-voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+#voile p,#confirm-voile p,#note-voile p,#motdepasse-voile p,#chatnom-voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
+.note-apercu{margin-top:6px;font-size:12px;color:var(--texte-2);background:var(--surface-2);
+  border-radius:var(--r-s);padding:7px 9px;line-height:1.35}
+.note-ajouter{margin-top:6px;font-size:11.5px;font-weight:600;color:var(--accent)}
 #toast{position:fixed;left:50%;bottom:calc(78px + var(--safe-b));transform:translateX(-50%);
   background:var(--texte);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;
   border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
@@ -232,17 +275,19 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 <body>
 <div id="app">
   <header id="entete">
-    <div class="glyphe">S</div>
+    <div class="glyphe">C</div>
     <div class="titres">
       <div class="eyebrow">Réactivation mémorielle</div>
-      <h1>SABOSSE</h1>
+      <h1>Cabosse</h1>
     </div>
     <button id="btn-imprimer" title="Imprimer le planning des 2 semaines" aria-label="Imprimer">🖨️</button>
   </header>
+  <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
   <nav id="barre">
     <button data-vue="agenda"><span class="ic">📅</span><span class="lb">Agenda</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
+    <button data-vue="chat"><span class="ic">💬</span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
   </nav>
 </div>
@@ -258,15 +303,161 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 <div id="confirm-voile"><div class="feuille">
   <h3 id="confirm-titre"></h3>
   <p id="confirm-info"></p>
+  <div id="confirm-note-zone" class="champ" style="display:none">
+    <label for="confirm-note">Point de difficulté à noter (optionnel)</label>
+    <textarea id="confirm-note" rows="3" placeholder="Ex. confond passé simple et imparfait…"></textarea>
+  </div>
   <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
   <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
+</div></div>
+<div id="note-voile"><div class="feuille">
+  <h3>Note de difficulté</h3>
+  <p id="note-info"></p>
+  <div class="champ" style="margin-bottom:0">
+    <textarea id="note-texte" rows="4" placeholder="Points de difficulté, questions à retravailler…"></textarea>
+  </div>
+  <div style="display:flex;gap:9px;margin-top:14px">
+    <button class="bouton discret" id="note-annuler" style="flex:1">Fermer</button>
+    <button class="bouton principal" id="note-ok" style="flex:1;padding:13px;font-size:14.5px">Enregistrer</button>
+  </div>
+</div></div>
+<div id="motdepasse-voile"><div class="feuille">
+  <h3>Paramètres avancés</h3>
+  <p>Mot de passe requis pour y accéder.</p>
+  <input type="password" id="motdepasse-champ" placeholder="Mot de passe" autocomplete="off">
+  <div style="display:flex;gap:9px;margin-top:14px">
+    <button class="bouton discret" id="motdepasse-annuler" style="flex:1">Fermer</button>
+    <button class="bouton principal" id="motdepasse-ok" style="flex:1;padding:13px;font-size:14.5px">Déverrouiller</button>
+  </div>
+</div></div>
+<div id="chatnom-voile"><div class="feuille">
+  <h3>Ton nom dans le chat</h3>
+  <p>Affiché à côté de tes messages.</p>
+  <input type="text" id="chatnom-champ" placeholder="Prénom" maxlength="20">
+  <div style="display:flex;gap:9px;margin-top:14px">
+    <button class="bouton discret" id="chatnom-annuler" style="flex:1">Fermer</button>
+    <button class="bouton principal" id="chatnom-ok" style="flex:1;padding:13px;font-size:14.5px">Valider</button>
+  </div>
 </div></div>
 <div id="toast"></div>
 <div id="impression"></div>
 
+<!-- ============================================================
+     Synchronisation Firebase (optionnelle)
+     Coller ci-dessous la configuration du projet Firebase créé pour
+     Cabosse (Console Firebase → Paramètres du projet → Vos
+     applications → icône </> « application Web »). Tant que ces
+     valeurs ne sont pas remplacées, la synchronisation reste
+     désactivée sans faire planter le reste de l'app.
+
+     Nécessite aussi, dans la console Firebase :
+     Authentication → Sign-in method → activer « Anonymous ».
+     Voir les règles Firestore fournies séparément — l'écriture y
+     est vérifiée via un identifiant anonyme stocké dans un document
+     jamais lisible par un client, distinct du code de lecture.
+     ============================================================ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limitToLast }
+  from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDL1Du9jLAD13gHQI1Y_4LQ1SsWGRSQJAc",
+  authDomain: "cabosse-famille.firebaseapp.com",
+  projectId: "cabosse-famille",
+  storageBucket: "cabosse-famille.firebasestorage.app",
+  messagingSenderId: "779388589101",
+  appId: "1:779388589101:web:f6cac26a448e2f25d4d4a4"
+};
+
+const configure = Object.values(FIREBASE_CONFIG).every(v => typeof v === 'string' && !v.startsWith('COLLE_'));
+let bdd = null, auth = null, arreterEcoute = null, arreterEcouteChat = null;
+if (configure) {
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    bdd = getFirestore(app);
+    auth = getAuth(app);
+  } catch (e) { console.error('SABOSSE sync : configuration Firebase invalide', e); }
+}
+
+/* Authentifie l'appareil auprès de Firebase à la demande : requis
+   pour pousser les données de révision (mode source) et pour
+   envoyer un message dans le chat, quel que soit le rôle. La lecture
+   des données de révision, elle, ne demande aucune identité. */
+function assurerAuth(){
+  return new Promise((resolve, reject) => {
+    if (auth.currentUser) { resolve(auth.currentUser); return; }
+    const arret = onAuthStateChanged(auth, u => { if (u) { arret(); resolve(u); } });
+    signInAnonymously(auth).catch(e => { arret(); reject(e); });
+  });
+}
+
+window.SabosseSync = {
+  disponible: configure && !!bdd,
+  async envoyer(code, donnees){
+    if (!this.disponible || !code) return false;
+    try {
+      const u = await assurerAuth();
+      /* Tentative d'enregistrement comme écrivain autorisé — n'a
+         d'effet réel que la toute première fois (le document est
+         ensuite verrouillé par les règles Firestore) ; les tentatives
+         suivantes échouent silencieusement, sans conséquence. */
+      try { await setDoc(doc(bdd, 'sabosse_writers', code), {uid: u.uid}); } catch (e) { /* déjà pris, sans effet */ }
+      await setDoc(doc(bdd, 'sabosse', code), Object.assign({}, donnees, {misAJour: Date.now()}));
+      return true;
+    } catch (e) { console.error('SABOSSE sync : envoi impossible', e); return false; }
+  },
+  suivre(code, callback){
+    if (!this.disponible || !code) return;
+    if (arreterEcoute) arreterEcoute();
+    arreterEcoute = onSnapshot(
+      doc(bdd, 'sabosse', code),
+      snap => { if (snap.exists()) callback(snap.data()); },
+      err => { console.error('SABOSSE sync : écoute interrompue', err); callback(null, err); }
+    );
+  },
+  arreter(){
+    if (arreterEcoute) { arreterEcoute(); arreterEcoute = null; }
+  },
+  /* Chat familial : contrairement aux données de révision, n'importe
+     quel appareil authentifié (source ou suivi) peut y écrire — ce
+     n'est plus une donnée à sens unique. */
+  async envoyerMessage(code, message){
+    if (!this.disponible || !code) return false;
+    try {
+      await assurerAuth();
+      await addDoc(collection(bdd, 'sabosse_chat', code, 'messages'), message);
+      return true;
+    } catch (e) { console.error('SABOSSE sync : message impossible', e); return false; }
+  },
+  suivreChat(code, callback){
+    if (!this.disponible || !code) return;
+    if (arreterEcouteChat) arreterEcouteChat();
+    const q = query(collection(bdd, 'sabosse_chat', code, 'messages'), orderBy('quand', 'asc'), limitToLast(200));
+    arreterEcouteChat = onSnapshot(q,
+      snap => {
+        const msgs = [];
+        snap.forEach(d => msgs.push(Object.assign({id: d.id}, d.data())));
+        callback(msgs);
+      },
+      err => { console.error('SABOSSE sync : chat interrompu', err); callback(null, err); }
+    );
+  },
+  arreterChat(){
+    if (arreterEcouteChat) { arreterEcouteChat(); arreterEcouteChat = null; }
+  }
+};
+
+/* Signale au script principal que SabosseSync est prêt à l'emploi
+   (ce module se charge après le script classique, jamais avant). */
+window.dispatchEvent(new Event('sabosse-sync-pret'));
+</script>
+
 <script>
 'use strict';
-const VERSION = 'v5 · 3 septembre 2026';
+const VERSION = 'v9 · 3 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -284,7 +475,7 @@ const MATIERES_DEFAUT = [
   {code:'SVT', nom:'Sciences de la vie et de la Terre', c:'#2E7D32'}
 ];
 function matiereDe(code){
-  return DB.matieres.find(m => m.code === code) || {nom: code, c: '#9AA3B2'};
+  return donneesLecture().matieres.find(m => m.code === code) || {nom: code, c: '#9AA3B2'};
 }
 
 /* ============================================================
@@ -348,6 +539,11 @@ function finAnnee(d){
    Puis le cycle J+7, J+14, J+21, J+28, puis tous les 28 jours,
    toujours compté depuis la date du cours, jusqu'au 1er juillet.
    ============================================================ */
+/* La rampe donne l'écart, en jours, entre chaque révision et la
+   précédente (pas depuis la date du cours) : 7, 7, 14, 14, 21, 21,
+   21, puis un rythme fixe de 28 jours jusqu'à la fin de l'année. */
+const RAMPE_INTERVALLES = [7, 7, 14, 14, 21, 21, 21, 28];
+
 function echeancier(dateISO){
   const d = dDe(dateISO);
   const fin = finAnnee(d);
@@ -357,8 +553,11 @@ function echeancier(dateISO){
   while (samedi.getDay() !== 6) samedi = plus(samedi, 1);
   if (samedi <= fin) sortie.push({rang:'Ancrage', ancrage:true, date:isoDe(samedi)});
 
-  const deltas = [7, 14, 21, 28];
-  for (let x = 56; plus(d, x) <= fin; x += 28) deltas.push(x);
+  const deltas = [];
+  let cumul = 0;
+  RAMPE_INTERVALLES.forEach(ecart => { cumul += ecart; deltas.push(cumul); });
+  for (let x = cumul + 28; plus(d, x) <= fin; x += 28) deltas.push(x);
+
   deltas.forEach(x => {
     const q = plus(d, x);
     if (q > fin) return;
@@ -379,8 +578,8 @@ const CLE = 'sabosse';
 const Store = {
   dispo: true,
   lire(){
-    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(),
-                    reglages:{afficherAncrage:true, prenom:''}};
+    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivi: null,
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:''}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
@@ -389,7 +588,8 @@ const Store = {
         cours: o.cours || [],
         revisions: o.revisions || [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-        reglages: Object.assign({afficherAncrage:true, prenom:''}, o.reglages || {})
+        suivi: o.suivi || null,
+        reglages: Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:''}, o.reglages || {})
       };
     } catch (e) { this.dispo = false; return defaut; }
   },
@@ -399,16 +599,57 @@ const Store = {
   }
 };
 let DB = Store.lire();
-function sauver(){ Store.ecrire(DB); }
+
+/* Deux jeux de données peuvent coexister sur un même appareil : le
+   « personnel » (celui que l'appareil encode lui-même) et le
+   « suivi » (le miroir en lecture seule d'un autre appareil, reçu
+   par Firebase). reglages.affichage choisit lequel est à l'écran ;
+   les écritures ne touchent jamais le jeu affiché en mode suivi,
+   puisque toute la partie édition de l'interface reste masquée
+   par modeLecture() dans ce cas. */
+function donneesLecture(){
+  if (DB.reglages.affichage === 'suivi' && DB.suivi) {
+    return {
+      cours: DB.suivi.cours || [],
+      revisions: DB.suivi.revisions || [],
+      matieres: (DB.suivi.matieres && DB.suivi.matieres.length) ? DB.suivi.matieres : MATIERES_DEFAUT,
+      afficherAncrage: (DB.suivi.reglages && typeof DB.suivi.reglages.afficherAncrage === 'boolean')
+        ? DB.suivi.reglages.afficherAncrage : true,
+      prenom: (DB.suivi.reglages && DB.suivi.reglages.prenom) || ''
+    };
+  }
+  return {
+    cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
+    afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom
+  };
+}
+
+/* modeLecture() : l'écran affiche actuellement le miroir d'un autre
+   appareil, donc rien n'est modifiable ici — toute édition se fait
+   sur l'appareil source. Indépendant du rôle de synchronisation :
+   un appareil « suivi » peut très bien être en train d'afficher son
+   propre profil personnel, pleinement éditable, à un instant donné. */
+function modeLecture(){ return DB.reglages.affichage === 'suivi'; }
+
+function sauver(){
+  Store.ecrire(DB);
+  if (DB.reglages.role === 'source' && DB.reglages.codePartage &&
+      window.SabosseSync && window.SabosseSync.disponible) {
+    window.SabosseSync.envoyer(DB.reglages.codePartage, {
+      cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
+      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
+    });
+  }
+}
 
 function idCours(code, num, date){ return code + '-' + num + '-' + date; }
 function refCours(c){ return c.code + '-' + c.numero; }
-function trouverCours(id){ return DB.cours.find(c => c.id === id); }
+function trouverCours(id){ return donneesLecture().cours.find(c => c.id === id); }
 
 function ajouterCours(code, numero, dateISO){
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
-  DB.cours.push({id, code, numero, date: dateISO});
+  DB.cours.push({id, code, numero, date: dateISO, commentaire: ''});
   echeancier(dateISO).forEach((e, i) => {
     DB.revisions.push({
       id: id + '#' + i,
@@ -430,6 +671,17 @@ function supprimerCours(id){
   sauver();
 }
 
+/* Suppression définitive d'une seule révision de l'historique —
+   distincte de « Réactiver », qui ne fait que changer son statut.
+   Les statistiques, calculées à chaque rendu depuis DB.revisions,
+   ignorent automatiquement ce qui a été supprimé. */
+function supprimerRevision(id){
+  DB.revisions = DB.revisions.filter(r => r.id !== id);
+  sauver();
+  rendre();
+  toast('Révision supprimée définitivement.');
+}
+
 /* ============================================================
    Rendu
    ============================================================ */
@@ -447,6 +699,38 @@ document.addEventListener('toggle', e => {
   }
 }, true);
 
+/* Verrou des Paramètres avancés : un mot de passe simple, côté
+   client — un frein pour éviter qu'un enfant curieux ne modifie la
+   synchronisation ou les matières par mégarde, pas une protection
+   cryptographique (le mot de passe est visible dans le code source). */
+const MOT_DE_PASSE_PARAMETRES = 'bregmatique';
+let parametresDeverrouilles = false;
+const mdpVoile = document.getElementById('motdepasse-voile');
+
+function ouvrirMotDePasse(){
+  document.getElementById('motdepasse-champ').value = '';
+  mdpVoile.classList.add('on');
+  setTimeout(() => document.getElementById('motdepasse-champ').focus(), 60);
+}
+function fermerMotDePasse(){ mdpVoile.classList.remove('on'); }
+function tenterDeverrouillage(){
+  const val = document.getElementById('motdepasse-champ').value;
+  if (val === MOT_DE_PASSE_PARAMETRES) {
+    parametresDeverrouilles = true;
+    fermerMotDePasse();
+    rendre();
+    toast('Paramètres avancés déverrouillés.');
+  } else {
+    toast('Mot de passe incorrect.');
+  }
+}
+document.getElementById('motdepasse-annuler').addEventListener('click', fermerMotDePasse);
+mdpVoile.addEventListener('click', e => { if (e.target === mdpVoile) fermerMotDePasse(); });
+document.getElementById('motdepasse-ok').addEventListener('click', tenterDeverrouillage);
+document.getElementById('motdepasse-champ').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tenterDeverrouillage();
+});
+
 const vue = document.getElementById('vue');
 
 function ech(s){
@@ -460,8 +744,24 @@ function rendre(){
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
+  else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; }
   else vue.innerHTML = vueStats();
-  vue.scrollTop = 0;
+  if (vueActive !== 'chat') vue.scrollTop = 0;
+  majBascule();
+}
+
+/* Bascule « Mes révisions / Suivi » : uniquement visible si cet
+   appareil a un profil suivi configuré. Volontairement hors des
+   Paramètres avancés (donc jamais derrière le mot de passe), pour
+   rester accessible à l'usage quotidien. */
+function majBascule(){
+  const zone = document.getElementById('bascule-profil');
+  if (DB.reglages.role !== 'suivi') { zone.style.display = 'none'; return; }
+  zone.style.display = 'flex';
+  const dlSuivi = (DB.suivi && DB.suivi.reglages && DB.suivi.reglages.prenom) || 'Suivi';
+  zone.innerHTML =
+    '<button data-act="profil-personnel" class="seg' + (DB.reglages.affichage !== 'suivi' ? ' actif' : '') + '">Mes révisions</button>' +
+    '<button data-act="profil-suivi" class="seg' + (DB.reglages.affichage === 'suivi' ? ' actif' : '') + '">' + ech(dlSuivi) + '</button>';
 }
 
 /* --- Agenda ------------------------------------------------ */
@@ -482,6 +782,17 @@ function carteRevision(r){
   const boutonFaite = validable
     ? '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>'
     : '<button class="verrou" disabled>Faite</button>';
+  const cmds = modeLecture() ? '' :
+    '<div class="cmds">' + boutonFaite +
+      '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
+      '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
+    '</div>';
+  const commentaire = (c.commentaire || '').trim();
+  const texteNote = ech(commentaire.length > 90 ? commentaire.slice(0, 90) + '…' : commentaire);
+  const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + c.id + '"');
+  const zoneNote = commentaire
+    ? '<button type="button" class="note-apercu"' + attrsNote + '>📝 ' + texteNote + '</button>'
+    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
   return '<article class="rev">' +
     '<div class="haut">' +
       '<i class="puce" style="background:' + m.c + '"></i>' +
@@ -491,13 +802,10 @@ function carteRevision(r){
     '</div>' +
     (r.statut === 'reportee'
       ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
-    (!validable
+    (!validable && !modeLecture()
       ? '<div class="note" style="color:var(--texte-3)">Validable à partir du ' +
         libelleCourt(isoDe(plus(dDe(r.date), -7))) + '</div>' : '') +
-    '<div class="cmds">' + boutonFaite +
-      '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
-      '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
-    '</div></article>';
+    zoneNote + cmds + '</article>';
 }
 
 /* La carte du dimanche : un bilan de la semaine écoulée (lundi à
@@ -505,15 +813,16 @@ function carteRevision(r){
    N'apparaît que pour le dimanche de la semaine en cours : l'afficher
    aussi pour la semaine prochaine doublonnerait le même message. */
 function carteRepos(dimancheISO){
+  const dl = donneesLecture();
   const lundi = isoDe(plus(dDe(dimancheISO), -6));
-  let semaine = DB.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
-  if (!DB.reglages.afficherAncrage) semaine = semaine.filter(r => !r.ancrage);
+  let semaine = dl.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
+  if (!dl.afficherAncrage) semaine = semaine.filter(r => !r.ancrage);
   const total = semaine.length;
   const reste = semaine.filter(r => r.statut === 'aFaire' || r.statut === 'reportee').length;
   const succes = reste === 0;
   let detail = '';
   if (!succes) {
-    const prenom = (DB.reglages.prenom || '').trim();
+    const prenom = (dl.prenom || '').trim();
     detail = '<span class="repos-detail">il reste ' + reste + ' révision' + (reste > 1 ? 's' : '') +
       ' sur ' + total + (prenom ? ', courage ' + ech(prenom) : '') + '.</span>';
   }
@@ -536,10 +845,15 @@ function grouperParDate(liste){
 }
 
 function vueAgenda(){
-  if (!DB.cours.length) {
-    return '<div class="vide"><div class="gros">📅</div>' +
+  const dl = donneesLecture();
+  const banniere = modeLecture()
+    ? '<div class="suivi-banniere">👀 Lecture seule · suivi d\u2019un autre appareil</div>' : '';
+  if (!dl.cours.length) {
+    return banniere + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
-      '<p>Ajoute un cours pour lancer son échéancier.</p></div>';
+      '<p>' + (modeLecture()
+        ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
+        : 'Ajoute un cours pour lancer son échéancier.') + '</p></div>';
   }
 
   const auj = aujourdhui();
@@ -547,15 +861,15 @@ function vueAgenda(){
   const dimActuel = isoDe(dimancheDe(auj));
   const dimSuivant = isoDe(plus(dimancheDe(auj), 7));
 
-  const enAttente = DB.revisions.filter(r =>
+  const enAttente = dl.revisions.filter(r =>
     (r.statut === 'aFaire' || r.statut === 'reportee') &&
-    (DB.reglages.afficherAncrage || !r.ancrage));
+    (dl.afficherAncrage || !r.ancrage));
 
   const retard   = enAttente.filter(r => r.date < ajISO);
   const proches  = enAttente.filter(r => r.date >= ajISO && r.date <= dimSuivant);
   const plusTard = enAttente.filter(r => r.date > dimSuivant);
 
-  let html = '';
+  let html = banniere;
 
   if (retard.length) {
     grouperParDate(retard).forEach(g => {
@@ -599,6 +913,12 @@ function vueAgenda(){
 let matiereEnEdition = null;
 
 function vueAjout(){
+  if (modeLecture()) {
+    return '<div class="vide"><div class="gros">👀</div>' +
+      '<p><b>Lecture seule.</b></p>' +
+      '<p>Ce téléphone suit les cours encodés sur un autre appareil. ' +
+      'La gestion des cours et des matières se fait depuis celui-ci.</p></div>';
+  }
   let opts = '<option value="">Choisir une matière</option>';
   DB.matieres.forEach(m => {
     opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>';
@@ -699,16 +1019,54 @@ function majApercu(){
 
 /* --- Paramètres avancés ------------------------------------- */
 function blocParametres(){
+  if (!parametresDeverrouilles) {
+    return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller">' +
+      '<span class="ic">🔒</span>' +
+      '<span class="txt"><b>Paramètres avancés</b><span>Protégés par mot de passe</span></span>' +
+    '</button>';
+  }
   return '<details class="pliable" data-cle="parametres"' + ouvert('parametres') + ' style="margin-top:20px">' +
     '<summary>Paramètres avancés</summary>' +
     '<div class="contenu-pliable">' +
       '<div class="champ" style="margin-top:12px"><label for="f-prenom">Prénom affiché dans l\u2019agenda</label>' +
         '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
+      blocSynchronisation() +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
       '<button class="bouton discret" data-act="maj" style="margin-top:8px">Forcer la mise à jour</button>' +
     '</div></details>';
+}
+
+/* Un seul appareil « source » pousse ses données ; les autres
+   peuvent s'y « suivre » en lecture seule via un code partagé. */
+function blocSynchronisation(){
+  const r = DB.reglages.role || 'aucun';
+  let html = '<p class="etiquette" style="margin-top:6px">Synchronisation</p><div class="carte" style="margin-bottom:12px">';
+  if (!window.SabosseSync || !window.SabosseSync.disponible) {
+    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0">' +
+      'Configuration Firebase manquante ou hors ligne — voir les instructions fournies pour l\u2019activer.</p>';
+  } else if (r === 'aucun') {
+    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 10px">' +
+      'Ce téléphone encode-t-il les cours, ou suit-il ceux d\u2019un autre appareil ?</p>' +
+      '<button class="bouton discret" data-act="sync-source">Ce téléphone encode et partage</button>' +
+      '<div class="champ" style="margin-top:10px;margin-bottom:6px">' +
+        '<input type="text" id="sync-code-entree" placeholder="Coller un code reçu pour suivre"></div>' +
+      '<button class="bouton discret" data-act="sync-suivre">Suivre avec ce code</button>';
+  } else if (r === 'source') {
+    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px">' +
+      'Ce téléphone encode et partage. Code à transmettre :</p>' +
+      '<div class="sync-code">' + ech(DB.reglages.codePartage) + '</div>' +
+      '<button class="bouton discret" data-act="sync-copier" style="margin-top:8px">Copier le code</button>' +
+      '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Désactiver le partage</button>';
+  } else if (r === 'suivi') {
+    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px">' +
+      'Lecture seule, connecté avec le code :</p>' +
+      '<div class="sync-code">' + ech(DB.reglages.codeSuivi) + '</div>' +
+      '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Se déconnecter</button>';
+  }
+  html += '</div>';
+  return html;
 }
 
 /* Semaine du lundi au dimanche, courte : « DD/MM » pour l'axe des graphiques. */
@@ -721,9 +1079,10 @@ function libelleAxe(iso){
    révision (r.date) — celle qui compte aujourd'hui, y compris après
    un report. Fenêtre bornée à 12 semaines pour rester lisible. */
 function calculerSemaines(){
-  if (!DB.cours.length) return {semaines:[], nouveaux:[], revises:[], pourcentages:[], annules:[]};
+  const dl = donneesLecture();
+  if (!dl.cours.length) return {semaines:[], nouveaux:[], revises:[], pourcentages:[], annules:[]};
   const lundiCourant = lundiDe(aujourdhui());
-  const premiereISO = DB.cours.map(c => isoDe(lundiDe(dDe(c.date))))
+  const premiereISO = dl.cours.map(c => isoDe(lundiDe(dDe(c.date))))
     .reduce((a, b) => a < b ? a : b);
   let debut = dDe(premiereISO);
   const limite = plus(lundiCourant, -11 * 7);
@@ -735,8 +1094,8 @@ function calculerSemaines(){
   const nouveaux = [], revises = [], pourcentages = [], annules = [];
   semaines.forEach(lundiISO => {
     const dimISO = isoDe(plus(dDe(lundiISO), 6));
-    const nC = DB.cours.filter(c => c.date >= lundiISO && c.date <= dimISO).length;
-    const revsSemaine = DB.revisions.filter(r => r.date >= lundiISO && r.date <= dimISO);
+    const nC = dl.cours.filter(c => c.date >= lundiISO && c.date <= dimISO).length;
+    const revsSemaine = dl.revisions.filter(r => r.date >= lundiISO && r.date <= dimISO);
     const nRevisees = revsSemaine.filter(r => r.statut === 'faite').length;
     const nAnnulees = revsSemaine.filter(r => r.statut === 'annulee').length;
     const planifiees = revsSemaine.length;
@@ -781,15 +1140,122 @@ function graphiqueBarres(labels, valeurs, options){
     '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
 }
 
+/* --- Chat ---------------------------------------------------- */
+
+/* Le chat utilise le même code que la synchronisation : un seul
+   canal par famille, pas de code séparé à gérer. Sans rôle de
+   synchronisation configuré, il n'y a pas de canal disponible. */
+function codeFamille(){
+  if (DB.reglages.role === 'source') return DB.reglages.codePartage;
+  if (DB.reglages.role === 'suivi') return DB.reglages.codeSuivi;
+  return '';
+}
+
+let messagesChat = [];
+
+function libelleHeure(ts){
+  if (!ts) return '';
+  const d = new Date(ts);
+  const auj = new Date();
+  const meme = d.getFullYear() === auj.getFullYear() && d.getMonth() === auj.getMonth() && d.getDate() === auj.getDate();
+  const hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0');
+  return meme ? (hh + ':' + mm) : (String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + ' ' + hh + ':' + mm);
+}
+
+function demarrerEcouteChat(){
+  const code = codeFamille();
+  if (!window.SabosseSync || !window.SabosseSync.disponible || !code) return;
+  window.SabosseSync.suivreChat(code, (msgs, erreur) => {
+    if (erreur) { toast('Connexion au chat interrompue.'); return; }
+    if (!msgs) return;
+    messagesChat = msgs;
+    if (vueActive === 'chat') rendre();
+  });
+}
+
+function vueChat(){
+  if (!window.SabosseSync || !window.SabosseSync.disponible) {
+    return '<div class="vide"><div class="gros">💬</div><p><b>Chat indisponible.</b></p>' +
+      '<p>La configuration Firebase n\u2019est pas active sur cet appareil.</p></div>';
+  }
+  const code = codeFamille();
+  if (!code) {
+    return '<div class="vide"><div class="gros">💬</div><p><b>Chat indisponible.</b></p>' +
+      '<p>Configure d\u2019abord la synchronisation, dans Statistiques → Paramètres avancés.</p></div>';
+  }
+  const nom = (DB.reglages.nomChat || '').trim();
+  let html = '<div id="chat-fil">';
+  if (!messagesChat.length) {
+    html += '<p class="vide-chat">Aucun message pour l\u2019instant.</p>';
+  } else {
+    messagesChat.forEach(m => {
+      const moi = nom && m.auteur === nom;
+      html += '<div class="msg' + (moi ? ' moi' : '') + '">' +
+        (moi ? '' : '<b class="msg-auteur">' + ech(m.auteur || '?') + '</b>') +
+        '<div class="msg-bulle">' + ech(m.texte || '') + '</div>' +
+        '<span class="msg-heure">' + libelleHeure(m.quand) + '</span>' +
+      '</div>';
+    });
+  }
+  html += '</div>' +
+    '<div class="chat-bas">' +
+      '<button type="button" class="chat-nom" data-act="chat-nom">' +
+        (nom ? ech(nom) : 'Choisir mon nom') + ' ✎</button>' +
+      '<div class="chat-saisie">' +
+        '<input type="text" id="chat-texte" placeholder="Message…" maxlength="300">' +
+        '<button data-act="chat-envoyer">➤</button>' +
+      '</div>' +
+    '</div>';
+  return html;
+}
+
+async function envoyerMessageChat(){
+  const nom = (DB.reglages.nomChat || '').trim();
+  if (!nom) { ouvrirChatNom(); return; }
+  const champ = document.getElementById('chat-texte');
+  if (!champ) return;
+  const texte = champ.value.trim();
+  if (!texte) return;
+  const code = codeFamille();
+  if (!code) return;
+  champ.value = '';
+  champ.disabled = true;
+  const ok = await window.SabosseSync.envoyerMessage(code, {
+    texte: texte.slice(0, 300), auteur: nom, quand: Date.now()
+  });
+  champ.disabled = false;
+  champ.focus();
+  if (!ok) toast('Message non envoyé, réessaie.');
+}
+
+const chatnomVoile = document.getElementById('chatnom-voile');
+function ouvrirChatNom(){
+  document.getElementById('chatnom-champ').value = DB.reglages.nomChat || '';
+  chatnomVoile.classList.add('on');
+  setTimeout(() => document.getElementById('chatnom-champ').focus(), 60);
+}
+function fermerChatNom(){ chatnomVoile.classList.remove('on'); }
+document.getElementById('chatnom-annuler').addEventListener('click', fermerChatNom);
+chatnomVoile.addEventListener('click', e => { if (e.target === chatnomVoile) fermerChatNom(); });
+document.getElementById('chatnom-ok').addEventListener('click', () => {
+  const val = document.getElementById('chatnom-champ').value.trim();
+  if (!val) { toast('Choisis un nom.'); return; }
+  DB.reglages.nomChat = val;
+  sauver();
+  fermerChatNom();
+  rendre();
+});
+
 /* --- Statistiques ------------------------------------------ */
 function vueStats(){
-  if (!DB.revisions.length) {
+  const dl = donneesLecture();
+  if (!dl.revisions.length) {
     return '<div class="vide"><div class="gros">📊</div>' +
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
       '<p>Les statistiques arrivent avec le premier cours.</p></div>' +
       blocParametres();
   }
-  const n = s => DB.revisions.filter(r => r.statut === s).length;
+  const n = s => dl.revisions.filter(r => r.statut === s).length;
   const faites = n('faite'), reportees = n('reportee'),
         annulees = n('annulee'), venir = n('aFaire');
   const traitees = faites + annulees;
@@ -825,10 +1291,10 @@ function vueStats(){
   }
 
   const lignes = [];
-  DB.matieres.forEach(m => {
-    const ids = DB.cours.filter(c => c.code === m.code).map(c => c.id);
+  dl.matieres.forEach(m => {
+    const ids = dl.cours.filter(c => c.code === m.code).map(c => c.id);
     if (!ids.length) return;
-    const revs = DB.revisions.filter(r => ids.indexOf(r.cours) !== -1);
+    const revs = dl.revisions.filter(r => ids.indexOf(r.cours) !== -1);
     lignes.push({
       m: m,
       cours: ids.length,
@@ -850,32 +1316,49 @@ function vueStats(){
   });
   html += '</div>';
 
-  const historique = DB.revisions
+  const historique = dl.revisions
     .filter(r => r.statut === 'faite' || r.statut === 'annulee')
     .sort((a, b) => a.date < b.date ? 1 : -1);
   if (historique.length) {
-    html += '<details class="pliable" data-cle="historique"' + ouvert('historique') + ' style="margin-top:20px">' +
-      '<summary>Historique<span class="compte">' + historique.length + '</span></summary>' +
-      '<div class="contenu-pliable"><div class="carte" style="padding:5px 15px">';
+    const groupes = [];
     historique.forEach(r => {
       const c = trouverCours(r.cours);
       if (!c) return;
-      const m = matiereDe(c.code);
-      html += '<div class="hist-l">' +
-        '<i class="puce" style="background:' + m.c + '"></i>' +
-        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
-        '<span>' + ech(libelleRang(r.rang)) + ' · ' + libelleCourt(r.date) + ' · ' +
-        (r.statut === 'faite' ? 'Faite' : 'Annulée') + '</span></div>' +
-        '<button data-act="reactiver" data-id="' + r.id + '">Réactiver</button></div>';
+      let g = groupes.find(x => x.cours.id === c.id);
+      if (!g) { g = {cours: c, items: []}; groupes.push(g); }
+      g.items.push(r);
     });
-    html += '</div></div></details>';
+
+    html += '<details class="pliable" data-cle="historique"' + ouvert('historique') + ' style="margin-top:20px">' +
+      '<summary>Historique<span class="compte">' + historique.length + '</span></summary>' +
+      '<div class="contenu-pliable">';
+    groupes.forEach(g => {
+      const m = matiereDe(g.cours.code);
+      html += '<div class="hist-groupe"><div class="hist-entete">' +
+        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<span>' + ech(refCours(g.cours)) + ' · ' + ech(m.nom) + '</span>' +
+        (modeLecture() ? '' :
+          '<button class="hist-suppr-serie" data-act="suppr-serie-hist" data-id="' + g.cours.id + '">Supprimer la série</button>') +
+        '</div><div class="carte" style="padding:5px 15px">';
+      g.items.forEach(r => {
+        html += '<div class="hist-l">' +
+          '<div class="txt"><b>' + ech(libelleRang(r.rang)) + '</b>' +
+          '<span>' + libelleCourt(r.date) + ' · ' + (r.statut === 'faite' ? 'Faite' : 'Annulée') + '</span></div>' +
+          (modeLecture() ? '' :
+            '<button data-act="reactiver" data-id="' + r.id + '">Réactiver</button>' +
+            '<button class="sup" data-act="suppr-revision" data-id="' + r.id + '">✕</button>') +
+          '</div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div></details>';
   }
 
   html += blocParametres();
 
   html +=
     '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
-    'SABOSSE ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
+    'Cabosse ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
   return html;
 }
 
@@ -897,14 +1380,15 @@ function toast(txt){
    lundi de la semaine en cours — y compris les jours déjà passés
    cette semaine, puisqu'une révision en retard reste à cocher. */
 function planningImpression(){
+  const dl = donneesLecture();
   const debut = lundiDe(aujourdhui());
   const jours = [];
   for (let i = 0; i < 14; i++) jours.push(isoDe(plus(debut, i)));
 
-  const revs = DB.revisions.filter(r =>
+  const revs = dl.revisions.filter(r =>
     (r.statut === 'aFaire' || r.statut === 'reportee') &&
     jours.indexOf(r.date) !== -1 &&
-    (DB.reglages.afficherAncrage || !r.ancrage));
+    (dl.afficherAncrage || !r.ancrage));
 
   function colonne(liste){
     let html = '';
@@ -934,7 +1418,8 @@ function planningImpression(){
   }
 
   return '<div class="pr-page">' +
-    '<div class="pr-entete">SABOSSE · planning du ' + libelleCourt(jours[0]) +
+    '<div class="pr-entete">Cabosse' + (modeLecture() && dl.prenom ? ' · ' + ech(dl.prenom) : '') +
+    ' · planning du ' + libelleCourt(jours[0]) +
     ' au ' + libelleCourt(jours[13]) + '</div>' +
     '<div class="pr-grille">' +
       '<div class="pr-col">' + colonne(jours.slice(0, 7)) + '</div>' +
@@ -948,6 +1433,68 @@ function imprimerPlanning(){
 }
 
 document.getElementById('btn-imprimer').addEventListener('click', imprimerPlanning);
+
+/* --- Synchronisation entre appareils ------------------------- */
+
+/* Ce téléphone devient la « source » : il génère un code (une fois)
+   et pousse désormais chaque modification vers Firestore. */
+function activerPartage(){
+  if (!DB.reglages.codePartage) {
+    DB.reglages.codePartage = (window.crypto && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+  }
+  DB.reglages.role = 'source';
+  sauver();
+  demarrerEcouteChat();
+  rendre();
+  toast('Partage activé.');
+}
+
+/* Ce téléphone devient « suivi » : lecture seule, alimentée par le
+   flux temps réel de l'appareil source identifié par ce code. */
+function activerSuivi(code){
+  code = (code || '').trim();
+  if (!code) { toast('Colle le code reçu.'); return; }
+  DB.reglages.role = 'suivi';
+  DB.reglages.codeSuivi = code;
+  DB.reglages.affichage = 'suivi'; // on bascule directement dessus : c'est ce qu'on vient de demander à voir
+  sauver();
+  demarrerEcouteSuivi();
+  demarrerEcouteChat();
+  rendre();
+  toast('Connecté au suivi.');
+}
+
+function demarrerEcouteSuivi(){
+  if (!window.SabosseSync || !window.SabosseSync.disponible ||
+      DB.reglages.role !== 'suivi' || !DB.reglages.codeSuivi) return;
+  window.SabosseSync.suivre(DB.reglages.codeSuivi, (donnees, erreur) => {
+    if (erreur) { toast('Connexion au suivi interrompue.'); return; }
+    if (!donnees) return;
+    /* Écrit dans le miroir séparé DB.suivi, jamais dans les données
+       personnelles de cet appareil : un arrivage Firestore ne doit
+       jamais écraser ce que l'utilisateur encode pour lui-même. */
+    DB.suivi = {
+      cours: donnees.cours || [],
+      revisions: donnees.revisions || [],
+      matieres: (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice(),
+      reglages: donnees.reglages || {}
+    };
+    Store.ecrire(DB); // mise en cache locale pour la lecture hors-ligne, sans repousser vers Firestore
+    rendre();
+  });
+}
+
+function desactiverSync(){
+  if (window.SabosseSync) { window.SabosseSync.arreter(); window.SabosseSync.arreterChat(); }
+  DB.reglages.role = 'aucun';
+  DB.reglages.affichage = 'personnel';
+  messagesChat = [];
+  sauver();
+  rendre();
+  toast('Synchronisation désactivée.');
+}
 
 /* Vide le cache du service worker puis recharge : utile quand
    l'app affiche encore une version périmée sur l'écran d'accueil. */
@@ -991,7 +1538,8 @@ function importerSauvegarde(fichier){
       cours: o.cours,
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-      reglages: Object.assign({afficherAncrage: true, prenom: ''}, o.reglages || {})
+      suivi: o.suivi || null,
+      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', codeSuivi: '', affichage: 'personnel', nomChat: ''}, o.reglages || {})
     };
     sauver();
     rendre();
@@ -1089,6 +1637,31 @@ document.getElementById('voile-ok').addEventListener('click', () => {
   toast('Reportée au ' + libelleCourt(d) + '.');
 });
 
+/* Note de difficulté, rattachée au cours (pas à une révision précise) :
+   modifiable depuis n'importe quelle révision de ce cours, passée ou
+   à venir, puisqu'elle porte sur la matière elle-même. */
+let noteEnCours = null;
+const noteVoile = document.getElementById('note-voile');
+
+function ouvrirNote(coursId){
+  const c = trouverCours(coursId);
+  if (!c) return;
+  noteEnCours = coursId;
+  document.getElementById('note-info').textContent = refCours(c) + ' · ' + matiereDe(c.code).nom;
+  document.getElementById('note-texte').value = c.commentaire || '';
+  noteVoile.classList.add('on');
+}
+function fermerNote(){ noteVoile.classList.remove('on'); noteEnCours = null; }
+
+document.getElementById('note-annuler').addEventListener('click', fermerNote);
+noteVoile.addEventListener('click', e => { if (e.target === noteVoile) fermerNote(); });
+document.getElementById('note-ok').addEventListener('click', () => {
+  if (!noteEnCours) return;
+  const c = trouverCours(noteEnCours);
+  if (c) { c.commentaire = document.getElementById('note-texte').value.trim(); sauver(); rendre(); toast('Note enregistrée.'); }
+  fermerNote();
+});
+
 /* Confirmation, requise avant de marquer une révision faite ou
    annulée. Pour une annulation, deux issues possibles : cette seule
    révision, ou toute la série encore en attente pour ce cours. */
@@ -1101,11 +1674,15 @@ function demanderConfirmation(id, statut){
   const c = trouverCours(r.cours);
   actionEnCours = {id: id};
   const actions = document.getElementById('confirm-actions');
+  const zoneNote = document.getElementById('confirm-note-zone');
   if (statut === 'faite') {
     document.getElementById('confirm-titre').textContent = 'Marquer comme faite ?';
+    zoneNote.style.display = '';
+    document.getElementById('confirm-note').value = (c && c.commentaire) || '';
     actions.innerHTML = '<button class="bouton principal" data-confirm="faite">Confirmer</button>';
   } else {
     document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
+    zoneNote.style.display = 'none';
     actions.innerHTML =
       '<button class="bouton discret" data-confirm="annulee-une">Cette révision seule</button>' +
       '<button class="bouton principal" style="background:var(--annulee);box-shadow:none" ' +
@@ -1123,7 +1700,12 @@ confirmVoile.addEventListener('click', e => {
   const b = e.target.closest('button[data-confirm]');
   if (!b || !actionEnCours) return;
   const type = b.dataset.confirm;
-  if (type === 'faite')              marquer(actionEnCours.id, 'faite');
+  if (type === 'faite') {
+    const r = DB.revisions.find(x => x.id === actionEnCours.id);
+    const c = r && trouverCours(r.cours);
+    if (c) c.commentaire = document.getElementById('confirm-note').value.trim();
+    marquer(actionEnCours.id, 'faite');
+  }
   else if (type === 'annulee-une')   marquer(actionEnCours.id, 'annulee');
   else if (type === 'annulee-serie') annulerSerie(actionEnCours.id);
   fermerConfirmation();
@@ -1136,9 +1718,20 @@ vue.addEventListener('click', e => {
   if (act === 'faite')         demanderConfirmation(id, 'faite');
   else if (act === 'annuler')  demanderConfirmation(id, 'annulee');
   else if (act === 'reporter') ouvrirReport(id);
+  else if (act === 'note') { if (!modeLecture()) ouvrirNote(id); }
   else if (act === 'reactiver') {
     const r = DB.revisions.find(x => x.id === id);
     if (r) { r.statut = 'aFaire'; sauver(); rendre(); toast('Révision remise en attente.'); }
+  }
+  else if (act === 'suppr-revision') {
+    if (confirm('Supprimer définitivement cette révision ? Cette action est irréversible.')) supprimerRevision(id);
+  }
+  else if (act === 'suppr-serie-hist') {
+    const c = trouverCours(id);
+    if (c && confirm('Supprimer définitivement toute la série ' + refCours(c) +
+        ' (y compris les révisions encore à venir) ? Cette action est irréversible.')) {
+      supprimerCours(id); rendre(); toast('Série ' + refCours(c) + ' supprimée.');
+    }
   }
   else if (act === 'export') exporterSauvegarde();
   else if (act === 'importDeclencheur') {
@@ -1147,6 +1740,28 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'maj') {
     if (confirm('Forcer la mise à jour ? L\'application va se recharger.')) forcerMiseAJour();
+  }
+  else if (act === 'parametres-deverrouiller') ouvrirMotDePasse();
+  else if (act === 'chat-nom') ouvrirChatNom();
+  else if (act === 'chat-envoyer') envoyerMessageChat();
+  else if (act === 'sync-source') {
+    if (confirm('Faire de ce téléphone la source qui encode et partage les cours ?')) activerPartage();
+  }
+  else if (act === 'sync-suivre') {
+    const champ = document.getElementById('sync-code-entree');
+    activerSuivi(champ ? champ.value : '');
+  }
+  else if (act === 'sync-copier') {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(DB.reglages.codePartage)
+        .then(() => toast('Code copié.'))
+        .catch(() => toast('Copie impossible : sélectionne le texte manuellement.'));
+    } else {
+      toast('Copie indisponible : sélectionne le texte manuellement.');
+    }
+  }
+  else if (act === 'sync-desactiver') {
+    if (confirm('Désactiver la synchronisation sur cet appareil ?')) desactiverSync();
   }
   else if (act === 'matiere-editer') { matiereEnEdition = id; rendre(); }
   else if (act === 'matiere-annuler-edition') { matiereEnEdition = null; rendre(); }
@@ -1173,6 +1788,13 @@ vue.addEventListener('click', e => {
 vue.addEventListener('input', e => {
   if (e.target.id === 'f-date') majApercu();
   if (e.target.id === 'f-num') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+});
+
+vue.addEventListener('keydown', e => {
+  if (e.target && e.target.id === 'chat-texte' && e.key === 'Enter') {
+    e.preventDefault();
+    envoyerMessageChat();
+  }
 });
 
 vue.addEventListener('change', e => {
@@ -1215,7 +1837,39 @@ document.getElementById('barre').addEventListener('click', e => {
   rendre();
 });
 
+document.getElementById('bascule-profil').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  DB.reglages.affichage = (b.dataset.act === 'profil-suivi') ? 'suivi' : 'personnel';
+  sauver();
+  rendre();
+});
+
 rendre();
+
+/* Le module de synchronisation se charge après ce script (il est
+   différé) : on attend son signal avant de démarrer l'écoute ou de
+   pousser l'état actuel, plutôt que de dépendre de l'ordre de chargement. */
+window.addEventListener('sabosse-sync-pret', () => {
+  if (DB.reglages.role === 'suivi') demarrerEcouteSuivi();
+  else if (DB.reglages.role === 'source' && DB.reglages.codePartage) {
+    window.SabosseSync.envoyer(DB.reglages.codePartage, {
+      cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
+      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
+    });
+  }
+  demarrerEcouteChat();
+  rendre(); // met à jour le bloc Synchronisation si Paramètres avancés est ouvert
+});
+
+/* Retour de connexion : si la dernière action a poussé dans le vide
+   (téléphone hors réseau), on rattrape avec l'état complet actuel
+   plutôt que d'attendre la prochaine action de l'utilisateur. */
+window.addEventListener('online', () => {
+  if (DB.reglages.role === 'source') sauver();
+  else if (DB.reglages.role === 'suivi') demarrerEcouteSuivi();
+  demarrerEcouteChat();
+});
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
