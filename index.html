@@ -113,6 +113,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .jour.retard > h2{color:var(--retard)}
 .rev{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:13px 15px;
   margin-bottom:8px;box-shadow:var(--ombre)}
+.rev.rev-jour{background:rgba(179,58,30,.3);border-color:rgba(179,58,30,.35)}
 .rev .haut{display:flex;align-items:center;gap:10px}
 .rev .code{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.01em}
 .rev .matiere{font-size:12.5px;color:var(--texte-2);flex:1;min-width:0;
@@ -122,9 +123,9 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   background:var(--surface-2);border-radius:99px;padding:3px 8px;flex:0 0 auto}
 .rev .rang.ancrage{color:var(--accent);background:var(--accent-doux)}
 .rev .note{font-size:11.5px;color:var(--reportee);font-weight:600;margin-top:6px}
-.rev .cmds{display:flex;gap:7px;margin-top:11px}
-.rev .cmds button{flex:1;padding:9px 6px;border-radius:99px;background:var(--surface-2);
-  font-size:12.5px;font-weight:600;color:var(--texte-2)}
+.rev .cmds{display:flex;gap:6px;margin-top:11px}
+.rev .cmds button{flex:1;padding:9px 4px;border-radius:99px;background:var(--surface-2);
+  font-size:11.5px;font-weight:600;color:var(--texte-2);white-space:nowrap}
 .rev .cmds button.ok{background:var(--faite);color:#fff}
 .rev .cmds button.verrou{opacity:.4;cursor:not-allowed}
 
@@ -134,6 +135,10 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .repos-ic{font-size:26px;line-height:1}
 .repos-txt{font-size:13.5px;font-weight:700;color:var(--texte-2)}
 .repos-detail{font-size:11.5px;color:var(--texte-3);font-weight:600;text-align:center;max-width:220px}
+.repos-barre{width:100%;max-width:210px;height:8px;border-radius:99px;background:var(--surface-2);
+  overflow:hidden;margin-top:9px}
+.repos-barre-remplie{height:100%;border-radius:99px;transition:width .3s ease,background-color .3s ease}
+.repos-pct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--texte-2);margin-top:4px}
 .rev.repos.succes .repos-txt{color:var(--faite)}
 .rev.repos.succes .repos-ic{animation:repos-pop .5s ease}
 @keyframes repos-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
@@ -304,7 +309,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
   <nav id="barre">
-    <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb">Agenda</span></button>
+    <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb" id="lb-agenda">Agenda</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
@@ -476,7 +481,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v13 · 4 septembre 2026';
+const VERSION = 'v14 · 4 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -777,17 +782,28 @@ function rendre(){
    aujourd'hui, verte avec un pouce levé si tout est fait. Reflète
    le profil actuellement affiché (personnel ou suivi), comme le
    reste de l'interface. */
+/* Icône de l'onglet Agenda : rouge s'il reste des révisions prévues
+   aujourd'hui, verte avec un pouce levé si tout est fait. Le libellé
+   sous l'icône reprend le même calcul : « X à faire » ou « Tout est
+   ok ». Reflète le profil actuellement affiché (personnel ou suivi),
+   comme le reste de l'interface. */
 function majIconeAgenda(){
   const el = document.getElementById('ic-agenda');
+  const lb = document.getElementById('lb-agenda');
   if (!el) return;
   const dl = donneesLecture();
   el.classList.remove('ic-rouge', 'ic-verte');
-  if (!dl.cours.length) { el.textContent = '📅'; return; }
+  if (!dl.cours.length) { el.textContent = '📅'; if (lb) lb.textContent = 'Agenda'; return; }
   const ajISO = isoDe(aujourdhui());
   const duJour = dl.revisions.filter(r => r.date === ajISO &&
     (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
-  if (duJour.length) { el.textContent = '📅'; el.classList.add('ic-rouge'); }
-  else { el.textContent = '👍'; el.classList.add('ic-verte'); }
+  if (duJour.length) {
+    el.textContent = '📅'; el.classList.add('ic-rouge');
+    if (lb) lb.textContent = duJour.length + ' à faire';
+  } else {
+    el.textContent = '👍'; el.classList.add('ic-verte');
+    if (lb) lb.textContent = 'Tout est ok';
+  }
 }
 
 /* Pastille clignotante sur l'onglet Chat : s'éteint dès qu'on
@@ -821,18 +837,18 @@ function libelleRang(rang){
 
 /* Une carte de révision, réutilisée pour les retards, la semaine
    en cours, la semaine prochaine et le repli « Semaines suivantes ». */
-function carteRevision(r){
+function carteRevision(r, aujourdhuiCarte){
   const c = trouverCours(r.cours);
   if (!c) return '';
   const m = matiereDe(c.code);
   const validable = estValidable(r.date);
   const boutonFaite = validable
-    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">Faite</button>'
-    : '<button class="verrou" disabled>Faite</button>';
+    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">J\u2019ai révisé 😎</button>'
+    : '<button class="verrou" disabled>J\u2019ai révisé 😎</button>';
   const cmds = modeLecture() ? '' :
     '<div class="cmds">' + boutonFaite +
-      '<button data-act="reporter" data-id="' + r.id + '">Reporter</button>' +
-      '<button data-act="annuler" data-id="' + r.id + '">Annuler</button>' +
+      '<button data-act="reporter" data-id="' + r.id + '">Reporter 😳</button>' +
+      '<button data-act="annuler" data-id="' + r.id + '">Annuler 🫣</button>' +
     '</div>';
   const commentaire = (c.commentaire || '').trim();
   const texteNote = ech(commentaire.length > 90 ? commentaire.slice(0, 90) + '…' : commentaire);
@@ -840,7 +856,7 @@ function carteRevision(r){
   const zoneNote = commentaire
     ? '<button type="button" class="note-apercu"' + attrsNote + '>📝 ' + texteNote + '</button>'
     : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
-  return '<article class="rev">' +
+  return '<article class="rev' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
     '<div class="haut">' +
       '<i class="puce" style="background:' + m.c + '"></i>' +
       '<b class="code">' + ech(refCours(c)) + '</b>' +
@@ -859,6 +875,17 @@ function carteRevision(r){
    samedi), pas une révision. Succès si plus aucune n'est en attente.
    N'apparaît que pour le dimanche de la semaine en cours : l'afficher
    aussi pour la semaine prochaine doublonnerait le même message. */
+
+/* Interpole du rouge (0 %) au vert foncé (100 %) pour la barre
+   d'avancement — mêmes teintes que les autres signaux de l'app. */
+function couleurProgression(pct){
+  const t = Math.max(0, Math.min(1, pct / 100));
+  const depart = [209, 67, 67];   // rouge (--annulee)
+  const arrivee = [11, 107, 63];  // vert foncé
+  const c = depart.map((v, i) => Math.round(v + (arrivee[i] - v) * t));
+  return 'rgb(' + c.join(',') + ')';
+}
+
 function carteRepos(dimancheISO){
   const dl = donneesLecture();
   const lundi = isoDe(plus(dDe(dimancheISO), -6));
@@ -867,17 +894,26 @@ function carteRepos(dimancheISO){
   const total = semaine.length;
   const reste = semaine.filter(r => r.statut === 'aFaire' || r.statut === 'reportee').length;
   const succes = reste === 0;
+  const pct = total ? Math.round((total - reste) / total * 100) : 100;
+
   let detail = '';
   if (!succes) {
     const prenom = (dl.prenom || '').trim();
-    detail = '<span class="repos-detail">il reste ' + reste + ' révision' + (reste > 1 ? 's' : '') +
-      ' sur ' + total + (prenom ? ', courage ' + ech(prenom) : '') + '.</span>';
+    detail = '<div class="repos-detail">Il reste ' + reste + ' cours sur ' + total + '</div>' +
+      (prenom ? '<div class="repos-detail">Courage ' + ech(prenom) + ' 💪</div>' : '');
   }
+
+  const barre = total
+    ? '<div class="repos-barre"><div class="repos-barre-remplie" style="width:' + pct +
+      '%;background:' + couleurProgression(pct) + '"></div></div>' +
+      '<span class="repos-pct">' + pct + '&nbsp;%</span>'
+    : '';
+
   return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
     '<div class="repos-corps">' +
       '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
       '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
-      detail +
+      detail + barre +
     '</div></article>';
 }
 
@@ -933,10 +969,11 @@ function vueAgenda(){
   grProches.sort((a, b) => a.date < b.date ? -1 : 1);
 
   grProches.forEach(g => {
-    const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
+    const estAujourdhui = g.date === ajISO;
+    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
     html += '<section class="jour"><h2>' + titre +
       (g.items.length ? '<span class="compte">' + g.items.length + '</span>' : '') + '</h2>';
-    g.items.forEach(r => html += carteRevision(r));
+    g.items.forEach(r => html += carteRevision(r, estAujourdhui));
     if (g.date === dimActuel) html += carteRepos(g.date);
     html += '</section>';
   });
@@ -1394,11 +1431,11 @@ function vueStats(){
     html += '<p class="etiquette">Évolution hebdomadaire</p>' +
       '<div class="carte graf"><p class="graf-titre">Nouveaux cours</p>' +
         graphiqueBarres(labels, s7.nouveaux, {couleur: 'var(--accent)'}) + '</div>' +
-      '<div class="carte graf"><p class="graf-titre">Révisions faites</p>' +
+      '<div class="carte graf"><p class="graf-titre">Cours révisés</p>' +
         graphiqueBarres(labels, s7.revises, {couleur: 'var(--faite)'}) + '</div>' +
-      '<div class="carte graf"><p class="graf-titre">Taux de révision sur le planifié</p>' +
+      '<div class="carte graf"><p class="graf-titre">Taux de cours révisés sur le planifié</p>' +
         graphiqueBarres(labels, s7.pourcentages, {couleur: 'var(--faite)', suffixe: '%', max: 100}) + '</div>' +
-      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Révisions annulées</p>' +
+      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Cours annulés</p>' +
         graphiqueBarres(labels, s7.annules, {couleur: 'var(--annulee)'}) + '</div>';
   }
 
