@@ -31,6 +31,7 @@
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.emo{font-size:1.5em}
 html,body{margin:0;padding:0;height:100%}
 body{background:var(--fond);color-scheme:light;color:var(--texte);font-family:var(--corps);
   font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
@@ -63,7 +64,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #btn-imprimer{flex:0 0 auto;width:44px;height:44px;border-radius:var(--r-s);
-  background:var(--surface-2);font-size:19px;display:flex;align-items:center;justify-content:center}
+  background:var(--surface-2);font-size:28.5px;display:flex;align-items:center;justify-content:center}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
   border-bottom:1px solid var(--filet)}
@@ -75,14 +76,14 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
 #barre button{position:relative;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:20px;line-height:1;filter:grayscale(1) opacity(.55);
-  display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%}
+#barre button .ic{font-size:30px;line-height:1;filter:grayscale(1) opacity(.55);
+  display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%}
 #barre button .lb{font-size:10px;font-weight:600}
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
 #barre button .ic.ic-rouge{filter:none;background:#FBDCDA}
 #barre button .ic.ic-verte{filter:none;background:#D6F0E1}
-.badge-non-lu{position:absolute;top:6px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;
+.badge-non-lu{position:absolute;top:4px;left:calc(50% + 12px);width:9px;height:9px;border-radius:50%;
   background:var(--annulee);display:none}
 .badge-non-lu.on{display:block;animation:clignoter 1.1s ease-in-out infinite}
 @keyframes clignoter{0%,100%{opacity:1}50%{opacity:.2}}
@@ -100,7 +101,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .bouton.discret{background:transparent;border:1.5px solid var(--filet);color:var(--texte-2);
   font-weight:600;font-size:14.5px;padding:13px}
 .vide{text-align:center;padding:52px 20px;color:var(--texte-2)}
-.vide .gros{font-size:38px;margin-bottom:12px}
+.vide .gros{font-size:57px;margin-bottom:12px}
 .vide p{margin:0 0 4px}
 .suivi-banniere{background:var(--accent-doux);color:var(--accent);font-size:12px;font-weight:700;
   text-align:center;padding:9px 12px;border-radius:var(--r-m);margin-bottom:14px}
@@ -132,7 +133,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 /* --- carte de repos du dimanche --- */
 .rev.repos{display:flex;align-items:center;justify-content:center;padding:16px 15px}
 .repos-corps{display:flex;flex-direction:column;align-items:center;gap:6px}
-.repos-ic{font-size:26px;line-height:1}
+.repos-ic{font-size:39px;line-height:1}
 .repos-txt{font-size:13.5px;font-weight:700;color:var(--texte-2)}
 .repos-detail{font-size:11.5px;color:var(--texte-3);font-weight:600;text-align:center;max-width:220px}
 .repos-barre{width:100%;max-width:210px;height:8px;border-radius:99px;background:var(--surface-2);
@@ -162,7 +163,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
 .hist-l button{flex:0 0 auto;padding:7px 12px;border-radius:99px;background:var(--surface-2);
   font-size:11.5px;font-weight:600;color:var(--texte-2)}
-.hist-l button.sup{color:var(--annulee);padding:7px 10px}
+.hist-l button.sup{color:var(--annulee);padding:7px 10px;font-size:17.25px}
 .hist-groupe{margin-bottom:14px}
 .hist-groupe:last-child{margin-bottom:0}
 .hist-entete{display:flex;align-items:center;gap:8px;margin-bottom:6px}
@@ -172,7 +173,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .sync-code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:var(--r-s);
   padding:10px 12px;word-break:break-all}
 .parametres-verrou{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:20px}
-.parametres-verrou .ic{font-size:20px;flex:0 0 auto}
+.parametres-verrou .ic{font-size:30px;flex:0 0 auto}
 .parametres-verrou .txt{flex:1;min-width:0}
 .parametres-verrou .txt b{display:block;font-size:13px;font-weight:700}
 .parametres-verrou .txt span{font-size:11.5px;color:var(--texte-2)}
@@ -193,7 +194,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .chat-saisie{display:flex;gap:8px;align-items:flex-end}
 .chat-saisie input{flex:1}
 .chat-saisie button{flex:0 0 auto;width:44px;height:44px;border-radius:99px;background:var(--accent);
-  color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center}
+  color:#fff;font-size:25.5px;display:flex;align-items:center;justify-content:center}
 .notif-banniere{display:block;width:100%;background:var(--accent-doux);color:var(--accent);
   font-size:12.5px;font-weight:700;text-align:center;padding:9px 12px;border-radius:var(--r-m);margin-bottom:12px}
 
@@ -214,7 +215,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .ligne .txt b{display:block;font-family:var(--mono);font-size:14px;font-weight:700}
 .ligne .txt span{display:block;font-size:12px;color:var(--texte-2)}
 .ligne .sup{flex:0 0 auto;width:34px;height:34px;border-radius:var(--r-s);
-  background:var(--surface-2);color:var(--texte-3);font-size:15px}
+  background:var(--surface-2);color:var(--texte-3);font-size:22.5px}
 
 /* --- gestion des matières --- */
 .mat-l{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--filet)}
@@ -222,7 +223,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .mat-nom{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mat-nom b{font-family:var(--mono)}
 .mini{flex:0 0 auto;width:30px;height:30px;border-radius:var(--r-s);background:var(--surface-2);
-  color:var(--texte-2);font-size:14px}
+  color:var(--texte-2);font-size:21px}
 .mini.sup{color:var(--annulee)}
 .mini.ok{color:#fff;background:var(--faite)}
 .mat-edit input[type="text"]{flex:1;padding:8px 10px;font-size:13px}
@@ -482,7 +483,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v15 · 4 septembre 2026';
+const VERSION = 'v16 · 4 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -844,18 +845,18 @@ function carteRevision(r, aujourdhuiCarte){
   const m = matiereDe(c.code);
   const validable = estValidable(r.date);
   const boutonFaite = validable
-    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">J\u2019ai révisé 😎</button>'
-    : '<button class="verrou" disabled>J\u2019ai révisé 😎</button>';
+    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">J\u2019ai révisé <span class="emo">😎</span></button>'
+    : '<button class="verrou" disabled>J\u2019ai révisé <span class="emo">😎</span></button>';
   const cmds = modeLecture() ? '' :
     '<div class="cmds">' + boutonFaite +
-      '<button data-act="reporter" data-id="' + r.id + '">Reporter 😳</button>' +
-      '<button data-act="annuler" data-id="' + r.id + '">Annuler 🫣</button>' +
+      '<button data-act="reporter" data-id="' + r.id + '">Reporter <span class="emo">😳</span></button>' +
+      '<button data-act="annuler" data-id="' + r.id + '">Annuler <span class="emo">🫣</span></button>' +
     '</div>';
   const commentaire = (c.commentaire || '').trim();
   const texteNote = ech(commentaire.length > 90 ? commentaire.slice(0, 90) + '…' : commentaire);
   const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + c.id + '"');
   const zoneNote = commentaire
-    ? '<button type="button" class="note-apercu"' + attrsNote + '>📝 ' + texteNote + '</button>'
+    ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">📝</span> ' + texteNote + '</button>'
     : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
   return '<article class="rev' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
     '<div class="haut">' +
@@ -901,7 +902,7 @@ function carteRepos(dimancheISO){
   if (!succes) {
     const prenom = (dl.prenom || '').trim();
     detail = '<div class="repos-detail">Il reste ' + reste + ' cours sur ' + total + '</div>' +
-      (prenom ? '<div class="repos-detail">Courage ' + ech(prenom) + ' 💪</div>' : '');
+      (prenom ? '<div class="repos-detail">Courage ' + ech(prenom) + ' <span class="emo">💪</span></div>' : '');
   }
 
   const barre = total
@@ -932,7 +933,7 @@ function grouperParDate(liste){
 function vueAgenda(){
   const dl = donneesLecture();
   const banniere = modeLecture()
-    ? '<div class="suivi-banniere">👀 Lecture seule · suivi d\u2019un autre appareil</div>' : '';
+    ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
   if (!dl.cours.length) {
     return banniere + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
@@ -1343,7 +1344,7 @@ function vueChat(){
   const nom = (DB.reglages.nomChat || '').trim();
   const banniereNotif = (etatNotifications() === 'default')
     ? '<button type="button" class="notif-banniere" data-act="notif-activer">' +
-        '🔔 Activer le son des notifications</button>'
+        '<span class="emo">🔔</span> Activer le son des notifications</button>'
     : '';
   let html = banniereNotif + '<div id="chat-fil">';
   if (!messagesChat.length) {
@@ -1361,7 +1362,7 @@ function vueChat(){
   html += '</div>' +
     '<div class="chat-bas">' +
       '<button type="button" class="chat-nom" data-act="chat-nom">' +
-        (nom ? ech(nom) : 'Choisir mon nom') + ' ✎</button>' +
+        (nom ? ech(nom) : 'Choisir mon nom') + ' <span class="emo">✎</span></button>' +
       '<div class="chat-saisie">' +
         '<input type="text" id="chat-texte" placeholder="Message…" maxlength="300">' +
         '<button data-act="chat-envoyer">➤</button>' +
@@ -1424,10 +1425,10 @@ function vueStats(){
 
   let html =
     '<div class="tuiles">' +
-      '<div class="tuile faite"><b>' + faites + '</b><span>Cours révisés 😎</span></div>' +
-      '<div class="tuile reportee"><b>' + reportees + '</b><span>Cours reportés 😳</span></div>' +
-      '<div class="tuile annulee"><b>' + annulees + '</b><span>Cours annulés 🫣</span></div>' +
-      '<div class="tuile venir"><b>' + venir + '</b><span>À venir 🗓️</span></div>' +
+      '<div class="tuile faite"><b>' + faites + '</b><span>Cours révisés <span class="emo">😎</span></span></div>' +
+      '<div class="tuile reportee"><b>' + reportees + '</b><span>Cours reportés <span class="emo">😳</span></span></div>' +
+      '<div class="tuile annulee"><b>' + annulees + '</b><span>Cours annulés <span class="emo">🫣</span></span></div>' +
+      '<div class="tuile venir"><b>' + venir + '</b><span>À venir <span class="emo">🗓️</span></span></div>' +
     '</div>' +
     '<p class="etiquette">Réalisation</p>' +
     '<div class="carte" style="margin-bottom:20px">' +
@@ -1435,7 +1436,7 @@ function vueStats(){
       '<b style="font-size:30px;font-weight:800;letter-spacing:-.03em;' +
       'font-variant-numeric:tabular-nums;color:var(--faite)">' + taux + '&nbsp;%</b>' +
       '<span style="font-size:13px;color:var(--texte-2)">des révisions prévues ont été réalisées ' +
-      'le jour prévu ' + smileyTaux(taux) + '</span></div></div>';
+      'le jour prévu <span class="emo">' + smileyTaux(taux) + '</span></span></div></div>';
 
   const s7 = calculerSemaines();
   if (s7.semaines.length) {
