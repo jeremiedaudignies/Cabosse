@@ -2,7 +2,7 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v8';
+const CACHE = 'sabosse-v11';
 const FICHIERS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
@@ -29,6 +29,18 @@ self.addEventListener('fetch', e => {
         return rep;
       }).catch(() => cache);
       return cache || reseau;
+    })
+  );
+});
+
+/* Un tap sur la notification ramène à l'app plutôt que de l'ouvrir
+   en double si elle est déjà présente dans un onglet/fenêtre. */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(liste => {
+      for (const c of liste) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });

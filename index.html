@@ -59,8 +59,8 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--accent);font-weight:600}
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#btn-imprimer{flex:0 0 auto;width:36px;height:36px;border-radius:var(--r-s);
-  background:var(--surface-2);font-size:17px;display:flex;align-items:center;justify-content:center}
+#btn-imprimer{flex:0 0 auto;width:44px;height:44px;border-radius:var(--r-s);
+  background:var(--surface-2);font-size:19px;display:flex;align-items:center;justify-content:center}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
   border-bottom:1px solid var(--filet)}
@@ -179,6 +179,8 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .chat-saisie input{flex:1}
 .chat-saisie button{flex:0 0 auto;width:44px;height:44px;border-radius:99px;background:var(--accent);
   color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center}
+.notif-banniere{display:block;width:100%;background:var(--accent-doux);color:var(--accent);
+  font-size:12.5px;font-weight:700;text-align:center;padding:9px 12px;border-radius:var(--r-m);margin-bottom:12px}
 
 /* --- aperçu de l'échéancier --- */
 .apercu{margin-top:12px}
@@ -253,23 +255,29 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 @media print{
   body *{visibility:hidden}
   #impression, #impression *{visibility:visible}
-  #impression{display:block;position:absolute;left:0;top:0;width:100%}
+  #impression{display:block;position:absolute;left:0;top:0;width:100%;background:#fff}
+  body{background:#fff}
   @page{size:A4;margin:11mm}
 }
-.pr-page{font-family:var(--corps);color:#000;font-size:8.3px;line-height:1.25}
+.pr-page{font-family:var(--corps);color:#000;background:#fff;font-size:8px;line-height:1.3;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr-entete{font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid #000}
-.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
-.pr-jour{margin-bottom:7px;break-inside:avoid}
-.pr-jour h3{margin:0 0 2px;font-size:9px;font-weight:800;text-transform:uppercase;
-  border-bottom:1px solid #000;padding-bottom:1px;letter-spacing:.02em}
-.pr-vide{margin:0 0 3px;color:#888;font-size:8px}
-.pr-item{margin-bottom:3px}
-.pr-nom{font-weight:700}
-.pr-mat,.pr-rang{font-weight:400;color:#444}
-.pr-cases{display:flex;gap:9px;margin:1px 0 3px;flex-wrap:wrap}
-.pr-c{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
-.pr-c i,.pr-nouveau i{display:inline-block;width:7px;height:7px;border:1px solid #000;flex:0 0 auto}
-.pr-nouveau{display:flex;align-items:center;gap:4px;margin-top:2px;color:#333;white-space:nowrap}
+.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+.pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}
+.pr-table th,.pr-table td{border:1px solid #000;padding:2.5px 4px;vertical-align:middle}
+.pr-table thead th{background:#eee;font-size:7px;text-transform:uppercase;letter-spacing:.02em;
+  font-weight:800;text-align:center}
+.pr-table th:nth-child(1){width:15%}
+.pr-table th:nth-child(2){width:42%}
+.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:12%}
+.pr-table th:nth-child(5){width:19%}
+.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#f7f7f7}
+.pr-cours-cel{font-size:7.8px}
+.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#444;font-size:7px}
+.pr-vide-cel{color:#999;text-align:center;font-size:8px}
+.pr-case-cel,.pr-report-cel{text-align:center}
+.pr-case{display:inline-block;width:8px;height:8px;border:1px solid #000}
+.pr-nouveau-cel{color:#555;font-style:italic;font-size:7.3px}
 </style>
 </head>
 <body>
@@ -457,7 +465,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v9 · 3 septembre 2026';
+const VERSION = 'v11 · 4 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -841,6 +849,7 @@ function grouperParDate(liste){
     if (!e) { e = {date: r.date, items: []}; g.push(e); }
     e.items.push(r);
   });
+  g.sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0));
   return g;
 }
 
@@ -1142,6 +1151,55 @@ function graphiqueBarres(labels, valeurs, options){
 
 /* --- Chat ---------------------------------------------------- */
 
+/* Notifications système : ne fonctionnent que pendant que l'app est
+   ouverte (ou récemment ouverte). Sans serveur, impossible de
+   réveiller le téléphone quand Cabosse est complètement fermée —
+   ni pour le chat, ni pour le rappel du jour. C'est un choix
+   assumé pour rester sur l'offre gratuite de Firebase. */
+function etatNotifications(){
+  if (!('Notification' in window)) return 'indisponible';
+  return Notification.permission; // 'default' | 'granted' | 'denied'
+}
+
+async function demanderNotifications(){
+  if (!('Notification' in window)) { toast('Notifications non disponibles sur cet appareil.'); return; }
+  const res = await Notification.requestPermission();
+  if (res === 'granted') { toast('Notifications activées.'); verifierRappelJournalier(); rendre(); }
+  else if (res === 'denied') { toast('Refusé — modifiable dans Réglages iPhone → Cabosse.'); rendre(); }
+}
+
+function notifier(titre, corps, options){
+  if (etatNotifications() !== 'granted') return;
+  const opts = Object.assign({body: corps, icon: 'icone-180.png'}, options || {});
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(reg => reg.showNotification(titre, opts));
+    } else {
+      new Notification(titre, opts);
+    }
+  } catch (e) { /* silencieux : une notification manquée n'est pas bloquante */ }
+}
+
+/* Rappel du jour, au mieux : une seule fois par date calendaire, à
+   l'ouverture de l'app — pas une alarme programmée, juste un coup
+   d'œil si jamais on ouvre Cabosse ce jour-là. */
+function verifierRappelJournalier(){
+  if (etatNotifications() !== 'granted') return;
+  try {
+    const cle = 'cabosse-rappel-' + isoDe(aujourdhui());
+    if (localStorage.getItem(cle)) return;
+    localStorage.setItem(cle, '1');
+    const dl = donneesLecture();
+    const ajISO = isoDe(aujourdhui());
+    const duJour = dl.revisions.filter(r => r.date === ajISO &&
+      (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
+    if (duJour.length) {
+      notifier('Cabosse', duJour.length + ' révision' + (duJour.length > 1 ? 's' : '') +
+        ' prévue' + (duJour.length > 1 ? 's' : '') + ' aujourd\u2019hui.', {tag: 'rappel-jour'});
+    }
+  } catch (e) { /* localStorage indisponible : on passe simplement */ }
+}
+
 /* Le chat utilise le même code que la synchronisation : un seul
    canal par famille, pas de code séparé à gérer. Sans rôle de
    synchronisation configuré, il n'y a pas de canal disponible. */
@@ -1168,7 +1226,15 @@ function demarrerEcouteChat(){
   window.SabosseSync.suivreChat(code, (msgs, erreur) => {
     if (erreur) { toast('Connexion au chat interrompue.'); return; }
     if (!msgs) return;
+    /* Ne notifie que les messages réellement nouveaux depuis le
+       dernier instantané — jamais tout l'historique à la première
+       connexion — et jamais mes propres messages. */
+    const monNom = (DB.reglages.nomChat || '').trim();
+    const nouveaux = messagesChat.length ? msgs.filter(m => !messagesChat.some(x => x.id === m.id)) : [];
     messagesChat = msgs;
+    nouveaux.forEach(m => {
+      if (m.auteur !== monNom) notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id});
+    });
     if (vueActive === 'chat') rendre();
   });
 }
@@ -1184,7 +1250,11 @@ function vueChat(){
       '<p>Configure d\u2019abord la synchronisation, dans Statistiques → Paramètres avancés.</p></div>';
   }
   const nom = (DB.reglages.nomChat || '').trim();
-  let html = '<div id="chat-fil">';
+  const banniereNotif = (etatNotifications() === 'default')
+    ? '<button type="button" class="notif-banniere" data-act="notif-activer">' +
+        '🔔 Activer le son des notifications</button>'
+    : '';
+  let html = banniereNotif + '<div id="chat-fil">';
   if (!messagesChat.length) {
     html += '<p class="vide-chat">Aucun message pour l\u2019instant.</p>';
   } else {
@@ -1391,30 +1461,37 @@ function planningImpression(){
     (dl.afficherAncrage || !r.ancrage));
 
   function colonne(liste){
-    let html = '';
+    let lignes = '';
     liste.forEach(iso => {
       const d = dDe(iso);
       const nomJour = JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
-      html += '<div class="pr-jour"><h3>' + nomJour + ' ' + libelleCourt(iso) + '</h3>';
       const items = revs.filter(r => r.date === iso);
-      if (!items.length) html += '<p class="pr-vide">—</p>';
-      items.forEach(r => {
-        const c = trouverCours(r.cours);
-        if (!c) return;
-        const m = matiereDe(c.code);
-        html += '<div class="pr-item"><div class="pr-nom">' + ech(refCours(c)) +
-          ' <span class="pr-mat">' + ech(m.nom) + '</span> ' +
-          '<span class="pr-rang">' + ech(libelleRang(r.rang)) + '</span></div>' +
-          '<div class="pr-cases">' +
-            '<span class="pr-c"><i></i>Fait</span>' +
-            '<span class="pr-c"><i></i>Annulé</span>' +
-            '<span class="pr-c"><i></i>Reporté au&nbsp;______</span>' +
-          '</div></div>';
-      });
-      html += '<div class="pr-nouveau"><i></i>Nouveau à encoder&nbsp;: ______________________</div>';
-      html += '</div>';
+      const nRangees = Math.max(items.length, 1) + 1; // + la ligne « Nouveau à encoder »
+      if (!items.length) {
+        lignes += '<tr><td class="pr-jour-cel" rowspan="' + nRangees + '">' + nomJour + '<br>' +
+          libelleCourt(iso) + '</td><td class="pr-vide-cel" colspan="4">—</td></tr>';
+      } else {
+        items.forEach((r, i) => {
+          const c = trouverCours(r.cours);
+          if (!c) return;
+          const m = matiereDe(c.code);
+          lignes += '<tr>' +
+            (i === 0 ? '<td class="pr-jour-cel" rowspan="' + nRangees + '">' + nomJour + '<br>' +
+              libelleCourt(iso) + '</td>' : '') +
+            '<td class="pr-cours-cel">' + ech(refCours(c)) +
+              '<span class="pr-mat">' + ech(m.nom) + '</span>' +
+              '<span class="pr-rang">' + ech(libelleRang(r.rang)) + '</span></td>' +
+            '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
+            '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
+            '<td class="pr-report-cel"><i class="pr-case"></i></td>' +
+          '</tr>';
+        });
+      }
+      lignes += '<tr><td class="pr-nouveau-cel" colspan="4">Nouveau à encoder&nbsp;: ________________</td></tr>';
     });
-    return html;
+    return '<table class="pr-table"><thead><tr>' +
+      '<th>Jour</th><th>Cours</th><th>Fait</th><th>Annulé</th><th>Reporté au</th>' +
+      '</tr></thead><tbody>' + lignes + '</tbody></table>';
   }
 
   return '<div class="pr-page">' +
@@ -1744,6 +1821,7 @@ vue.addEventListener('click', e => {
   else if (act === 'parametres-deverrouiller') ouvrirMotDePasse();
   else if (act === 'chat-nom') ouvrirChatNom();
   else if (act === 'chat-envoyer') envoyerMessageChat();
+  else if (act === 'notif-activer') demanderNotifications();
   else if (act === 'sync-source') {
     if (confirm('Faire de ce téléphone la source qui encode et partage les cours ?')) activerPartage();
   }
@@ -1846,6 +1924,7 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
 });
 
 rendre();
+verifierRappelJournalier();
 
 /* Le module de synchronisation se charge après ce script (il est
    différé) : on attend son signal avant de démarrer l'écoute ou de
