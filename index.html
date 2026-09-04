@@ -15,8 +15,9 @@
 /* ============================================================
    Cabosse — jetons de conception
    Mêmes règles que RHABDO : fond clair, cartes blanches, une
-   seule couleur de signal. Accent indigo pour distinguer les
-   deux applications sur l'écran d'accueil.
+   seule couleur de signal. Le logo et la barre de statut sont en
+   terracotta (couleur cabosse) ; --accent reste indigo pour les
+   boutons et liens, hérité de la base commune avec RHABDO.
    ============================================================ */
 :root{
   --fond:#F4F5F7; --surface:#FFFFFF; --surface-2:#EDEFF3; --filet:#E1E5EA;
@@ -33,7 +34,9 @@
 html,body{margin:0;padding:0;height:100%}
 body{background:var(--fond);color-scheme:light;color:var(--texte);font-family:var(--corps);
   font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
-button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer}
+button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer;
+  -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#entete,#entete *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 input,select,textarea{font-family:inherit;font-size:16px;color:var(--texte);background:var(--surface);
   border:1px solid var(--filet);border-radius:var(--r-s);padding:11px 12px;width:100%;appearance:none}
 textarea{resize:vertical;min-height:64px;line-height:1.4}
@@ -70,12 +73,19 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
 #barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
-#barre button{padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
+#barre button{position:relative;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:20px;line-height:1;filter:grayscale(1) opacity(.55)}
+#barre button .ic{font-size:20px;line-height:1;filter:grayscale(1) opacity(.55);
+  display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%}
 #barre button .lb{font-size:10px;font-weight:600}
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
+#barre button .ic.ic-rouge{filter:none;background:#FBDCDA}
+#barre button .ic.ic-verte{filter:none;background:#D6F0E1}
+.badge-non-lu{position:absolute;top:6px;left:calc(50% + 7px);width:9px;height:9px;border-radius:50%;
+  background:var(--annulee);display:none}
+.badge-non-lu.on{display:block;animation:clignoter 1.1s ease-in-out infinite}
+@keyframes clignoter{0%,100%{opacity:1}50%{opacity:.2}}
 
 .etiquette{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
   color:var(--texte-3);font-weight:600;margin:0 0 8px}
@@ -263,6 +273,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr-entete{font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid #000}
 .pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+.pr-col{min-width:0}
 .pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}
 .pr-table th,.pr-table td{border:1px solid #000;padding:2.5px 4px;vertical-align:middle}
 .pr-table thead th{background:#eee;font-size:7px;text-transform:uppercase;letter-spacing:.02em;
@@ -293,9 +304,9 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
   <nav id="barre">
-    <button data-vue="agenda"><span class="ic">📅</span><span class="lb">Agenda</span></button>
+    <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb">Agenda</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
-    <button data-vue="chat"><span class="ic">💬</span><span class="lb">Chat</span></button>
+    <button data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
   </nav>
 </div>
@@ -465,7 +476,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v11 · 4 septembre 2026';
+const VERSION = 'v13 · 4 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -544,8 +555,8 @@ function finAnnee(d){
 /* ============================================================
    Échéancier
    Un ancrage : le premier samedi qui suit la date du cours.
-   Puis le cycle J+7, J+14, J+21, J+28, puis tous les 28 jours,
-   toujours compté depuis la date du cours, jusqu'au 1er juillet.
+   Puis une rampe d'intervalles croissants (voir RAMPE_INTERVALLES
+   ci-dessous), jusqu'au 1er juillet.
    ============================================================ */
 /* La rampe donne l'écart, en jours, entre chaque révision et la
    précédente (pas depuis la date du cours) : 7, 7, 14, 14, 21, 21,
@@ -745,6 +756,8 @@ function ech(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+let chatNonLu = false;
+
 function rendre(){
   document.querySelectorAll('#barre button').forEach(b => {
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
@@ -752,10 +765,36 @@ function rendre(){
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
-  else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; }
+  else if (vueActive === 'chat') { chatNonLu = false; vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; }
   else vue.innerHTML = vueStats();
   if (vueActive !== 'chat') vue.scrollTop = 0;
   majBascule();
+  majIconeAgenda();
+  majBadgeChat();
+}
+
+/* Icône de l'onglet Agenda : rouge s'il reste des révisions prévues
+   aujourd'hui, verte avec un pouce levé si tout est fait. Reflète
+   le profil actuellement affiché (personnel ou suivi), comme le
+   reste de l'interface. */
+function majIconeAgenda(){
+  const el = document.getElementById('ic-agenda');
+  if (!el) return;
+  const dl = donneesLecture();
+  el.classList.remove('ic-rouge', 'ic-verte');
+  if (!dl.cours.length) { el.textContent = '📅'; return; }
+  const ajISO = isoDe(aujourdhui());
+  const duJour = dl.revisions.filter(r => r.date === ajISO &&
+    (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
+  if (duJour.length) { el.textContent = '📅'; el.classList.add('ic-rouge'); }
+  else { el.textContent = '👍'; el.classList.add('ic-verte'); }
+}
+
+/* Pastille clignotante sur l'onglet Chat : s'éteint dès qu'on
+   consulte réellement le chat (voir rendre() ci-dessus). */
+function majBadgeChat(){
+  const badge = document.getElementById('badge-chat');
+  if (badge) badge.classList.toggle('on', chatNonLu && vueActive !== 'chat');
 }
 
 /* Bascule « Mes révisions / Suivi » : uniquement visible si cet
@@ -1233,7 +1272,10 @@ function demarrerEcouteChat(){
     const nouveaux = messagesChat.length ? msgs.filter(m => !messagesChat.some(x => x.id === m.id)) : [];
     messagesChat = msgs;
     nouveaux.forEach(m => {
-      if (m.auteur !== monNom) notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id});
+      if (m.auteur !== monNom) {
+        notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id});
+        if (vueActive !== 'chat') { chatNonLu = true; majBadgeChat(); }
+      }
     });
     if (vueActive === 'chat') rendre();
   });
@@ -1465,7 +1507,9 @@ function planningImpression(){
     liste.forEach(iso => {
       const d = dDe(iso);
       const nomJour = JOURS[d.getDay()].charAt(0).toUpperCase() + JOURS[d.getDay()].slice(1);
-      const items = revs.filter(r => r.date === iso);
+      // Filtré avant de compter les lignes : un cours introuvable (donnée
+      // orpheline) ne doit jamais fausser le rowspan de la cellule jour.
+      const items = revs.filter(r => r.date === iso && trouverCours(r.cours));
       const nRangees = Math.max(items.length, 1) + 1; // + la ligne « Nouveau à encoder »
       if (!items.length) {
         lignes += '<tr><td class="pr-jour-cel" rowspan="' + nRangees + '">' + nomJour + '<br>' +
@@ -1473,7 +1517,6 @@ function planningImpression(){
       } else {
         items.forEach((r, i) => {
           const c = trouverCours(r.cours);
-          if (!c) return;
           const m = matiereDe(c.code);
           lignes += '<tr>' +
             (i === 0 ? '<td class="pr-jour-cel" rowspan="' + nRangees + '">' + nomJour + '<br>' +
@@ -1594,7 +1637,7 @@ function exporterSauvegarde(){
     const blob = new Blob([JSON.stringify(DB)], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'sabosse-' + isoDe(aujourdhui()) + '.json';
+    a.href = url; a.download = 'cabosse-' + isoDe(aujourdhui()) + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
     toast('Sauvegarde exportée.');

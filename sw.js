@@ -1,8 +1,8 @@
-/* SABOSSE — service worker
+/* Cabosse — service worker
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v11';
+const CACHE = 'sabosse-v13';
 const FICHIERS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
