@@ -240,15 +240,16 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .tuile.annulee b{color:var(--annulee)} .tuile.venir b{color:var(--accent)}
 .carte.graf{margin-bottom:12px;padding:13px 14px 6px}
 .graf-titre{margin:0 0 6px;font-size:12px;font-weight:700;color:var(--texte-2)}
-.tab .l{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:baseline;
-  padding:9px 0;border-bottom:1px solid var(--filet);font-size:13px}
-.tab .l:last-child{border-bottom:0}
-.tab .l.entete{padding-top:0;font-size:9px;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--texte-3);font-weight:700}
-.tab .l .n{display:flex;align-items:center;gap:8px;min-width:0}
-.tab .l .n span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tab .l .v{font-variant-numeric:tabular-nums;font-weight:700;min-width:34px;text-align:right}
-.tab .l.entete .v{font-weight:700}
+.mat-stats{margin-bottom:10px}
+.mat-stats-entete{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:13.5px;font-weight:700}
+.mat-stats-ligne{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;
+  border-bottom:1px solid var(--filet);font-size:12.5px;color:var(--texte-2)}
+.mat-stats-ligne:last-child{border-bottom:0}
+.mat-stats-ligne b{font-variant-numeric:tabular-nums;color:var(--texte);font-weight:700}
+.note-ligne{padding:7px 0;border-bottom:1px solid var(--filet);font-size:12.5px}
+.note-ligne:last-child{border-bottom:0}
+.note-ligne b{display:block;font-family:var(--mono);font-size:12px;font-weight:700;margin-bottom:2px}
+.note-ligne span{color:var(--texte-2);line-height:1.4}
 
 /* --- report, confirmation et note --- */
 #voile,#confirm-voile,#note-voile,#motdepasse-voile,#chatnom-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
@@ -481,7 +482,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v14 · 4 septembre 2026';
+const VERSION = 'v15 · 4 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1160,6 +1161,17 @@ function libelleAxe(iso){
   return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
 }
 
+/* Cinq paliers, du plus favorable au moins favorable — évalués dans
+   cet ordre pour que « inférieur à 30 % » prenne le dessus sur
+   « inférieur à 50 % » quand les deux s'appliquent. */
+function smileyTaux(pct){
+  if (pct > 90) return '😍';
+  if (pct >= 80) return '🙂';
+  if (pct >= 50) return '😐';
+  if (pct >= 30) return '🙁';
+  return '🤮';
+}
+
 /* Quatre indicateurs, semaine par semaine, calés sur la date de
    révision (r.date) — celle qui compte aujourd'hui, y compris après
    un report. Fenêtre bornée à 12 semaines pour rester lisible. */
@@ -1412,30 +1424,30 @@ function vueStats(){
 
   let html =
     '<div class="tuiles">' +
-      '<div class="tuile faite"><b>' + faites + '</b><span>Faites</span></div>' +
-      '<div class="tuile reportee"><b>' + reportees + '</b><span>Reportées</span></div>' +
-      '<div class="tuile annulee"><b>' + annulees + '</b><span>Annulées</span></div>' +
-      '<div class="tuile venir"><b>' + venir + '</b><span>À venir</span></div>' +
+      '<div class="tuile faite"><b>' + faites + '</b><span>Cours révisés 😎</span></div>' +
+      '<div class="tuile reportee"><b>' + reportees + '</b><span>Cours reportés 😳</span></div>' +
+      '<div class="tuile annulee"><b>' + annulees + '</b><span>Cours annulés 🫣</span></div>' +
+      '<div class="tuile venir"><b>' + venir + '</b><span>À venir 🗓️</span></div>' +
     '</div>' +
     '<p class="etiquette">Réalisation</p>' +
     '<div class="carte" style="margin-bottom:20px">' +
       '<div style="display:flex;align-items:baseline;gap:10px">' +
       '<b style="font-size:30px;font-weight:800;letter-spacing:-.03em;' +
       'font-variant-numeric:tabular-nums;color:var(--faite)">' + taux + '&nbsp;%</b>' +
-      '<span style="font-size:13px;color:var(--texte-2)">des ' + traitees +
-      ' révisions échues ont été faites</span></div></div>';
+      '<span style="font-size:13px;color:var(--texte-2)">des révisions prévues ont été réalisées ' +
+      'le jour prévu ' + smileyTaux(taux) + '</span></div></div>';
 
   const s7 = calculerSemaines();
   if (s7.semaines.length) {
     const labels = s7.semaines.map(libelleAxe);
     html += '<p class="etiquette">Évolution hebdomadaire</p>' +
-      '<div class="carte graf"><p class="graf-titre">Nouveaux cours</p>' +
+      '<div class="carte graf"><p class="graf-titre">Nombre de nouveau cours enregistrés</p>' +
         graphiqueBarres(labels, s7.nouveaux, {couleur: 'var(--accent)'}) + '</div>' +
       '<div class="carte graf"><p class="graf-titre">Cours révisés</p>' +
         graphiqueBarres(labels, s7.revises, {couleur: 'var(--faite)'}) + '</div>' +
       '<div class="carte graf"><p class="graf-titre">Taux de cours révisés sur le planifié</p>' +
         graphiqueBarres(labels, s7.pourcentages, {couleur: 'var(--faite)', suffixe: '%', max: 100}) + '</div>' +
-      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Cours annulés</p>' +
+      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Nombre de cours annulés</p>' +
         graphiqueBarres(labels, s7.annules, {couleur: 'var(--annulee)'}) + '</div>';
   }
 
@@ -1448,22 +1460,43 @@ function vueStats(){
       m: m,
       cours: ids.length,
       faites: revs.filter(r => r.statut === 'faite').length,
+      reportees: revs.filter(r => r.statut === 'reportee').length,
       annulees: revs.filter(r => r.statut === 'annulee').length
     });
   });
 
-  html += '<p class="etiquette">Par matière</p><div class="carte tab">' +
-    '<div class="l entete"><span class="n">Matière</span>' +
-    '<span class="v">Cours</span><span class="v">Faites</span><span class="v">Annul.</span></div>';
+  /* Fiches empilées plutôt qu'un tableau : les intitulés demandés
+     sont trop longs pour tenir en colonnes sur un écran de téléphone. */
+  html += '<p class="etiquette">Par matière</p>';
   lignes.forEach(l => {
-    html += '<div class="l"><span class="n">' +
-      '<i class="puce" style="background:' + l.m.c + '"></i>' +
-      '<span>' + ech(l.m.nom) + '</span></span>' +
-      '<span class="v">' + l.cours + '</span>' +
-      '<span class="v">' + l.faites + '</span>' +
-      '<span class="v">' + l.annulees + '</span></div>';
+    html += '<div class="carte mat-stats">' +
+      '<div class="mat-stats-entete"><i class="puce" style="background:' + l.m.c + '"></i>' +
+      '<b>' + ech(l.m.nom) + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Nb de cours</span><b>' + l.cours + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Nb de révisions réalisées</span><b>' + l.faites + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Nb de cours reportés</span><b>' + l.reportees + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Nb de cours annulés</span><b>' + l.annulees + '</b></div>' +
+    '</div>';
   });
-  html += '</div>';
+
+  const notesParMatiere = [];
+  dl.matieres.forEach(m => {
+    const coursAvecNote = dl.cours.filter(c => c.code === m.code && (c.commentaire || '').trim());
+    if (coursAvecNote.length) notesParMatiere.push({m: m, cours: coursAvecNote});
+  });
+  if (notesParMatiere.length) {
+    html += '<p class="etiquette" style="margin-top:20px">Notes par matière</p>';
+    notesParMatiere.forEach(g => {
+      html += '<div class="carte mat-stats">' +
+        '<div class="mat-stats-entete"><i class="puce" style="background:' + g.m.c + '"></i>' +
+        '<b>' + ech(g.m.nom) + '</b></div>';
+      g.cours.forEach(c => {
+        html += '<div class="note-ligne"><b>' + ech(refCours(c)) + '</b>' +
+          '<span>' + ech(c.commentaire.trim()) + '</span></div>';
+      });
+      html += '</div>';
+    });
+  }
 
   const historique = dl.revisions
     .filter(r => r.statut === 'faite' || r.statut === 'annulee')
