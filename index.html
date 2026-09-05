@@ -132,25 +132,25 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev .cmds button.verrou{opacity:.4;cursor:not-allowed}
 
 /* --- carte de repos du dimanche --- */
-.rev.repos{display:flex;align-items:center;justify-content:center;padding:16px 15px}
-.repos-corps{display:flex;flex-direction:column;align-items:center;gap:6px}
+.rev.repos{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 15px}
+.repos-corps{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px}
 .repos-ic{font-size:39px;line-height:1}
 .repos-txt{font-size:13.5px;font-weight:700;color:var(--texte-2)}
 .repos-detail{font-size:11.5px;color:var(--texte-3);font-weight:600;text-align:center;max-width:220px}
-.repos-barre{width:100%;max-width:210px;height:8px;border-radius:99px;background:var(--surface-2);
+.repos-barre{width:100%;max-width:180px;height:8px;border-radius:99px;background:var(--surface-2);
   overflow:hidden;margin-top:9px}
 .repos-barre-remplie{height:100%;border-radius:99px;transition:width .3s ease,background-color .3s ease}
 .repos-pct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--texte-2);margin-top:4px}
-.repos-scores{display:flex;gap:6px;width:100%;max-width:260px;margin-top:12px}
-.repos-score{flex:1;background:var(--surface-2);border-radius:var(--r-s);padding:8px 4px;
+.repos-scores{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;width:82px}
+.repos-score{background:var(--surface-2);border-radius:var(--r-s);padding:6px 4px;
   text-align:center;position:relative}
 .repos-score-titre{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;
   letter-spacing:.03em;color:var(--texte-3)}
-.repos-score b{display:block;font-family:var(--mono);font-size:17px;font-weight:800;
-  margin-top:2px;color:var(--texte)}
+.repos-score b{display:block;font-family:var(--mono);font-size:15px;font-weight:800;
+  margin-top:1px;color:var(--texte)}
 .repos-score.record{background:var(--accent-doux)}
 .repos-score.record b{color:var(--accent)}
-.repos-record{display:block;font-size:8.5px;font-weight:800;color:var(--accent);margin-top:2px;
+.repos-record{display:block;font-size:7.5px;font-weight:800;color:var(--accent);margin-top:1px;
   white-space:nowrap}
 .rev.repos.succes .repos-txt{color:var(--faite)}
 .rev.repos.succes .repos-ic{animation:repos-pop .5s ease}
@@ -184,6 +184,8 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-suppr-serie{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--annulee)}
 .sync-code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:var(--r-s);
   padding:10px 12px;word-break:break-all}
+.sync-alerte{font-size:11.5px;line-height:1.4;color:var(--annulee);background:#FBEAE8;
+  border-radius:var(--r-s);padding:9px 11px;margin:8px 0 0;font-weight:600}
 .qr-bloc{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:var(--r-m);
   margin-bottom:10px}
 .qr-bloc svg{width:150px;height:150px}
@@ -484,7 +486,15 @@ window.SabosseSync = {
       try { await setDoc(doc(bdd, 'sabosse_writers', code), {uid: u.uid}); } catch (e) { /* déjà pris, sans effet */ }
       await setDoc(doc(bdd, 'sabosse', code), Object.assign({}, donnees, {misAJour: Date.now()}));
       return true;
-    } catch (e) { console.error('SABOSSE sync : envoi impossible', e); return false; }
+    } catch (e) {
+      console.error('SABOSSE sync : envoi impossible', e);
+      /* Remonte le motif : « permission-denied » signifie que ce code
+         appartient à une autre identité d'appareil (code restauré
+         depuis une sauvegarde, ou données du site effacées). Sans
+         cette distinction, la panne restait indéchiffrable. */
+      window.SabosseSync.dernierMotifEchec = (e && e.code) || 'inconnu';
+      return false;
+    }
   },
   suivre(code, callback){
     if (!this.disponible || !code) return;
@@ -555,7 +565,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v24 · 5 septembre 2026';
+const VERSION = 'v25 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -858,7 +868,10 @@ function sauver(){
          rien n'avertissait qu'une mise à jour n'était pas partie. */
       if (ok) { derniereSyncEnvoi = Date.now(); echecsSyncConsecutifs = 0; }
       else if (++echecsSyncConsecutifs === 3) {
-        toast('Le partage ne se synchronise plus — vérifie ta connexion.');
+        const motif = window.SabosseSync.dernierMotifEchec;
+        toast(motif === 'permission-denied'
+          ? 'Ce code de partage appartient à un autre appareil — régénère-le.'
+          : 'Le partage ne se synchronise plus — vérifie ta connexion.');
       }
       if (vueActive === 'reglages') rendre();
     });
@@ -1194,8 +1207,8 @@ function carteRepos(dimancheISO){
     '<div class="repos-corps">' +
       '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
       '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
-      detail + barre + scores +
-    '</div></article>';
+      detail + barre +
+    '</div>' + scores + '</article>';
 }
 
 function grouperParDate(liste){
@@ -1507,8 +1520,13 @@ function blocSynchronisation(){
       '<div class="qr-bloc">' + genererQR(lien) + '</div>' +
       '<div class="sync-code">' + ech(DB.reglages.codePartage) + '</div>' +
       '<p class="aide-champ" style="margin-top:6px">Dernier envoi réussi : ' + libelleDepuis(derniereSyncEnvoi) + '</p>' +
+      (echecsSyncConsecutifs >= 3
+        ? '<p class="sync-alerte">⚠️ Les envois échouent. Si ce code vient d\u2019une sauvegarde ' +
+          'restaurée ou d\u2019une réinstallation, il appartient à un autre appareil : génère un nouveau code.</p>'
+        : '') +
       '<button class="bouton discret" data-act="sync-copier" style="margin-top:8px">Copier le code</button>' +
       '<button class="bouton discret" data-act="sync-actualiser" style="margin-top:8px">Renvoyer maintenant</button>' +
+      '<button class="bouton discret" data-act="sync-regenerer" style="margin-top:8px">Générer un nouveau code</button>' +
       '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Désactiver le partage</button>';
   } else {
     if (DB.suivis.length) {
@@ -2220,17 +2238,38 @@ document.getElementById('btn-imprimer').addEventListener('click', imprimerPlanni
 
 /* Ce téléphone devient la « source » : il génère un code (une fois)
    et pousse désormais chaque modification vers Firestore. */
+function nouveauCode(){
+  return (window.crypto && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : (Math.random().toString(36).slice(2) + Date.now().toString(36));
+}
+
 function activerPartage(){
-  if (!DB.reglages.codePartage) {
-    DB.reglages.codePartage = (window.crypto && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : (Math.random().toString(36).slice(2) + Date.now().toString(36));
-  }
+  if (!DB.reglages.codePartage) DB.reglages.codePartage = nouveauCode();
   DB.reglages.role = 'source';
   sauver();
   demarrerEcouteChat();
   rendre();
   toast('Partage activé.');
+}
+
+/* Sortie de secours quand le code appartient à une autre identité
+   d'appareil (code restauré depuis une sauvegarde, données du site
+   effacées, réinstallation) : les règles Firestore verrouillent
+   définitivement un code à son créateur, donc la seule issue est
+   d'en générer un neuf — et de le repartager. */
+function regenererCodePartage(){
+  if (!confirm('Générer un nouveau code de partage ?\n\nCeux qui te suivent devront rescanner ton QR code.')) return;
+  if (window.SabosseSync) { window.SabosseSync.arreterChat(); }
+  DB.reglages.codePartage = nouveauCode();
+  DB.reglages.role = 'source';
+  echecsSyncConsecutifs = 0;
+  derniereSyncEnvoi = null;
+  messagesChat = [];
+  sauver();
+  demarrerEcouteChat();
+  rendre();
+  toast('Nouveau code généré — fais-le rescanner.');
 }
 
 /* Ce téléphone devient « suivi » d'un enfant supplémentaire : lecture
@@ -2400,18 +2439,30 @@ function importerSauvegarde(fichier){
       toast('Fichier invalide.'); return;
     }
     if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
-    let suivis = Array.isArray(o.suivis) ? o.suivis : [];
-    if (!suivis.length && o.suivi && o.reglages && o.reglages.codeSuivi) {
-      suivis = [Object.assign({code: o.reglages.codeSuivi}, o.suivi)];
-    }
+    /* On ne restaure JAMAIS l'identité de synchronisation depuis un
+       fichier : le code de partage est verrouillé côté Firestore à
+       l'appareil qui l'a créé. Restaurer le code d'un autre appareil
+       (ou d'une ancienne installation) rendait toutes les écritures
+       silencieusement refusées — c'était la cause du suivi figé.
+       Les réglages de synchro de CET appareil sont donc préservés. */
+    const syncActuelle = {
+      role: DB.reglages.role,
+      codePartage: DB.reglages.codePartage,
+      affichage: DB.reglages.affichage
+    };
+    const suivisActuels = DB.suivis;
     DB = {
       cours: o.cours,
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-      suivis: suivis,
-      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', affichage: 'personnel', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
+      suivis: suivisActuels,
+      reglages: Object.assign(
+        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: ''},
+        o.reglages || {},
+        syncActuelle,          // écrase toute valeur de synchro venue du fichier
+        {afficherAncrage: true}
+      )
     };
-    if (DB.reglages.affichage === 'suivi' && suivis[0]) DB.reglages.affichage = suivis[0].code;
     sauver();
     demarrerToutesLesEcoutesSuivi();
     demarrerEcouteChat();
@@ -2668,6 +2719,7 @@ vue.addEventListener('click', e => {
       toast('Copie indisponible : sélectionne le texte manuellement.');
     }
   }
+  else if (act === 'sync-regenerer') regenererCodePartage();
   else if (act === 'sync-actualiser') {
     if (DB.reglages.role === 'source') sauver();
     else demarrerToutesLesEcoutesSuivi();
