@@ -67,8 +67,8 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   background:var(--surface-2);font-size:28.5px;display:flex;align-items:center;justify-content:center}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
-  border-bottom:1px solid var(--filet)}
-#bascule-profil .seg{flex:1;padding:8px 6px;border-radius:99px;background:var(--surface-2);
+  border-bottom:1px solid var(--filet);overflow-x:auto}
+#bascule-profil .seg{flex:1 0 auto;min-width:88px;padding:8px 10px;border-radius:99px;background:var(--surface-2);
   font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
@@ -173,11 +173,33 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-suppr-serie{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--annulee)}
 .sync-code{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:var(--r-s);
   padding:10px 12px;word-break:break-all}
+.qr-bloc{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:var(--r-m);
+  margin-bottom:10px}
+.qr-bloc svg{width:150px;height:150px}
+.suivi-ligne{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--filet)}
+.suivi-ligne:last-of-type{border-bottom:0}
+.suivi-ligne .txt{flex:1;min-width:0}
+.suivi-ligne .txt b{display:block;font-size:13px;font-weight:700}
+.suivi-ligne .txt span{display:block;font-size:11px;color:var(--texte-3);font-family:var(--mono)}
+.suivi-ligne button{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--annulee)}
+#scan-voile{position:fixed;inset:0;background:#000;display:none;z-index:25;flex-direction:column}
+#scan-voile.on{display:flex}
+.scan-entete{display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;
+  font-size:15px;padding:calc(var(--safe-t) + 14px) 16px 14px}
+.scan-entete button{color:#fff;font-size:20px;width:32px;height:32px}
+.scan-corps{display:flex;flex-direction:column;height:100%}
+#scan-video{flex:1;width:100%;object-fit:cover;background:#000}
+#scan-statut{color:#fff;text-align:center;font-size:13px;padding:16px 24px calc(20px + var(--safe-b));
+  background:#000}
 .parametres-verrou{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:20px}
 .parametres-verrou .ic{font-size:30px;flex:0 0 auto}
 .parametres-verrou .txt{flex:1;min-width:0}
 .parametres-verrou .txt b{display:block;font-size:13px;font-weight:700}
 .parametres-verrou .txt span{font-size:11.5px;color:var(--texte-2)}
+.aide-bloc{margin-bottom:10px}
+.aide-bloc:last-child{margin-bottom:0}
+.aide-bloc b{display:block;font-size:13px;font-weight:700;margin-bottom:4px}
+.aide-bloc p{margin:0;font-size:12.5px;color:var(--texte-2);line-height:1.5}
 
 /* --- chat --- */
 #chat-fil{display:flex;flex-direction:column;gap:12px;min-height:calc(100dvh - 320px)}
@@ -375,6 +397,12 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
     <button class="bouton principal" id="chatnom-ok" style="flex:1;padding:13px;font-size:14.5px">Valider</button>
   </div>
 </div></div>
+<div id="scan-voile"><div class="scan-corps">
+  <div class="scan-entete"><span>Scanner un code de suivi</span>
+    <button id="scan-fermer" aria-label="Fermer">✕</button></div>
+  <video id="scan-video" playsinline muted autoplay></video>
+  <p id="scan-statut">Vise le QR code affiché sur l\u2019autre téléphone.</p>
+</div></div>
 <div id="toast"></div>
 <div id="impression"></div>
 
@@ -409,7 +437,8 @@ const FIREBASE_CONFIG = {
 };
 
 const configure = Object.values(FIREBASE_CONFIG).every(v => typeof v === 'string' && !v.startsWith('COLLE_'));
-let bdd = null, auth = null, arreterEcoute = null, arreterEcouteChat = null;
+let bdd = null, auth = null, arreterEcouteChat = null;
+const ecoutesSuivi = {}; // une désinscription par code suivi, plusieurs enfants possibles à la fois
 if (configure) {
   try {
     const app = initializeApp(FIREBASE_CONFIG);
@@ -447,15 +476,19 @@ window.SabosseSync = {
   },
   suivre(code, callback){
     if (!this.disponible || !code) return;
-    if (arreterEcoute) arreterEcoute();
-    arreterEcoute = onSnapshot(
+    if (ecoutesSuivi[code]) ecoutesSuivi[code](); // ré-écoute propre du même code, sans dupliquer
+    ecoutesSuivi[code] = onSnapshot(
       doc(bdd, 'sabosse', code),
       snap => { if (snap.exists()) callback(snap.data()); },
       err => { console.error('SABOSSE sync : écoute interrompue', err); callback(null, err); }
     );
   },
-  arreter(){
-    if (arreterEcoute) { arreterEcoute(); arreterEcoute = null; }
+  arreter(code){
+    if (code) {
+      if (ecoutesSuivi[code]) { ecoutesSuivi[code](); delete ecoutesSuivi[code]; }
+      return;
+    }
+    Object.keys(ecoutesSuivi).forEach(c => { ecoutesSuivi[c](); delete ecoutesSuivi[c]; });
   },
   /* Chat familial : contrairement aux données de révision, n'importe
      quel appareil authentifié (source ou suivi) peut y écrire — ce
@@ -491,9 +524,15 @@ window.SabosseSync = {
 window.dispatchEvent(new Event('sabosse-sync-pret'));
 </script>
 
+<!-- Génération et lecture de QR code, en JS pur : Safari iOS n'implémente
+     pas l'API native de détection de codes-barres, ces deux bibliothèques
+     ne s'appuient donc dessus ni l'une ni l'autre. -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
 <script>
 'use strict';
-const VERSION = 'v19 · 5 septembre 2026';
+const VERSION = 'v20 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -702,22 +741,31 @@ const CLE = 'sabosse';
 const Store = {
   dispo: true,
   lire(){
-    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivi: null,
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}};
+    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
-      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}, o.reglages || {});
+      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
          resterait bloqué sans aucun moyen de la réactiver. */
       reglages.afficherAncrage = true;
+
+      /* Migration : DB.suivi (un seul enfant) devient DB.suivis (plusieurs).
+         L'ancien reglages.codeSuivi devient le code du premier élément. */
+      let suivis = Array.isArray(o.suivis) ? o.suivis : [];
+      if (!suivis.length && o.suivi && o.reglages && o.reglages.codeSuivi) {
+        suivis = [Object.assign({code: o.reglages.codeSuivi}, o.suivi)];
+      }
+      if (reglages.affichage === 'suivi' && suivis[0]) reglages.affichage = suivis[0].code;
+
       return {
         cours: o.cours || [],
         revisions: o.revisions || [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-        suivi: o.suivi || null,
+        suivis: suivis,
         reglages: reglages
       };
     } catch (e) { this.dispo = false; return defaut; }
@@ -729,22 +777,28 @@ const Store = {
 };
 let DB = Store.lire();
 
-/* Deux jeux de données peuvent coexister sur un même appareil : le
-   « personnel » (celui que l'appareil encode lui-même) et le
-   « suivi » (le miroir en lecture seule d'un autre appareil, reçu
-   par Firebase). reglages.affichage choisit lequel est à l'écran ;
-   les écritures ne touchent jamais le jeu affiché en mode suivi,
-   puisque toute la partie édition de l'interface reste masquée
-   par modeLecture() dans ce cas. */
+/* Deux jeux de données ou plus peuvent coexister sur un même appareil :
+   le « personnel » (celui que l'appareil encode lui-même) et un miroir
+   en lecture seule par enfant suivi (reçu par Firebase, un par code).
+   reglages.affichage vaut 'personnel', ou le code de l'enfant actif.
+   Les écritures ne touchent jamais un jeu affiché en mode suivi,
+   puisque toute la partie édition de l'interface reste masquée par
+   modeLecture() dans ce cas. */
+function suiviActif(){
+  if (DB.reglages.affichage === 'personnel') return null;
+  return DB.suivis.find(s => s.code === DB.reglages.affichage) || null;
+}
+
 function donneesLecture(){
-  if (DB.reglages.affichage === 'suivi' && DB.suivi) {
+  const s = suiviActif();
+  if (s) {
     return {
-      cours: DB.suivi.cours || [],
-      revisions: DB.suivi.revisions || [],
-      matieres: (DB.suivi.matieres && DB.suivi.matieres.length) ? DB.suivi.matieres : MATIERES_DEFAUT,
-      afficherAncrage: (DB.suivi.reglages && typeof DB.suivi.reglages.afficherAncrage === 'boolean')
-        ? DB.suivi.reglages.afficherAncrage : true,
-      prenom: (DB.suivi.reglages && DB.suivi.reglages.prenom) || ''
+      cours: s.cours || [],
+      revisions: s.revisions || [],
+      matieres: (s.matieres && s.matieres.length) ? s.matieres : MATIERES_DEFAUT,
+      afficherAncrage: (s.reglages && typeof s.reglages.afficherAncrage === 'boolean')
+        ? s.reglages.afficherAncrage : true,
+      prenom: (s.reglages && s.reglages.prenom) || ''
     };
   }
   return {
@@ -758,10 +812,11 @@ function donneesLecture(){
    sur l'appareil source. Indépendant du rôle de synchronisation :
    un appareil « suivi » peut très bien être en train d'afficher son
    propre profil personnel, pleinement éditable, à un instant donné. */
-function modeLecture(){ return DB.reglages.affichage === 'suivi'; }
+function modeLecture(){ return DB.reglages.affichage !== 'personnel'; }
 
 function sauver(){
   Store.ecrire(DB);
+  if (!modeLecture()) enregistrerInstantane(); // jamais pour un profil suivi : ce n'est pas nos données
   if (DB.reglages.role === 'source' && DB.reglages.codePartage &&
       window.SabosseSync && window.SabosseSync.disponible) {
     window.SabosseSync.envoyer(DB.reglages.codePartage, {
@@ -769,6 +824,59 @@ function sauver(){
       reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
     });
   }
+}
+
+/* ============================================================
+   Instantanés locaux, pour la restauration à H-1 / H-24 / J-7.
+   Un seul par heure au maximum ; au-delà de 24 h, un seul par jour ;
+   rien au-delà de 7 jours — pour ne pas saturer le stockage du
+   téléphone avec l'historique complet des cours et révisions.
+   ============================================================ */
+const CLE_INSTANTANES = 'cabosse-instantanes';
+
+function enregistrerInstantane(){
+  try {
+    const maintenant = Date.now();
+    let liste = JSON.parse(localStorage.getItem(CLE_INSTANTANES) || '[]');
+    const dernier = liste[liste.length - 1];
+    if (dernier && maintenant - dernier.quand < 3600000) return; // au plus un par heure
+    liste.push({quand: maintenant, cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres});
+
+    const limite24h = maintenant - 24 * 3600000;
+    const limite7j = maintenant - 7 * 24 * 3600000;
+    const recents = liste.filter(s => s.quand >= limite24h);
+    const anciens = liste.filter(s => s.quand < limite24h && s.quand >= limite7j);
+    const parJour = {};
+    anciens.forEach(s => {
+      const j = new Date(s.quand).toDateString();
+      if (!parJour[j] || s.quand > parJour[j].quand) parJour[j] = s;
+    });
+    liste = Object.values(parJour).concat(recents).sort((a, b) => a.quand - b.quand);
+    localStorage.setItem(CLE_INSTANTANES, JSON.stringify(liste));
+  } catch (e) { /* ce n'est qu'une sécurité : une erreur ici ne doit rien bloquer */ }
+}
+
+function listeInstantanes(){
+  try { return JSON.parse(localStorage.getItem(CLE_INSTANTANES) || '[]'); }
+  catch (e) { return []; }
+}
+
+function restaurerInstantane(decalageMs){
+  const liste = listeInstantanes();
+  if (!liste.length) { toast('Aucun instantané disponible pour l\u2019instant.'); return; }
+  const cible = Date.now() - decalageMs;
+  let meilleur = liste[0];
+  liste.forEach(s => { if (Math.abs(s.quand - cible) < Math.abs(meilleur.quand - cible)) meilleur = s; });
+  const quand = new Date(meilleur.quand).toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+  if (!confirm('Restaurer l\u2019état du ' + quand + ' ? Cela remplace tes cours et révisions actuels.')) return;
+  DB.cours = meilleur.cours;
+  DB.revisions = meilleur.revisions;
+  DB.matieres = meilleur.matieres;
+  sauver();
+  rendre();
+  toast('Restauré à l\u2019état du ' + quand + '.');
 }
 
 function idCours(code, num, date){ return code + '-' + num + '-' + date; }
@@ -920,18 +1028,22 @@ function majBadgeChat(){
   if (badge) badge.classList.toggle('on', chatNonLu && vueActive !== 'chat');
 }
 
-/* Bascule « Mes révisions / Suivi » : uniquement visible si cet
-   appareil a un profil suivi configuré. Volontairement hors des
-   Paramètres avancés (donc jamais derrière le mot de passe), pour
-   rester accessible à l'usage quotidien. */
+/* Bascule « Mes révisions / Enfant 1 / Enfant 2… » : un segment par
+   enfant suivi, en plus du personnel. Invisible si aucun suivi n'est
+   configuré. Volontairement hors des Paramètres avancés (donc jamais
+   derrière le mot de passe), pour rester accessible au quotidien. */
 function majBascule(){
   const zone = document.getElementById('bascule-profil');
-  if (DB.reglages.role !== 'suivi') { zone.style.display = 'none'; return; }
+  if (!DB.suivis.length) { zone.style.display = 'none'; return; }
   zone.style.display = 'flex';
-  const dlSuivi = (DB.suivi && DB.suivi.reglages && DB.suivi.reglages.prenom) || 'Suivi';
-  zone.innerHTML =
-    '<button data-act="profil-personnel" class="seg' + (DB.reglages.affichage !== 'suivi' ? ' actif' : '') + '">Mes révisions</button>' +
-    '<button data-act="profil-suivi" class="seg' + (DB.reglages.affichage === 'suivi' ? ' actif' : '') + '">' + ech(dlSuivi) + '</button>';
+  let html = '<button data-act="profil" data-code="personnel" class="seg' +
+    (DB.reglages.affichage === 'personnel' ? ' actif' : '') + '">Mes révisions</button>';
+  DB.suivis.forEach((s, i) => {
+    const nom = (s.reglages && s.reglages.prenom) || ('Suivi ' + (i + 1));
+    html += '<button data-act="profil" data-code="' + ech(s.code) + '" class="seg' +
+      (DB.reglages.affichage === s.code ? ' actif' : '') + '">' + ech(nom) + '</button>';
+  });
+  zone.innerHTML = html;
 }
 
 /* --- Agenda ------------------------------------------------ */
@@ -1211,6 +1323,35 @@ function majApercu(){
 }
 
 /* --- Paramètres avancés ------------------------------------- */
+/* --- Aide ------------------------------------------------ */
+/* Volontairement hors des Paramètres avancés : ton fils doit pouvoir
+   la consulter sans connaître le mot de passe. */
+function blocAide(){
+  return '<details class="pliable" data-cle="aide" style="margin-top:20px">' +
+    '<summary>Aide</summary>' +
+    '<div class="contenu-pliable">' +
+      '<div class="carte aide-bloc">' +
+        '<b>Partager le lien entre iPhones</b>' +
+        '<p>Envoie l\u2019adresse de Cabosse par Messages ou AirDrop à la personne concernée. ' +
+        'Elle l\u2019ouvre dans Safari — aucune installation n\u2019est nécessaire pour commencer.</p>' +
+      '</div>' +
+      '<div class="carte aide-bloc">' +
+        '<b>Installer sur l\u2019écran d\u2019accueil</b>' +
+        '<p>Dans Safari, touche le bouton Partager (le carré avec la flèche vers le haut), ' +
+        'puis « Sur l\u2019écran d\u2019accueil ». Une icône Cabosse apparaît alors comme une vraie ' +
+        'application, en plein écran, avec ses propres notifications.</p>' +
+      '</div>' +
+      '<div class="carte aide-bloc">' +
+        '<b>Partager le suivi avec ses parents</b>' +
+        '<p>Sur le téléphone qui encode les cours : Statistiques → Paramètres avancés → ' +
+        'Synchronisation → « Ce téléphone encode et partage ». Un QR code apparaît. Sur le ' +
+        'téléphone d\u2019un parent : « Suivre quelqu\u2019un », puis viser ce QR avec l\u2019appareil ' +
+        'photo — la connexion se fait toute seule, sans rien recopier. Si la caméra est ' +
+        'indisponible, un code à coller à la main reste proposé en repli.</p>' +
+      '</div>' +
+    '</div></details>';
+}
+
 function blocParametres(){
   if (!parametresDeverrouilles) {
     return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller">' +
@@ -1234,39 +1375,80 @@ function blocParametres(){
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
-      '<button class="bouton discret" data-act="maj" style="margin-top:8px">Forcer la mise à jour</button>' +
+      '<p class="aide-champ" style="margin-top:10px">Restauration rapide, sans fichier :</p>' +
+      '<div style="display:flex;gap:6px;margin-top:4px">' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-1h">Il y a 1 h</button>' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">Il y a 24 h</button>' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">Il y a 7 j</button>' +
+      '</div>' +
+      '<button class="bouton discret" data-act="maj" style="margin-top:14px">Forcer la mise à jour</button>' +
     '</div></details>';
 }
 
-/* Un seul appareil « source » pousse ses données ; les autres
-   peuvent s'y « suivre » en lecture seule via un code partagé. */
+/* Un appareil « source » pousse ses données ; les autres peuvent
+   suivre un ou plusieurs enfants en lecture seule, via un QR code
+   (ou, en repli, un code collé à la main). */
 function blocSynchronisation(){
-  const r = DB.reglages.role || 'aucun';
-  let html = '<p class="etiquette" style="margin-top:6px">Synchronisation</p><div class="carte" style="margin-bottom:12px">';
   if (!window.SabosseSync || !window.SabosseSync.disponible) {
-    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0">' +
-      'Configuration Firebase manquante ou hors ligne — voir les instructions fournies pour l\u2019activer.</p>';
-  } else if (r === 'aucun') {
-    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 10px">' +
-      'Ce téléphone encode-t-il les cours, ou suit-il ceux d\u2019un autre appareil ?</p>' +
-      '<button class="bouton discret" data-act="sync-source">Ce téléphone encode et partage</button>' +
-      '<div class="champ" style="margin-top:10px;margin-bottom:6px">' +
-        '<input type="text" id="sync-code-entree" placeholder="Coller un code reçu pour suivre"></div>' +
-      '<button class="bouton discret" data-act="sync-suivre">Suivre avec ce code</button>';
-  } else if (r === 'source') {
+    return '<p class="etiquette" style="margin-top:6px">Synchronisation</p>' +
+      '<div class="carte" style="margin-bottom:12px"><p style="font-size:12.5px;color:var(--texte-2);margin:0">' +
+      'Configuration Firebase manquante ou hors ligne — voir les instructions fournies pour l\u2019activer.</p></div>';
+  }
+
+  let html = '<p class="etiquette" style="margin-top:6px">Synchronisation</p><div class="carte" style="margin-bottom:12px">';
+
+  if (DB.reglages.role === 'source') {
+    const lien = urlSuivi(DB.reglages.codePartage);
     html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px">' +
-      'Ce téléphone encode et partage. Code à transmettre :</p>' +
+      'Ce téléphone encode et partage. À montrer à qui veut te suivre :</p>' +
+      '<div class="qr-bloc">' + genererQR(lien) + '</div>' +
       '<div class="sync-code">' + ech(DB.reglages.codePartage) + '</div>' +
       '<button class="bouton discret" data-act="sync-copier" style="margin-top:8px">Copier le code</button>' +
       '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Désactiver le partage</button>';
-  } else if (r === 'suivi') {
-    html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 8px">' +
-      'Lecture seule, connecté avec le code :</p>' +
-      '<div class="sync-code">' + ech(DB.reglages.codeSuivi) + '</div>' +
-      '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Se déconnecter</button>';
+  } else {
+    if (DB.suivis.length) {
+      html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 4px">Enfants suivis</p>';
+      DB.suivis.forEach(s => {
+        const nom = (s.reglages && s.reglages.prenom) || 'Sans nom';
+        html += '<div class="suivi-ligne"><div class="txt"><b>' + ech(nom) + '</b>' +
+          '<span>' + ech(s.code) + '</span></div>' +
+          '<button data-act="sync-retirer" data-id="' + ech(s.code) + '">Retirer</button></div>';
+      });
+    } else {
+      html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 10px">' +
+        'Ce téléphone encode-t-il les cours, ou suit-il ceux d\u2019un ou plusieurs enfants ?</p>' +
+        '<button class="bouton discret" data-act="sync-source">Ce téléphone encode et partage</button>';
+    }
+    html += '<button class="bouton discret" data-act="sync-scanner" style="margin-top:8px">' +
+      (DB.suivis.length ? 'Suivre un autre enfant' : 'Suivre quelqu\u2019un') + '</button>' +
+      '<details class="pliable" data-cle="sync-manuel"' + ouvert('sync-manuel') + ' style="margin-top:8px">' +
+        '<summary>Coller un code au lieu de scanner</summary>' +
+        '<div class="contenu-pliable">' +
+          '<input type="text" id="sync-code-entree" placeholder="Code reçu">' +
+          '<button class="bouton discret" data-act="sync-suivre" style="margin-top:8px">Suivre avec ce code</button>' +
+        '</div>' +
+      '</details>';
   }
+
   html += '</div>';
   return html;
+}
+
+/* Adresse encodée dans le QR : un simple lien vers l'app, avec le
+   code en fragment. Fonctionne aussi bien scanné par l'appareil
+   photo natif de l'iPhone (qui ouvre Safari) que par le scanner
+   intégré de Cabosse. */
+function urlSuivi(code){
+  return location.origin + location.pathname + '#suivre=' + encodeURIComponent(code);
+}
+
+function genererQR(texte){
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(texte);
+    qr.make();
+    return qr.createSvgTag({cellSize: 4, margin: 2});
+  } catch (e) { return '<p style="font-size:11px;color:var(--texte-3)">QR indisponible.</p>'; }
 }
 
 /* Semaine du lundi au dimanche, courte : « DD/MM » pour l'axe des graphiques. */
@@ -1402,13 +1584,14 @@ function verifierRappelJournalier(){
   } catch (e) { /* localStorage indisponible : on passe simplement */ }
 }
 
-/* Le chat utilise le même code que la synchronisation : un seul
-   canal par famille, pas de code séparé à gérer. Sans rôle de
-   synchronisation configuré, il n'y a pas de canal disponible. */
+/* Le chat utilise le même code que la synchronisation : pas de canal
+   séparé à gérer. Contextuel au profil affiché — en suivant Clément,
+   on discute dans le canal de Clément ; en suivant Léa, dans celui de
+   Léa ; sur son propre profil, dans celui qu'on partage soi-même. */
 function codeFamille(){
-  if (DB.reglages.role === 'source') return DB.reglages.codePartage;
-  if (DB.reglages.role === 'suivi') return DB.reglages.codeSuivi;
-  return '';
+  const s = suiviActif();
+  if (s) return s.code;
+  return DB.reglages.role === 'source' ? DB.reglages.codePartage : '';
 }
 
 let messagesChat = [];
@@ -1528,7 +1711,7 @@ function vueStats(){
     return '<div class="vide"><div class="gros">📊</div>' +
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
       '<p>Les statistiques arrivent avec le premier cours.</p></div>' +
-      blocParametres();
+      blocAide() + blocParametres();
   }
   const n = s => dl.revisions.filter(r => r.statut === s).length;
   const faites = n('faite'), reportees = n('reportee'),
@@ -1651,6 +1834,7 @@ function vueStats(){
     html += '</div></details>';
   }
 
+  html += blocAide();
   html += blocParametres();
 
   html +=
@@ -1775,49 +1959,132 @@ function activerPartage(){
   toast('Partage activé.');
 }
 
-/* Ce téléphone devient « suivi » : lecture seule, alimentée par le
-   flux temps réel de l'appareil source identifié par ce code. */
-function activerSuivi(code){
+/* Ce téléphone devient « suivi » d'un enfant supplémentaire : lecture
+   seule, alimentée par le flux temps réel de l'appareil source
+   identifié par ce code. Plusieurs enfants peuvent être suivis à la
+   fois, chacun avec son propre miroir et sa propre écoute. */
+function ajouterSuivi(code){
   code = (code || '').trim();
-  if (!code) { toast('Colle le code reçu.'); return; }
+  if (!code) { toast('Code manquant.'); return; }
+  if (DB.suivis.some(s => s.code === code)) { toast('Cet enfant est déjà suivi.'); return; }
+  if (DB.suivis.length >= 6) { toast('Trop d\u2019enfants suivis sur un même appareil.'); return; }
   DB.reglages.role = 'suivi';
-  DB.reglages.codeSuivi = code;
-  DB.reglages.affichage = 'suivi'; // on bascule directement dessus : c'est ce qu'on vient de demander à voir
+  DB.suivis.push({code: code, cours: [], revisions: [], matieres: [], reglages: {}});
+  DB.reglages.affichage = code; // on bascule directement dessus : c'est ce qu'on vient de demander à voir
   sauver();
-  demarrerEcouteSuivi();
+  demarrerEcouteSuivi(code);
   demarrerEcouteChat();
   rendre();
   toast('Connecté au suivi.');
 }
 
-function demarrerEcouteSuivi(){
-  if (!window.SabosseSync || !window.SabosseSync.disponible ||
-      DB.reglages.role !== 'suivi' || !DB.reglages.codeSuivi) return;
-  window.SabosseSync.suivre(DB.reglages.codeSuivi, (donnees, erreur) => {
+function demarrerEcouteSuivi(code){
+  if (!window.SabosseSync || !window.SabosseSync.disponible || !code) return;
+  window.SabosseSync.suivre(code, (donnees, erreur) => {
     if (erreur) { toast('Connexion au suivi interrompue.'); return; }
     if (!donnees) return;
-    /* Écrit dans le miroir séparé DB.suivi, jamais dans les données
-       personnelles de cet appareil : un arrivage Firestore ne doit
-       jamais écraser ce que l'utilisateur encode pour lui-même. */
-    DB.suivi = {
-      cours: donnees.cours || [],
-      revisions: donnees.revisions || [],
-      matieres: (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice(),
-      reglages: donnees.reglages || {}
-    };
+    const s = DB.suivis.find(x => x.code === code);
+    if (!s) return; // suivi retiré entre-temps
+    /* Écrit dans le miroir séparé de cet enfant, jamais dans les
+       données personnelles de cet appareil ni dans celles d'un autre
+       enfant : un arrivage Firestore ne doit jamais rien écraser
+       d'autre que ce qu'il concerne. */
+    s.cours = donnees.cours || [];
+    s.revisions = donnees.revisions || [];
+    s.matieres = (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice();
+    s.reglages = donnees.reglages || {};
     Store.ecrire(DB); // mise en cache locale pour la lecture hors-ligne, sans repousser vers Firestore
     rendre();
   });
 }
 
-function desactiverSync(){
-  if (window.SabosseSync) { window.SabosseSync.arreter(); window.SabosseSync.arreterChat(); }
-  DB.reglages.role = 'aucun';
-  DB.reglages.affichage = 'personnel';
+/* Relance toutes les écoutes suivi enregistrées — au démarrage de
+   l'app, ou après un retour de connexion. */
+function demarrerToutesLesEcoutesSuivi(){
+  DB.suivis.forEach(s => demarrerEcouteSuivi(s.code));
+}
+
+/* --- Scan de QR code -----------------------------------------
+   jsQR décode une image, pas un flux vidéo : on capture une image de
+   la caméra sur un <canvas> à chaque frame et on la lui soumet. Pas
+   besoin de l'API native de détection, absente de Safari iOS. */
+let scanFlux = null, scanBoucle = null;
+
+function extraireCode(texte){
+  const m = /[?#&]suivre=([^&]+)/.exec(texte || '');
+  return m ? decodeURIComponent(m[1]) : (texte || '').trim();
+}
+
+async function ouvrirScanner(){
+  const voile = document.getElementById('scan-voile');
+  const statut = document.getElementById('scan-statut');
+  const video = document.getElementById('scan-video');
+  if (!('jsQR' in window)) { toast('Lecteur de QR indisponible hors ligne.'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    toast('Caméra indisponible sur cet appareil.'); return;
+  }
+  voile.classList.add('on');
+  statut.textContent = 'Vise le QR code affiché sur l\u2019autre téléphone.';
+  try {
+    scanFlux = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+    video.srcObject = scanFlux;
+    await video.play();
+    const canevas = document.createElement('canvas');
+    const ctx = canevas.getContext('2d', {willReadFrequently: true});
+    const tick = () => {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canevas.width = video.videoWidth; canevas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canevas.width, canevas.height);
+        const image = ctx.getImageData(0, 0, canevas.width, canevas.height);
+        const resultat = jsQR(image.data, image.width, image.height);
+        if (resultat && resultat.data) { traiterCodeScanne(resultat.data); return; }
+      }
+      scanBoucle = requestAnimationFrame(tick);
+    };
+    scanBoucle = requestAnimationFrame(tick);
+  } catch (e) {
+    statut.textContent = 'Caméra refusée ou indisponible — utilise le code à coller.';
+  }
+}
+
+function traiterCodeScanne(texte){
+  fermerScanner();
+  const code = extraireCode(texte);
+  if (!code) { toast('QR code illisible.'); return; }
+  ajouterSuivi(code);
+}
+
+function fermerScanner(){
+  document.getElementById('scan-voile').classList.remove('on');
+  if (scanBoucle) cancelAnimationFrame(scanBoucle);
+  scanBoucle = null;
+  if (scanFlux) { scanFlux.getTracks().forEach(t => t.stop()); scanFlux = null; }
+}
+
+document.getElementById('scan-fermer').addEventListener('click', fermerScanner);
+
+/* Un QR scanné par l'appareil photo natif de l'iPhone (plutôt que
+   par le scanner intégré) ouvre Safari sur ce lien : on y réagit de
+   la même façon, une fois l'app chargée. */
+function traiterLienSuivi(){
+  const m = /suivre=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  const code = decodeURIComponent(m[1]);
+  history.replaceState(null, '', location.pathname + location.search);
+  if (DB.suivis.some(s => s.code === code)) return;
+  if (confirm('Suivre cet enfant avec le code reçu ?')) ajouterSuivi(code);
+}
+
+function retirerSuivi(code){
+  if (window.SabosseSync) window.SabosseSync.arreter(code);
+  DB.suivis = DB.suivis.filter(s => s.code !== code);
+  if (DB.reglages.affichage === code) DB.reglages.affichage = 'personnel';
+  if (!DB.suivis.length && DB.reglages.role === 'suivi') DB.reglages.role = 'aucun';
   messagesChat = [];
   sauver();
+  demarrerEcouteChat();
   rendre();
-  toast('Synchronisation désactivée.');
+  toast('Suivi retiré.');
 }
 
 /* Vide le cache du service worker puis recharge : utile quand
@@ -1858,14 +2125,21 @@ function importerSauvegarde(fichier){
       toast('Fichier invalide.'); return;
     }
     if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+    let suivis = Array.isArray(o.suivis) ? o.suivis : [];
+    if (!suivis.length && o.suivi && o.reglages && o.reglages.codeSuivi) {
+      suivis = [Object.assign({code: o.reglages.codeSuivi}, o.suivi)];
+    }
     DB = {
       cours: o.cours,
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-      suivi: o.suivi || null,
-      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', codeSuivi: '', affichage: 'personnel', nomChat: '', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
+      suivis: suivis,
+      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', affichage: 'personnel', nomChat: '', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
     };
+    if (DB.reglages.affichage === 'suivi' && suivis[0]) DB.reglages.affichage = suivis[0].code;
     sauver();
+    demarrerToutesLesEcoutesSuivi();
+    demarrerEcouteChat();
     rendre();
     toast('Sauvegarde restaurée.');
   };
@@ -2099,8 +2373,9 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'sync-suivre') {
     const champ = document.getElementById('sync-code-entree');
-    activerSuivi(champ ? champ.value : '');
+    ajouterSuivi(champ ? champ.value : '');
   }
+  else if (act === 'sync-scanner') ouvrirScanner();
   else if (act === 'sync-copier') {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(DB.reglages.codePartage)
@@ -2111,8 +2386,24 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'sync-desactiver') {
-    if (confirm('Désactiver la synchronisation sur cet appareil ?')) desactiverSync();
+    if (confirm('Désactiver le partage sur cet appareil ?')) {
+      if (window.SabosseSync) { window.SabosseSync.arreter(); window.SabosseSync.arreterChat(); }
+      DB.reglages.role = 'aucun';
+      DB.reglages.affichage = 'personnel';
+      messagesChat = [];
+      sauver();
+      rendre();
+      toast('Partage désactivé.');
+    }
   }
+  else if (act === 'sync-retirer') {
+    const s = DB.suivis.find(x => x.code === id);
+    const nom = (s && s.reglages && s.reglages.prenom) || 'cet enfant';
+    if (confirm('Ne plus suivre ' + nom + ' ?')) retirerSuivi(id);
+  }
+  else if (act === 'restaurer-1h') restaurerInstantane(3600000);
+  else if (act === 'restaurer-24h') restaurerInstantane(24 * 3600000);
+  else if (act === 'restaurer-7j') restaurerInstantane(7 * 24 * 3600000);
   else if (act === 'matiere-editer') { matiereEnEdition = id; rendre(); }
   else if (act === 'matiere-annuler-edition') { matiereEnEdition = null; rendre(); }
   else if (act === 'matiere-enregistrer') {
@@ -2191,10 +2482,13 @@ document.getElementById('barre').addEventListener('click', e => {
 });
 
 document.getElementById('bascule-profil').addEventListener('click', e => {
-  const b = e.target.closest('button[data-act]');
+  const b = e.target.closest('button[data-act="profil"]');
   if (!b) return;
-  DB.reglages.affichage = (b.dataset.act === 'profil-suivi') ? 'suivi' : 'personnel';
+  if (b.dataset.code === DB.reglages.affichage) return;
+  DB.reglages.affichage = b.dataset.code;
   sauver();
+  messagesChat = []; // le chat change de canal avec le profil affiché
+  demarrerEcouteChat();
   rendre();
 });
 
@@ -2206,7 +2500,7 @@ verifierRappelJournalier();
    différé) : on attend son signal avant de démarrer l'écoute ou de
    pousser l'état actuel, plutôt que de dépendre de l'ordre de chargement. */
 window.addEventListener('sabosse-sync-pret', () => {
-  if (DB.reglages.role === 'suivi') demarrerEcouteSuivi();
+  if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
   else if (DB.reglages.role === 'source' && DB.reglages.codePartage) {
     window.SabosseSync.envoyer(DB.reglages.codePartage, {
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
@@ -2214,6 +2508,7 @@ window.addEventListener('sabosse-sync-pret', () => {
     });
   }
   demarrerEcouteChat();
+  traiterLienSuivi(); // un QR scanné par l'appareil photo natif arrive ici via location.hash
   rendre(); // met à jour le bloc Synchronisation si Paramètres avancés est ouvert
 });
 
@@ -2222,7 +2517,7 @@ window.addEventListener('sabosse-sync-pret', () => {
    plutôt que d'attendre la prochaine action de l'utilisateur. */
 window.addEventListener('online', () => {
   if (DB.reglages.role === 'source') sauver();
-  else if (DB.reglages.role === 'suivi') demarrerEcouteSuivi();
+  else if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
   demarrerEcouteChat();
 });
 
