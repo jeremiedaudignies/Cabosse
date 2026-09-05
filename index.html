@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#B33A1E">
+<meta name="theme-color" content="#094639">
 <meta name="color-scheme" content="light only">
 <title>Cabosse</title>
 <link rel="manifest" href="manifest.json">
@@ -56,8 +56,8 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #app{display:flex;flex-direction:column;height:100dvh}
 #entete{flex:0 0 auto;padding:calc(var(--safe-t) + 12px) 16px 12px;display:flex;align-items:center;
   gap:12px;background:var(--surface);border-bottom:1px solid var(--filet)}
-#entete .glyphe{width:36px;height:36px;flex:0 0 auto;border-radius:var(--r-s);background:#B33A1E;
-  color:#fff;display:grid;place-items:center;font-size:17px;font-weight:800}
+#entete .glyphe{width:38px;height:38px;flex:0 0 auto;border-radius:var(--r-s);
+  object-fit:cover;display:block}
 #entete .titres{flex:1;min-width:0}
 #entete .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--accent);font-weight:600}
@@ -78,7 +78,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--texte-3);transition:color .15s}
 #barre button .ic{font-size:30px;line-height:1;filter:grayscale(1) opacity(.55);
   display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%}
-#barre button .lb{font-size:10px;font-weight:600}
+#barre button .lb{font-size:10px;font-weight:600;text-align:center;line-height:1.15;padding:0 2px}
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
 #barre button .ic.ic-rouge{filter:none;background:#FBDCDA}
@@ -94,6 +94,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   box-shadow:var(--ombre)}
 .champ{margin-bottom:12px}
 .champ label{display:block;font-size:12.5px;font-weight:600;color:var(--texte-2);margin-bottom:6px}
+.aide-champ{display:block;font-size:11px;color:var(--texte-3);margin-top:5px;line-height:1.35}
 .bouton{display:block;width:100%;padding:16px;border-radius:99px;background:var(--surface-2);
   font-weight:700;font-size:16px;letter-spacing:-.01em;transition:transform .08s}
 .bouton:active{transform:scale(.98)}
@@ -274,34 +275,43 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   #impression, #impression *{visibility:visible}
   #impression{display:block;position:absolute;left:0;top:0;width:100%;background:#fff}
   body{background:#fff}
-  @page{size:A4;margin:11mm}
+  @page{size:A4;margin:10mm}
 }
 .pr-page{font-family:var(--corps);color:#000;background:#fff;font-size:8px;line-height:1.3;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
-.pr-entete{font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:5px;border-bottom:1.5px solid #000}
-.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+.pr-entete{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;
+  border-bottom:2px solid #094639}
+.pr-logo{width:28px;height:28px;flex:0 0 auto;border-radius:6px;object-fit:cover;display:block}
+.pr-titres{flex:1;min-width:0}
+.pr-titres .pr-nom{font-size:13px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.pr-titres .pr-periode{font-size:8.5px;color:#555;margin-top:1px}
+.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}
 .pr-col{min-width:0}
 .pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}
-.pr-table th,.pr-table td{border:1px solid #000;padding:2.5px 4px;vertical-align:middle}
-.pr-table thead th{background:#eee;font-size:7px;text-transform:uppercase;letter-spacing:.02em;
-  font-weight:800;text-align:center}
-.pr-table th:nth-child(1){width:15%}
-.pr-table th:nth-child(2){width:42%}
-.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:12%}
-.pr-table th:nth-child(5){width:19%}
-.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#f7f7f7}
-.pr-cours-cel{font-size:7.8px}
-.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#444;font-size:7px}
-.pr-vide-cel{color:#999;text-align:center;font-size:8px}
+.pr-table th,.pr-table td{border:1px solid #bbb;padding:3px 4px;vertical-align:middle;
+  overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.pr-table thead th{background:#094639;color:#fff;font-size:6.5px;text-transform:uppercase;
+  letter-spacing:.03em;font-weight:800;text-align:center;border-color:#094639}
+.pr-table th:nth-child(1){width:17%}
+.pr-table th:nth-child(2){width:39%}
+.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:11%}
+.pr-table th:nth-child(5){width:22%}
+.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#eaf1ee;line-height:1.25}
+.pr-cours-cel{font-size:7.8px;font-weight:700}
+.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:6.8px}
+.pr-vide-cel{color:#aaa;text-align:center;font-size:8px;font-style:italic}
 .pr-case-cel,.pr-report-cel{text-align:center}
-.pr-case{display:inline-block;width:8px;height:8px;border:1px solid #000}
-.pr-nouveau-cel{color:#555;font-style:italic;font-size:7.3px}
+.pr-case{display:inline-block;width:9px;height:9px;border:1.2px solid #666;border-radius:2px}
+.pr-report-cel .pr-ligne-date{display:block;border-bottom:1px dotted #999;height:7px;margin-top:1px}
+.pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}
+.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:6.8px;color:#888;
+  display:flex;justify-content:space-between}
 </style>
 </head>
 <body>
 <div id="app">
   <header id="entete">
-    <div class="glyphe">C</div>
+    <img class="glyphe" src="icone-180.png" alt="Cabosse">
     <div class="titres">
       <div class="eyebrow">Réactivation mémorielle</div>
       <h1>Cabosse</h1>
@@ -312,7 +322,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <main id="vue"></main>
   <nav id="barre">
     <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb" id="lb-agenda">Agenda</span></button>
-    <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
+    <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter un cours</span></button>
     <button data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
   </nav>
@@ -483,12 +493,100 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v16 · 4 septembre 2026';
+const VERSION = 'v19 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
    ensuite depuis la vue Ajout (DB.matieres fait foi une fois créé).
    ============================================================ */
+/* ============================================================
+   Années scolaires — de l'école primaire au parcours pro.
+   ============================================================ */
+const ANNEES = (function(){
+  const a = ['CM1', 'CM2', '6ème', '5ème', '4ème', '3ème', '2nde', '1ère', 'Terminale'];
+  for (let i = 1; i <= 10; i++) a.push('BAC+' + i);
+  for (let i = 1; i <= 40; i++) a.push('PRO' + i);
+  return a;
+})();
+
+/* ============================================================
+   Rappels à long terme
+   Une fois l'échéancier de l'année scolaire épuisé, le cours
+   revient à la date anniversaire de sa création : une fois par an
+   s'il n'a pas de note de difficulté, une fois par trimestre s'il
+   en a une, et cela pendant 60 ans.
+
+   Ces rappels ne sont PAS tous générés d'avance : 60 ans de rappels
+   trimestriels feraient 240 lignes par cours, ce qui saturerait le
+   stockage local et dépasserait la limite de 1 Mo d'un document
+   Firestore. On génère donc jusqu'à un horizon glissant, complété
+   automatiquement à chaque ouverture de l'application.
+   ============================================================ */
+const RAPPEL_ANNEES = 60;
+const HORIZON_MOIS = 36;
+
+function plusMois(d, n){
+  const r = new Date(d.getTime());
+  const jour = r.getDate();
+  r.setMonth(r.getMonth() + n);
+  if (r.getDate() < jour) r.setDate(0); // 31 janvier + 1 mois → 28/29 février
+  return r;
+}
+
+function aUneNote(c){ return !!(c.commentaire || '').trim(); }
+
+/* Dates de rappel attendues pour un cours, jusqu'à l'horizon. */
+function rappelsAttendus(c){
+  const creation = dDe(c.date);
+  const fin = finAnnee(creation);            // 1er juillet : fin du cycle scolaire
+  const butoir = plusMois(creation, RAPPEL_ANNEES * 12);
+  const horizon = plusMois(aujourdhui(), HORIZON_MOIS);
+  const pas = aUneNote(c) ? 3 : 12;          // mois entre deux rappels
+
+  const sortie = [];
+  // Premier anniversaire strictement après la fin de l'année scolaire
+  let n = 12;
+  while (plusMois(creation, n) <= fin) n += 12;
+  for (; ; n += pas) {
+    const q = plusMois(creation, n);
+    if (q > butoir || q > horizon) break;
+    sortie.push(isoDe(q));
+  }
+  return sortie;
+}
+
+/* Aligne les rappels stockés sur ce qui est attendu : ajoute les
+   manquants, retire ceux devenus caducs (cadence changée par l'ajout
+   ou le retrait d'une note) — sans jamais toucher au passé ni à une
+   révision déjà traitée. */
+function completerRappels(){
+  const ajISO = isoDe(aujourdhui());
+  let change = false;
+  DB.cours.forEach(c => {
+    const attendus = rappelsAttendus(c);
+    const existants = DB.revisions.filter(r => r.cours === c.id && r.rappel);
+
+    attendus.forEach(iso => {
+      if (!existants.some(r => r.date === iso)) {
+        DB.revisions.push({
+          id: c.id + '@' + iso, cours: c.id, rang: 'Rappel', ancrage: false,
+          rappel: true, prevue: iso, date: iso, statut: 'aFaire'
+        });
+        change = true;
+      }
+    });
+
+    existants.forEach(r => {
+      if (r.statut === 'aFaire' && r.date > ajISO && attendus.indexOf(r.date) === -1) {
+        DB.revisions = DB.revisions.filter(x => x.id !== r.id);
+        change = true;
+      }
+    });
+  });
+  if (change) sauver();
+  return change;
+}
+
 const MATIERES_DEFAUT = [
   {code:'ANG', nom:'Anglais',                        c:'#3A56D4'},
   {code:'MAT', nom:'Mathématiques',                  c:'#D14343'},
@@ -605,17 +703,22 @@ const Store = {
   dispo: true,
   lire(){
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivi: null,
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:''}};
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
+      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}, o.reglages || {});
+      /* L'option de masquage de l'ancrage a été retirée de l'interface :
+         on force la valeur, sinon un appareil l'ayant désactivée autrefois
+         resterait bloqué sans aucun moyen de la réactiver. */
+      reglages.afficherAncrage = true;
       return {
         cours: o.cours || [],
         revisions: o.revisions || [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
         suivi: o.suivi || null,
-        reglages: Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', codeSuivi:'', affichage:'personnel', nomChat:''}, o.reglages || {})
+        reglages: reglages
       };
     } catch (e) { this.dispo = false; return defaut; }
   },
@@ -672,10 +775,10 @@ function idCours(code, num, date){ return code + '-' + num + '-' + date; }
 function refCours(c){ return c.code + '-' + c.numero; }
 function trouverCours(id){ return donneesLecture().cours.find(c => c.id === id); }
 
-function ajouterCours(code, numero, dateISO){
+function ajouterCours(code, numero, dateISO, annee){
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
-  DB.cours.push({id, code, numero, date: dateISO, commentaire: ''});
+  DB.cours.push({id, code, numero, date: dateISO, annee: annee || '', commentaire: ''});
   echeancier(dateISO).forEach((e, i) => {
     DB.revisions.push({
       id: id + '#' + i,
@@ -687,6 +790,8 @@ function ajouterCours(code, numero, dateISO){
       statut: 'aFaire'
     });
   });
+  if (annee) DB.reglages.derniereAnnee = annee;
+  completerRappels();
   sauver();
   return true;
 }
@@ -1011,9 +1116,17 @@ function vueAjout(){
     opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>';
   });
 
+  const derniere = DB.reglages.derniereAnnee || '';
+  let optsAnnee = '<option value="">Choisir une année</option>';
+  ANNEES.forEach(a => {
+    optsAnnee += '<option value="' + ech(a) + '"' + (a === derniere ? ' selected' : '') + '>' + ech(a) + '</option>';
+  });
+
   let html =
     '<p class="etiquette">Nouveau cours</p>' +
     '<div class="carte">' +
+      '<div class="champ"><label for="f-annee">Année scolaire</label>' +
+        '<select id="f-annee">' + optsAnnee + '</select></div>' +
       '<div class="champ"><label for="f-mat">Matière</label>' +
         '<select id="f-mat">' + opts + '</select></div>' +
       '<div class="champ"><label for="f-num">Numéro du cours</label>' +
@@ -1022,16 +1135,9 @@ function vueAjout(){
         '<input type="date" id="f-date" value="' + isoDe(aujourdhui()) + '"></div>' +
     '</div>' +
     '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>' +
-    '<label class="check-ligne" style="margin-top:16px">' +
-      '<input type="checkbox" id="f-ancrage"' + (DB.reglages.afficherAncrage ? ' checked' : '') + '>' +
-      '<span>Afficher la révision d\u2019ancrage (samedi)</span></label>' +
-    '<details class="pliable" data-cle="echeancier"' + ouvert('echeancier') + ' style="margin-top:6px">' +
+    '<details class="pliable" data-cle="echeancier"' + ouvert('echeancier') + ' style="margin-top:16px">' +
       '<summary>Échéancier prévisionnel<span class="compte" id="apercu-compte"></span></summary>' +
       '<div class="contenu-pliable"><div class="apercu" id="apercu"></div></div>' +
-    '</details>' +
-    '<details class="pliable" data-cle="matieres"' + ouvert('matieres') + '>' +
-      '<summary>Gérer les matières</summary>' +
-      '<div class="contenu-pliable">' + carteMatieres() + '</div>' +
     '</details>';
 
   if (DB.cours.length) {
@@ -1117,7 +1223,14 @@ function blocParametres(){
     '<div class="contenu-pliable">' +
       '<div class="champ" style="margin-top:12px"><label for="f-prenom">Prénom affiché dans l\u2019agenda</label>' +
         '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
+      '<div class="champ"><label for="f-tolerance">Tolérance « révisé dans les temps » (± jours)</label>' +
+        '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
+        '<span class="aide-champ">Une révision cochée dans cette fenêtre autour de sa date prévue ' +
+        'compte comme faite à l\u2019heure dans les statistiques.</span></div>' +
       blocSynchronisation() +
+      '<p class="etiquette" style="margin-top:6px">Matières</p>' +
+      carteMatieres() +
+      '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
@@ -1421,7 +1534,8 @@ function vueStats(){
   const faites = n('faite'), reportees = n('reportee'),
         annulees = n('annulee'), venir = n('aFaire');
   const traitees = faites + annulees;
-  const taux = traitees ? Math.round(faites / traitees * 100) : 0;
+  const aLheure = dl.revisions.filter(dansLesTemps).length;
+  const taux = traitees ? Math.round(aLheure / traitees * 100) : 0;
 
   let html =
     '<div class="tuiles">' +
@@ -1442,7 +1556,7 @@ function vueStats(){
   if (s7.semaines.length) {
     const labels = s7.semaines.map(libelleAxe);
     html += '<p class="etiquette">Évolution hebdomadaire</p>' +
-      '<div class="carte graf"><p class="graf-titre">Nombre de nouveau cours enregistrés</p>' +
+      '<div class="carte graf"><p class="graf-titre">Nombre de nouveaux cours enregistrés</p>' +
         graphiqueBarres(labels, s7.nouveaux, {couleur: 'var(--accent)'}) + '</div>' +
       '<div class="carte graf"><p class="graf-titre">Cours révisés</p>' +
         graphiqueBarres(labels, s7.revises, {couleur: 'var(--faite)'}) + '</div>' +
@@ -1597,30 +1711,49 @@ function planningImpression(){
               '<span class="pr-rang">' + ech(libelleRang(r.rang)) + '</span></td>' +
             '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
             '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
-            '<td class="pr-report-cel"><i class="pr-case"></i></td>' +
+            '<td class="pr-report-cel"><i class="pr-case"></i><span class="pr-ligne-date"></span></td>' +
           '</tr>';
         });
       }
-      lignes += '<tr><td class="pr-nouveau-cel" colspan="4">Nouveau à encoder&nbsp;: ________________</td></tr>';
+      lignes += '<tr><td class="pr-nouveau-cel" colspan="4">Nouveau à encoder</td></tr>';
     });
     return '<table class="pr-table"><thead><tr>' +
       '<th>Jour</th><th>Cours</th><th>Fait</th><th>Annulé</th><th>Reporté au</th>' +
       '</tr></thead><tbody>' + lignes + '</tbody></table>';
   }
 
+  const titre = 'Cabosse' + (modeLecture() && dl.prenom ? ' · ' + ech(dl.prenom) : '');
   return '<div class="pr-page">' +
-    '<div class="pr-entete">Cabosse' + (modeLecture() && dl.prenom ? ' · ' + ech(dl.prenom) : '') +
-    ' · planning du ' + libelleCourt(jours[0]) +
-    ' au ' + libelleCourt(jours[13]) + '</div>' +
+    '<div class="pr-entete">' +
+      '<img class="pr-logo" src="icone-180.png" alt="">' +
+      '<div class="pr-titres">' +
+        '<div class="pr-nom">' + titre + '</div>' +
+        '<div class="pr-periode">Planning de révision du ' + libelleCourt(jours[0]) +
+        ' au ' + libelleCourt(jours[13]) + '</div>' +
+      '</div>' +
+    '</div>' +
     '<div class="pr-grille">' +
       '<div class="pr-col">' + colonne(jours.slice(0, 7)) + '</div>' +
       '<div class="pr-col">' + colonne(jours.slice(7, 14)) + '</div>' +
-    '</div></div>';
+    '</div>' +
+    '<div class="pr-pied"><span>Cabosse · réactivation mémorielle</span>' +
+    '<span>Imprimé le ' + libelleCourt(isoDe(aujourdhui())) + '</span></div>' +
+  '</div>';
 }
 
+/* window.print() bloque le fil d'exécution jusqu'à l'ouverture de la
+   feuille d'impression iOS : on repeint l'icône en sablier AVANT,
+   via un double requestAnimationFrame qui garantit que le navigateur
+   a réellement affiché le changement avant de se figer. */
 function imprimerPlanning(){
+  const btn = document.getElementById('btn-imprimer');
   document.getElementById('impression').innerHTML = planningImpression();
-  window.print();
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    try { window.print(); }
+    finally { btn.textContent = '🖨️'; btn.disabled = false; }
+  }));
 }
 
 document.getElementById('btn-imprimer').addEventListener('click', imprimerPlanning);
@@ -1730,7 +1863,7 @@ function importerSauvegarde(fichier){
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
       suivi: o.suivi || null,
-      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', codeSuivi: '', affichage: 'personnel', nomChat: ''}, o.reglages || {})
+      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', codeSuivi: '', affichage: 'personnel', nomChat: '', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
     };
     sauver();
     rendre();
@@ -1743,9 +1876,30 @@ function marquer(id, statut){
   const r = DB.revisions.find(x => x.id === id);
   if (!r) return;
   r.statut = statut;
+  /* Date réelle du clic, distincte de la date prévue : c'est elle qui
+     permet de savoir si la révision a été faite dans les temps. */
+  if (statut === 'faite') r.faitLe = isoDe(aujourdhui());
   sauver();
   rendre();
   toast(statut === 'faite' ? 'Révision faite.' : 'Révision annulée.');
+}
+
+/* Une révision compte « dans les temps » si l'écart entre le jour du
+   clic et la date prévue tient dans la tolérance réglée (± N jours).
+   Les révisions cochées avant l'introduction de faitLe n'ont pas cette
+   date : elles sont comptées comme dans les temps, pour ne pas
+   dégrader rétroactivement l'historique. */
+function dansLesTemps(r){
+  if (r.statut !== 'faite') return false;
+  if (!r.faitLe) return true;
+  const tol = toleranceJours();
+  const ecart = Math.abs(Math.round((dDe(r.faitLe) - dDe(r.date)) / 86400000));
+  return ecart <= tol;
+}
+
+function toleranceJours(){
+  const t = parseInt(DB.reglages.tolerance, 10);
+  return (isNaN(t) || t < 0) ? 3 : t;
 }
 
 /* Annule toute la série encore en attente d'un cours (aFaire ou
@@ -1849,7 +2003,11 @@ noteVoile.addEventListener('click', e => { if (e.target === noteVoile) fermerNot
 document.getElementById('note-ok').addEventListener('click', () => {
   if (!noteEnCours) return;
   const c = trouverCours(noteEnCours);
-  if (c) { c.commentaire = document.getElementById('note-texte').value.trim(); sauver(); rendre(); toast('Note enregistrée.'); }
+  if (c) {
+    c.commentaire = document.getElementById('note-texte').value.trim();
+    completerRappels(); // la note change la cadence des rappels : annuelle ↔ trimestrielle
+    sauver(); rendre(); toast('Note enregistrée.');
+  }
   fermerNote();
 });
 
@@ -1894,7 +2052,7 @@ confirmVoile.addEventListener('click', e => {
   if (type === 'faite') {
     const r = DB.revisions.find(x => x.id === actionEnCours.id);
     const c = r && trouverCours(r.cours);
-    if (c) c.commentaire = document.getElementById('confirm-note').value.trim();
+    if (c) { c.commentaire = document.getElementById('confirm-note').value.trim(); completerRappels(); }
     marquer(actionEnCours.id, 'faite');
   }
   else if (type === 'annulee-une')   marquer(actionEnCours.id, 'annulee');
@@ -1990,15 +2148,16 @@ vue.addEventListener('keydown', e => {
 });
 
 vue.addEventListener('change', e => {
-  if (e.target.id === 'f-ancrage') {
-    DB.reglages.afficherAncrage = e.target.checked;
-    sauver();
-    majApercu();
-    return;
-  }
   if (e.target.id === 'f-prenom') {
     DB.reglages.prenom = e.target.value;
     sauver();
+    return;
+  }
+  if (e.target.id === 'f-tolerance') {
+    const v = parseInt(e.target.value, 10);
+    DB.reglages.tolerance = (isNaN(v) || v < 0) ? 3 : Math.min(v, 30);
+    sauver();
+    rendre();
     return;
   }
   if (e.target.id === 'fichier-import' && e.target.files && e.target.files[0]) {
@@ -2009,14 +2168,16 @@ vue.addEventListener('change', e => {
 
 vue.addEventListener('click', e => {
   if (e.target.id !== 'f-ok') return;
+  const annee = document.getElementById('f-annee').value;
   const code = document.getElementById('f-mat').value;
   let num = document.getElementById('f-num').value.replace(/\D/g, '');
   const date = document.getElementById('f-date').value;
+  if (!annee) { toast('Choisis une année scolaire.'); return; }
   if (!code) { toast('Choisis une matière.'); return; }
   if (!num)  { toast('Indique le numéro du cours.'); return; }
   if (!date) { toast('Indique la date du cours.'); return; }
   num = num.padStart(3, '0');
-  if (!ajouterCours(code, num, date)) { toast('Ce cours est déjà enregistré.'); return; }
+  if (!ajouterCours(code, num, date, annee)) { toast('Ce cours est déjà enregistré.'); return; }
   vueActive = 'agenda';
   rendre();
   toast(code + '-' + num + ' planifié.');
@@ -2037,6 +2198,7 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
   rendre();
 });
 
+completerRappels(); // étend l'horizon des rappels à long terme
 rendre();
 verifierRappelJournalier();
 
