@@ -141,6 +141,17 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   overflow:hidden;margin-top:9px}
 .repos-barre-remplie{height:100%;border-radius:99px;transition:width .3s ease,background-color .3s ease}
 .repos-pct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--texte-2);margin-top:4px}
+.repos-scores{display:flex;gap:6px;width:100%;max-width:260px;margin-top:12px}
+.repos-score{flex:1;background:var(--surface-2);border-radius:var(--r-s);padding:8px 4px;
+  text-align:center;position:relative}
+.repos-score-titre{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.03em;color:var(--texte-3)}
+.repos-score b{display:block;font-family:var(--mono);font-size:17px;font-weight:800;
+  margin-top:2px;color:var(--texte)}
+.repos-score.record{background:var(--accent-doux)}
+.repos-score.record b{color:var(--accent)}
+.repos-record{display:block;font-size:8.5px;font-weight:800;color:var(--accent);margin-top:2px;
+  white-space:nowrap}
 .rev.repos.succes .repos-txt{color:var(--faite)}
 .rev.repos.succes .repos-ic{animation:repos-pop .5s ease}
 @keyframes repos-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
@@ -425,7 +436,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limitToLast }
+import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limitToLast, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const FIREBASE_CONFIG = {
@@ -502,6 +513,17 @@ window.SabosseSync = {
       return true;
     } catch (e) { console.error('SABOSSE sync : message impossible', e); return false; }
   },
+  /* Purge côté serveur : les messages restent sinon indéfiniment dans
+     Firestore. Nécessite que les règles autorisent la suppression
+     pour un utilisateur authentifié (voir les instructions fournies). */
+  async purgerMessages(code, ids){
+    if (!this.disponible || !code || !ids.length) return;
+    try {
+      await assurerAuth();
+      await Promise.all(ids.map(id =>
+        deleteDoc(doc(bdd, 'sabosse_chat', code, 'messages', id)).catch(() => {})));
+    } catch (e) { console.error('SABOSSE sync : purge du chat impossible', e); }
+  },
   suivreChat(code, callback){
     if (!this.disponible || !code) return;
     if (arreterEcouteChat) arreterEcouteChat();
@@ -533,7 +555,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v23 · 5 septembre 2026';
+const VERSION = 'v24 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -820,6 +842,8 @@ function donneesLecture(){
    propre profil personnel, pleinement éditable, à un instant donné. */
 function modeLecture(){ return DB.reglages.affichage !== 'personnel'; }
 
+let derniereSyncEnvoi = null, echecsSyncConsecutifs = 0;
+
 function sauver(){
   Store.ecrire(DB);
   if (!modeLecture()) enregistrerInstantane(); // jamais pour un profil suivi : ce n'est pas nos données
@@ -828,6 +852,15 @@ function sauver(){
     window.SabosseSync.envoyer(DB.reglages.codePartage, {
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
       reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
+    }).then(ok => {
+      /* Un échec d'envoi était jusque-là totalement silencieux — c'est
+         très probablement ce qui a causé le bug de suivi rapporté :
+         rien n'avertissait qu'une mise à jour n'était pas partie. */
+      if (ok) { derniereSyncEnvoi = Date.now(); echecsSyncConsecutifs = 0; }
+      else if (++echecsSyncConsecutifs === 3) {
+        toast('Le partage ne se synchronise plus — vérifie ta connexion.');
+      }
+      if (vueActive === 'reglages') rendre();
     });
   }
 }
@@ -1135,11 +1168,33 @@ function carteRepos(dimancheISO){
       '<span class="repos-pct">' + pct + '&nbsp;%</span>'
     : '';
 
+  /* Trois scores affichés côte à côte, chacun comparé à son propre
+     historique récent pour détecter un éventuel record. */
+  const histoSem = historiqueScores(dl, 'semaine', 8);
+  const histoMois = historiqueScores(dl, 'mois', 6);
+  const histoAn = historiqueScores(dl, 'annee', 4);
+  const scoreSem = histoSem[histoSem.length - 1];
+  const scoreMois = histoMois[histoMois.length - 1];
+  const scoreAn = histoAn[histoAn.length - 1];
+
+  function carteScore(titre, s, record){
+    return '<div class="repos-score' + (record ? ' record' : '') + '">' +
+      '<span class="repos-score-titre">' + titre + '</span>' +
+      '<b>' + (s.score > 0 ? '+' : '') + s.score + '</b>' +
+      (record ? '<span class="repos-record">🏅 RECORD !</span>' : '') +
+    '</div>';
+  }
+  const scores = '<div class="repos-scores">' +
+    carteScore('Semaine', scoreSem, estRecord(histoSem)) +
+    carteScore('Mois', scoreMois, estRecord(histoMois)) +
+    carteScore('Année', scoreAn, estRecord(histoAn)) +
+  '</div>';
+
   return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
     '<div class="repos-corps">' +
       '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
       '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
-      detail + barre +
+      detail + barre + scores +
     '</div></article>';
 }
 
@@ -1451,7 +1506,9 @@ function blocSynchronisation(){
       'Ce téléphone encode et partage. À montrer à qui veut te suivre :</p>' +
       '<div class="qr-bloc">' + genererQR(lien) + '</div>' +
       '<div class="sync-code">' + ech(DB.reglages.codePartage) + '</div>' +
+      '<p class="aide-champ" style="margin-top:6px">Dernier envoi réussi : ' + libelleDepuis(derniereSyncEnvoi) + '</p>' +
       '<button class="bouton discret" data-act="sync-copier" style="margin-top:8px">Copier le code</button>' +
+      '<button class="bouton discret" data-act="sync-actualiser" style="margin-top:8px">Renvoyer maintenant</button>' +
       '<button class="bouton discret" data-act="sync-desactiver" style="margin-top:8px">Désactiver le partage</button>';
   } else {
     if (DB.suivis.length) {
@@ -1459,9 +1516,10 @@ function blocSynchronisation(){
       DB.suivis.forEach(s => {
         const nom = (s.reglages && s.reglages.prenom) || 'Sans nom';
         html += '<div class="suivi-ligne"><div class="txt"><b>' + ech(nom) + '</b>' +
-          '<span>' + ech(s.code) + '</span></div>' +
+          '<span>Reçu ' + libelleDepuis(s.recuLe) + '</span></div>' +
           '<button data-act="sync-retirer" data-id="' + ech(s.code) + '">Retirer</button></div>';
       });
+      html += '<button class="bouton discret" data-act="sync-actualiser" style="margin-top:4px">Actualiser maintenant</button>';
     } else {
       html += '<p style="font-size:12.5px;color:var(--texte-2);margin:0 0 10px">' +
         'Ce téléphone encode-t-il les cours, ou suit-il ceux d\u2019un ou plusieurs enfants ?</p>' +
@@ -1519,6 +1577,89 @@ function smileyTaux(pct){
 /* Quatre indicateurs, semaine par semaine, calés sur la date de
    révision (r.date) — celle qui compte aujourd'hui, y compris après
    un report. Fenêtre bornée à 12 semaines pour rester lisible. */
+/* ============================================================
+   Score de motivation — semaine / mois / année scolaire.
+
+   Formule (choix à discuter avec l'utilisateur, voir la réponse) :
+     + 1 point par nouveau cours encodé dans la période
+     + (révisions validées dans la période)²
+     - 1 point par cours reporté (compté sur sa date prévue d'origine)
+     - (cours annulés OU encore non validés 3 jours après leur date
+        prévue)²
+
+   Tout est recalculé en direct depuis les données actuelles, jamais
+   figé : une révision faite en retard peut encore améliorer le score
+   d'une semaine passée si on la consulte à nouveau plus tard.
+   ============================================================ */
+const MALUS_RETARD_JOURS = 3; // fixe, indépendant de la tolérance réglable ailleurs
+
+function calculerScore(dl, debutISO, finISO){
+  const nouveauxCours = dl.cours.filter(c => c.date >= debutISO && c.date <= finISO).length;
+
+  const revisionsPeriode = dl.revisions.filter(r => r.date >= debutISO && r.date <= finISO);
+  const validees = revisionsPeriode.filter(r => r.statut === 'faite').length;
+
+  const reportees = dl.revisions.filter(r =>
+    r.statut === 'reportee' && r.prevue >= debutISO && r.prevue <= finISO).length;
+
+  const ajISO = isoDe(aujourdhui());
+  const malusEligibles = revisionsPeriode.filter(r => {
+    if (r.statut === 'annulee') return true;
+    if (r.statut === 'aFaire' || r.statut === 'reportee') {
+      return Math.round((dDe(ajISO) - dDe(r.date)) / 86400000) > MALUS_RETARD_JOURS;
+    }
+    return false;
+  }).length;
+
+  const score = nouveauxCours + validees * validees - reportees - malusEligibles * malusEligibles;
+  return {score, nouveauxCours, validees, reportees, malusEligibles};
+}
+
+function limitesSemaine(decalage){
+  const debut = plus(lundiDe(aujourdhui()), -7 * decalage);
+  return {debut: isoDe(debut), fin: isoDe(plus(debut, 6)), label: libelleAxe(isoDe(debut))};
+}
+function limitesMois(decalage){
+  const auj = aujourdhui();
+  const debut = new Date(auj.getFullYear(), auj.getMonth() - decalage, 1, 12, 0, 0, 0);
+  const fin = new Date(debut.getFullYear(), debut.getMonth() + 1, 0, 12, 0, 0, 0);
+  return {debut: isoDe(debut), fin: isoDe(fin), label: MOIS[debut.getMonth()].slice(0, 3)};
+}
+function limitesAnneeScolaire(decalage){
+  const auj = aujourdhui();
+  const sept1 = new Date(auj.getFullYear(), 8, 1, 12, 0, 0, 0);
+  const debutCourante = auj >= sept1 ? sept1 : new Date(auj.getFullYear() - 1, 8, 1, 12, 0, 0, 0);
+  const debut = new Date(debutCourante.getFullYear() - decalage, 8, 1, 12, 0, 0, 0);
+  const fin = finAnnee(debut);
+  return {debut: isoDe(debut), fin: isoDe(fin), label: debut.getFullYear() + '-' + (debut.getFullYear() + 1 - 2000)};
+}
+const LIMITES_PAR_UNITE = {semaine: limitesSemaine, mois: limitesMois, annee: limitesAnneeScolaire};
+
+/* Historique des scores d'une unité de temps donnée, du plus ancien
+   au plus récent — sert à la fois aux graphiques et à la détection
+   de record. */
+function historiqueScores(dl, unite, nbPeriodes){
+  const limites = LIMITES_PAR_UNITE[unite];
+  const sortie = [];
+  for (let i = nbPeriodes - 1; i >= 0; i--) {
+    const p = limites(i);
+    sortie.push(Object.assign({}, p, calculerScore(dl, p.debut, p.fin)));
+  }
+  return sortie;
+}
+
+/* Record : le score de la période en cours égale-t-il ou dépasse-t-il
+   tout ce qu'on peut voir dans la fenêtre affichée par les graphiques ?
+   Une vraie mémoire de tous les temps demanderait de stocker chaque
+   score au fil des semaines, ce que l'app ne fait pas — cette
+   comparaison reste donc bornée à l'historique visible. */
+function estRecord(historique){
+  if (historique.length < 2) return false;
+  const actuel = historique[historique.length - 1].score;
+  if (actuel <= 0) return false;
+  return historique.slice(0, -1).every(p => actuel > p.score);
+}
+
 function calculerSemaines(){
   const dl = donneesLecture();
   if (!dl.cours.length) return {semaines:[], nouveaux:[], revises:[], pourcentages:[], annules:[]};
@@ -1578,6 +1719,41 @@ function graphiqueBarres(labels, valeurs, options){
   });
   return '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
     '<line x1="0" y1="' + (margeHaut + zoneH) + '" x2="' + larg + '" y2="' + (margeHaut + zoneH) +
+    '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
+}
+
+/* Variante pour des valeurs qui peuvent être négatives (le score peut
+   descendre sous zéro) : une ligne de zéro au milieu, les barres
+   montent au-dessus en vert, descendent en dessous en rouge. */
+function graphiqueScores(labels, valeurs){
+  const larg = 640, haut = 140, margeHaut = 20, margeBas = 26;
+  const zoneH = haut - margeHaut - margeBas;
+  const n = Math.max(valeurs.length, 1);
+  const pas = larg / n;
+  const largBarre = Math.min(30, pas * 0.55);
+  const maxV = Math.max(1, Math.max.apply(null, valeurs));
+  const minV = Math.min(0, Math.min.apply(null, valeurs));
+  const etendue = (maxV - minV) || 1;
+  const yZero = margeHaut + zoneH * (maxV / etendue);
+  let barres = '';
+  valeurs.forEach((v, i) => {
+    const x = i * pas + (pas - largBarre) / 2;
+    const yValeur = margeHaut + zoneH * (maxV - v) / etendue;
+    const y = v >= 0 ? yValeur : yZero;
+    const h = Math.abs(yZero - yValeur);
+    const couleur = v > 0 ? 'var(--faite)' : (v < 0 ? 'var(--annulee)' : 'var(--texte-3)');
+    barres += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + largBarre.toFixed(1) +
+      '" height="' + h.toFixed(1) + '" rx="3" fill="' + couleur + '"></rect>';
+    const yTexte = v >= 0 ? y - 6 : y + h + 13;
+    barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + yTexte.toFixed(1) +
+      '" text-anchor="middle" font-size="13" font-weight="700" font-family="var(--mono)" fill="var(--texte-2)">' +
+      v + '</text>';
+    barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (haut - 6) +
+      '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--texte-3)">' +
+      ech(labels[i]) + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
+    '<line x1="0" y1="' + yZero.toFixed(1) + '" x2="' + larg + '" y2="' + yZero.toFixed(1) +
     '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
 }
 
@@ -1653,6 +1829,19 @@ function libelleHeure(ts){
   return meme ? (hh + ':' + mm) : (String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + ' ' + hh + ':' + mm);
 }
 
+/* « il y a X » relatif — sert d'indicateur de fraîcheur pour la
+   synchronisation, pour qu'un blocage redevienne visible au lieu
+   d'être silencieux. */
+function libelleDepuis(ts){
+  if (!ts) return 'jamais';
+  const ecartMin = Math.round((Date.now() - ts) / 60000);
+  if (ecartMin < 1) return 'à l\u2019instant';
+  if (ecartMin < 60) return 'il y a ' + ecartMin + ' min';
+  const ecartH = Math.round(ecartMin / 60);
+  if (ecartH < 24) return 'il y a ' + ecartH + ' h';
+  return 'il y a ' + Math.round(ecartH / 24) + ' j';
+}
+
 function demarrerEcouteChat(){
   const code = codeFamille();
   if (!window.SabosseSync || !window.SabosseSync.disponible || !code) return;
@@ -1672,7 +1861,26 @@ function demarrerEcouteChat(){
       }
     });
     if (vueActive === 'chat') rendre();
+    purgerChatAncien(code);
   });
+}
+
+/* Purge les messages de plus de 30 jours, et — au cas où quelqu'un
+   discuterait beaucoup — tout ce qui dépasse un volant de 150
+   messages, même plus récents. N'importe quel appareil ouvrant le
+   chat participe au ménage ; supprimer un message déjà supprimé ne
+   pose aucun problème. */
+const CHAT_AGE_MAX_MS = 30 * 24 * 3600000;
+const CHAT_VOLUME_MAX = 150;
+
+function purgerChatAncien(code){
+  if (!messagesChat.length) return;
+  const limiteAge = Date.now() - CHAT_AGE_MAX_MS;
+  const aSupprimer = new Set(messagesChat.filter(m => m.quand < limiteAge).map(m => m.id));
+  if (messagesChat.length > CHAT_VOLUME_MAX) {
+    messagesChat.slice(0, messagesChat.length - CHAT_VOLUME_MAX).forEach(m => aSupprimer.add(m.id));
+  }
+  if (aSupprimer.size) window.SabosseSync.purgerMessages(code, Array.from(aSupprimer));
 }
 
 function vueChat(){
@@ -1809,6 +2017,17 @@ function vueStats(){
       '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Nombre de cours annulés</p>' +
         graphiqueBarres(labels, s7.annules, {couleur: 'var(--annulee)'}) + '</div>';
   }
+
+  const histoSemStats = historiqueScores(dl, 'semaine', 8);
+  const histoMoisStats = historiqueScores(dl, 'mois', 6);
+  const histoAnStats = historiqueScores(dl, 'annee', 4);
+  html += '<p class="etiquette" style="margin-top:20px">Score</p>' +
+    '<div class="carte graf"><p class="graf-titre">Score hebdomadaire</p>' +
+      graphiqueScores(histoSemStats.map(p => p.label), histoSemStats.map(p => p.score)) + '</div>' +
+    '<div class="carte graf"><p class="graf-titre">Score mensuel</p>' +
+      graphiqueScores(histoMoisStats.map(p => p.label), histoMoisStats.map(p => p.score)) + '</div>' +
+    '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Score par année scolaire</p>' +
+      graphiqueScores(histoAnStats.map(p => p.label), histoAnStats.map(p => p.score)) + '</div>';
 
   const lignes = [];
   dl.matieres.forEach(m => {
@@ -2048,6 +2267,7 @@ function demarrerEcouteSuivi(code){
     s.revisions = donnees.revisions || [];
     s.matieres = (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice();
     s.reglages = donnees.reglages || {};
+    s.recuLe = Date.now(); // horodatage visible, pour repérer un suivi qui ne bouge plus
     Store.ecrire(DB); // mise en cache locale pour la lecture hors-ligne, sans repousser vers Firestore
     rendre();
   });
@@ -2448,6 +2668,12 @@ vue.addEventListener('click', e => {
       toast('Copie indisponible : sélectionne le texte manuellement.');
     }
   }
+  else if (act === 'sync-actualiser') {
+    if (DB.reglages.role === 'source') sauver();
+    else demarrerToutesLesEcoutesSuivi();
+    demarrerEcouteChat();
+    toast('Actualisation demandée.');
+  }
   else if (act === 'sync-desactiver') {
     if (confirm('Désactiver le partage sur cet appareil ?')) {
       if (window.SabosseSync) { window.SabosseSync.arreter(); window.SabosseSync.arreterChat(); }
@@ -2586,6 +2812,20 @@ window.addEventListener('sabosse-sync-pret', () => {
    (téléphone hors réseau), on rattrape avec l'état complet actuel
    plutôt que d'attendre la prochaine action de l'utilisateur. */
 window.addEventListener('online', () => {
+  if (DB.reglages.role === 'source') sauver();
+  else if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
+  demarrerEcouteChat();
+});
+
+/* Bug rapporté : l'affichage ne reflétait pas les changements distants
+   après une mise en arrière-plan prolongée. Sur iOS, l'app peut être
+   suspendue pendant que l'écran est verrouillé ou qu'on change d'app,
+   ce qui peut figer la connexion temps réel à Firestore sans qu'elle
+   ne se relance seule au retour. On force une re-souscription complète
+   chaque fois que l'app redevient visible, plutôt que de dépendre
+   uniquement de la reconnexion interne du SDK. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
   if (DB.reglages.role === 'source') sauver();
   else if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
   demarrerEcouteChat();
