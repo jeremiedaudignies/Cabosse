@@ -72,7 +72,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
-#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);
+#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
 #barre button{position:relative;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
   color:var(--texte-3);transition:color .15s}
@@ -347,6 +347,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter un cours</span></button>
     <button data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
+    <button data-vue="reglages"><span class="ic">⚙️</span><span class="lb">Réglages</span></button>
   </nav>
 </div>
 <div id="voile"><div class="feuille">
@@ -532,7 +533,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v20 · 5 septembre 2026';
+const VERSION = 'v22 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -742,16 +743,21 @@ const Store = {
   dispo: true,
   lire(){
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}};
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:''}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
-      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', nomChat:'', tolerance:3, derniereAnnee:''}, o.reglages || {});
+      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:''}, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
          resterait bloqué sans aucun moyen de la réactiver. */
       reglages.afficherAncrage = true;
+      /* Le nom du chat et le prénom de l'agenda ont fusionné en un seul
+         champ : si un ancien nomChat existait mais pas de prénom, on le
+         récupère pour ne rien perdre. */
+      if (!reglages.prenom && o.reglages && o.reglages.nomChat) reglages.prenom = o.reglages.nomChat;
+      delete reglages.nomChat;
 
       /* Migration : DB.suivi (un seul enfant) devient DB.suivis (plusieurs).
          L'ancien reglages.codeSuivi devient le code du premier élément. */
@@ -986,6 +992,7 @@ function rendre(){
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { chatNonLu = false; vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; }
+  else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
   else vue.innerHTML = vueStats();
   if (vueActive !== 'chat') vue.scrollTop = 0;
   majBascule();
@@ -1263,8 +1270,7 @@ function vueAjout(){
         '<i class="puce" style="background:' + m.c + '"></i>' +
         '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
         '<span>' + ech(m.nom) + ' · encodé le ' + libelleCourt(c.date) +
-        ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div>' +
-        '<button class="sup" data-act="suppr" data-id="' + c.id + '">✕</button></div>';
+        ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div></div>';
     });
   }
   return html;
@@ -1272,6 +1278,32 @@ function vueAjout(){
 
 /* Liste, ajout, édition et suppression des matières. Le code n'est
    modifiable qu'à la création : il sert d'identifiant aux cours. */
+/* Liste des cours, avec les deux actions qui touchent toute une
+   série d'un coup — désormais réservées aux Paramètres avancés,
+   retirées de l'Agenda et de l'onglet Ajouter pour éviter un geste
+   accidentel. Annuler reste réversible (Historique → Réactiver) ;
+   Supprimer ne l'est pas. */
+function carteCoursEnregistres(){
+  if (!DB.cours.length) {
+    return '<p class="aide-champ">Aucun cours enregistré pour l\u2019instant.</p>';
+  }
+  const tries = DB.cours.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+  let html = '<div class="carte" style="padding:5px 15px">';
+  tries.forEach(c => {
+    const m = matiereDe(c.code);
+    const reste = DB.revisions.filter(r =>
+      r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
+    html += '<div class="hist-l">' +
+      '<i class="puce" style="background:' + m.c + '"></i>' +
+      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+      '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span></div>' +
+      '<button data-act="cours-annuler-serie" data-id="' + c.id + '">Annuler la série</button>' +
+      '<button class="sup" data-act="suppr" data-id="' + c.id + '">✕</button></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function carteMatieres(){
   let html = '<div class="carte" style="padding:5px 15px">';
   DB.matieres.forEach(m => {
@@ -1362,15 +1394,15 @@ function blocParametres(){
   return '<details class="pliable" data-cle="parametres"' + ouvert('parametres') + ' style="margin-top:20px">' +
     '<summary>Paramètres avancés</summary>' +
     '<div class="contenu-pliable">' +
-      '<div class="champ" style="margin-top:12px"><label for="f-prenom">Prénom affiché dans l\u2019agenda</label>' +
-        '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
-      '<div class="champ"><label for="f-tolerance">Tolérance « révisé dans les temps » (± jours)</label>' +
+      '<div class="champ" style="margin-top:12px"><label for="f-tolerance">Tolérance « révisé dans les temps » (± jours)</label>' +
         '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
         '<span class="aide-champ">Une révision cochée dans cette fenêtre autour de sa date prévue ' +
         'compte comme faite à l\u2019heure dans les statistiques.</span></div>' +
       blocSynchronisation() +
       '<p class="etiquette" style="margin-top:6px">Matières</p>' +
       carteMatieres() +
+      '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
+      carteCoursEnregistres() +
       '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
@@ -1381,8 +1413,24 @@ function blocParametres(){
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">Il y a 24 h</button>' +
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">Il y a 7 j</button>' +
       '</div>' +
-      '<button class="bouton discret" data-act="maj" style="margin-top:14px">Forcer la mise à jour</button>' +
     '</div></details>';
+}
+
+/* --- Réglages (onglet) --------------------------------------
+   Aide, prénom et mise à jour restent libres d'accès — ton fils
+   doit pouvoir les utiliser sans le mot de passe. Synchronisation,
+   matières et sauvegarde restent protégées, dans blocParametres(). */
+function vueReglages(){
+  return blocAide() +
+    '<p class="etiquette" style="margin-top:20px">Général</p>' +
+    '<div class="carte">' +
+      '<div class="champ" style="margin-bottom:0"><label for="f-prenom">Prénom utilisé dans l\u2019agenda et le Chat</label>' +
+        '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
+    '</div>' +
+    '<button class="bouton discret" data-act="maj" style="margin-top:10px">Forcer la mise à jour</button>' +
+    blocParametres() +
+    '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
+    'Cabosse ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
 }
 
 /* Un appareil « source » pousse ses données ; les autres peuvent
@@ -1614,7 +1662,7 @@ function demarrerEcouteChat(){
     /* Ne notifie que les messages réellement nouveaux depuis le
        dernier instantané — jamais tout l'historique à la première
        connexion — et jamais mes propres messages. */
-    const monNom = (DB.reglages.nomChat || '').trim();
+    const monNom = (DB.reglages.prenom || '').trim();
     const nouveaux = messagesChat.length ? msgs.filter(m => !messagesChat.some(x => x.id === m.id)) : [];
     messagesChat = msgs;
     nouveaux.forEach(m => {
@@ -1637,7 +1685,7 @@ function vueChat(){
     return '<div class="vide"><div class="gros">💬</div><p><b>Chat indisponible.</b></p>' +
       '<p>Configure d\u2019abord la synchronisation, dans Statistiques → Paramètres avancés.</p></div>';
   }
-  const nom = (DB.reglages.nomChat || '').trim();
+  const nom = (DB.reglages.prenom || '').trim();
   const banniereNotif = (etatNotifications() === 'default')
     ? '<button type="button" class="notif-banniere" data-act="notif-activer">' +
         '<span class="emo">🔔</span> Activer le son des notifications</button>'
@@ -1668,7 +1716,7 @@ function vueChat(){
 }
 
 async function envoyerMessageChat(){
-  const nom = (DB.reglages.nomChat || '').trim();
+  const nom = (DB.reglages.prenom || '').trim();
   if (!nom) { ouvrirChatNom(); return; }
   const champ = document.getElementById('chat-texte');
   if (!champ) return;
@@ -1688,7 +1736,7 @@ async function envoyerMessageChat(){
 
 const chatnomVoile = document.getElementById('chatnom-voile');
 function ouvrirChatNom(){
-  document.getElementById('chatnom-champ').value = DB.reglages.nomChat || '';
+  document.getElementById('chatnom-champ').value = DB.reglages.prenom || '';
   chatnomVoile.classList.add('on');
   setTimeout(() => document.getElementById('chatnom-champ').focus(), 60);
 }
@@ -1698,7 +1746,7 @@ chatnomVoile.addEventListener('click', e => { if (e.target === chatnomVoile) fer
 document.getElementById('chatnom-ok').addEventListener('click', () => {
   const val = document.getElementById('chatnom-champ').value.trim();
   if (!val) { toast('Choisis un nom.'); return; }
-  DB.reglages.nomChat = val;
+  DB.reglages.prenom = val;
   sauver();
   fermerChatNom();
   rendre();
@@ -1710,8 +1758,7 @@ function vueStats(){
   if (!dl.revisions.length) {
     return '<div class="vide"><div class="gros">📊</div>' +
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
-      '<p>Les statistiques arrivent avec le premier cours.</p></div>' +
-      blocAide() + blocParametres();
+      '<p>Les statistiques arrivent avec le premier cours.</p></div>';
   }
   const n = s => dl.revisions.filter(r => r.statut === s).length;
   const faites = n('faite'), reportees = n('reportee'),
@@ -1834,12 +1881,6 @@ function vueStats(){
     html += '</div></details>';
   }
 
-  html += blocAide();
-  html += blocParametres();
-
-  html +=
-    '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
-    'Cabosse ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
   return html;
 }
 
@@ -2134,7 +2175,7 @@ function importerSauvegarde(fichier){
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
       suivis: suivis,
-      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', affichage: 'personnel', nomChat: '', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
+      reglages: Object.assign({afficherAncrage: true, prenom: '', role: 'aucun', codePartage: '', affichage: 'personnel', tolerance: 3, derniereAnnee: ''}, o.reglages || {})
     };
     if (DB.reglages.affichage === 'suivi' && suivis[0]) DB.reglages.affichage = suivis[0].code;
     sauver();
@@ -2178,13 +2219,17 @@ function toleranceJours(){
 
 /* Annule toute la série encore en attente d'un cours (aFaire ou
    reportée) — les révisions déjà faites ne sont jamais touchées. */
+/* Annule toute la série encore en attente d'un cours (aFaire ou
+   reportée) — les révisions déjà faites ne sont jamais touchées.
+   Accepte indifféremment l'id d'une révision de ce cours (Agenda,
+   historique) ou l'id du cours lui-même (Paramètres avancés). */
 function annulerSerie(id){
   const r = DB.revisions.find(x => x.id === id);
-  if (!r) return;
+  const coursId = r ? r.cours : id;
   const n = DB.revisions.filter(x =>
-    x.cours === r.cours && (x.statut === 'aFaire' || x.statut === 'reportee')).length;
+    x.cours === coursId && (x.statut === 'aFaire' || x.statut === 'reportee')).length;
   DB.revisions.forEach(x => {
-    if (x.cours === r.cours && (x.statut === 'aFaire' || x.statut === 'reportee')) x.statut = 'annulee';
+    if (x.cours === coursId && (x.statut === 'aFaire' || x.statut === 'reportee')) x.statut = 'annulee';
   });
   sauver();
   rendre();
@@ -2209,6 +2254,10 @@ function modifierMatiere(code, nom, couleur){
   if (!m) return;
   nom = nom.trim();
   if (!nom) { toast('Le nom ne peut pas être vide.'); return; }
+  const idsCours = DB.cours.filter(c => c.code === code).map(c => c.id);
+  const nbRevisions = DB.revisions.filter(r => idsCours.indexOf(r.cours) !== -1).length;
+  if (nbRevisions > 0 && !confirm('ATTENTION : vous allez modifier ' + nbRevisions +
+      ' révision' + (nbRevisions > 1 ? 's' : '') + ', confirmez-vous ?')) return;
   m.nom = nom;
   m.c = couleur;
   matiereEnEdition = null;
@@ -2306,10 +2355,11 @@ function demanderConfirmation(id, statut){
   } else {
     document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
     zoneNote.style.display = 'none';
-    actions.innerHTML =
-      '<button class="bouton discret" data-confirm="annulee-une">Cette révision seule</button>' +
-      '<button class="bouton principal" style="background:var(--annulee);box-shadow:none" ' +
-      'data-confirm="annulee-serie">Toute la série ' + (c ? ech(refCours(c)) : '') + '</button>';
+    /* Annuler toute la série reste possible, mais uniquement depuis
+       les Paramètres avancés (protégés par mot de passe) : ici, on ne
+       propose que la révision seule, pour éviter un geste accidentel. */
+    actions.innerHTML = '<button class="bouton principal" style="background:var(--annulee);box-shadow:none" ' +
+      'data-confirm="annulee-une">Confirmer</button>';
   }
   document.getElementById('confirm-info').textContent =
     (c ? refCours(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date);
@@ -2330,7 +2380,6 @@ confirmVoile.addEventListener('click', e => {
     marquer(actionEnCours.id, 'faite');
   }
   else if (type === 'annulee-une')   marquer(actionEnCours.id, 'annulee');
-  else if (type === 'annulee-serie') annulerSerie(actionEnCours.id);
   fermerConfirmation();
 });
 
@@ -2417,6 +2466,13 @@ vue.addEventListener('click', e => {
     const nom = document.getElementById('nm-nom').value;
     const couleur = document.getElementById('nm-couleur').value;
     ajouterMatiere(code, nom, couleur);
+  }
+  else if (act === 'cours-annuler-serie') {
+    const c = trouverCours(id);
+    if (c && confirm('Annuler toute la série ' + refCours(c) + ' encore en attente ? ' +
+        'Réversible depuis l\u2019historique.')) {
+      annulerSerie(id);
+    }
   }
   else if (act === 'suppr') {
     const c = trouverCours(id);
