@@ -118,6 +118,9 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev.rev-jour{background:rgba(179,58,30,.3);border-color:rgba(179,58,30,.35)}
 .rev .haut{display:flex;align-items:center;gap:10px}
 .rev .code{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.01em}
+span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--texte-2);background:var(--surface-2);border-radius:99px;padding:2px 7px;
+  margin-left:5px;vertical-align:middle;white-space:nowrap;width:auto}
 .rev .matiere{font-size:12.5px;color:var(--texte-2);flex:1;min-width:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .puce{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
@@ -173,6 +176,9 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-l .txt{flex:1;min-width:0}
 .hist-l .txt b{display:block;font-family:var(--mono);font-size:13px;font-weight:700}
 .hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
+select.annee-select{display:block!important;width:auto!important;margin-top:5px;padding:5px 26px 5px 8px!important;
+  font-size:11px;border-radius:99px;background-color:var(--surface-2);border-color:transparent;
+  background-position:right 8px center!important;background-size:12px!important}
 .hist-l button{flex:0 0 auto;padding:7px 12px;border-radius:99px;background:var(--surface-2);
   font-size:11.5px;font-weight:600;color:var(--texte-2)}
 .hist-l button.sup{color:var(--annulee);padding:7px 10px;font-size:17.25px}
@@ -565,7 +571,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v25 · 5 septembre 2026';
+const VERSION = 'v27 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -775,12 +781,12 @@ const Store = {
   dispo: true,
   lire(){
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:''}};
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusque:0}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
-      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:''}, o.reglages || {});
+      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusque:0}, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
          resterait bloqué sans aucun moyen de la réactiver. */
@@ -933,6 +939,18 @@ function restaurerInstantane(decalageMs){
 
 function idCours(code, num, date){ return code + '-' + num + '-' + date; }
 function refCours(c){ return c.code + '-' + c.numero; }
+
+/* Pastille d'année scolaire, affichée partout où le code d'un cours
+   est rappelé — absente en douceur si le cours n'en a pas (données
+   créées avant l'ajout du sélecteur d'année). */
+function pastilleAnnee(c){
+  return c.annee ? '<span class="pastille-annee">' + ech(c.annee) + '</span>' : '';
+}
+/* Même information, en texte simple, pour les contextes qui ne
+   peuvent pas afficher de balise (confirm(), toast(), textContent). */
+function libelleAnnee(c){
+  return c.annee ? ' · ' + c.annee : '';
+}
 function trouverCours(id){ return donneesLecture().cours.find(c => c.id === id); }
 
 function ajouterCours(code, numero, dateISO, annee){
@@ -1037,7 +1055,7 @@ function rendre(){
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
-  else if (vueActive === 'chat') { chatNonLu = false; vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; }
+  else if (vueActive === 'chat') { chatNonLu = false; vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
   else vue.innerHTML = vueStats();
   if (vueActive !== 'chat') vue.scrollTop = 0;
@@ -1131,7 +1149,7 @@ function carteRevision(r, aujourdhuiCarte){
   return '<article class="rev' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
     '<div class="haut">' +
       '<i class="puce" style="background:' + m.c + '"></i>' +
-      '<b class="code">' + ech(refCours(c)) + '</b>' +
+      '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
       '<span class="matiere">' + ech(m.nom) + '</span>' +
       '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(libelleRang(r.rang)) + '</span>' +
     '</div>' +
@@ -1336,7 +1354,7 @@ function vueAjout(){
         r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
       html += '<div class="ligne">' +
         '<i class="puce" style="background:' + m.c + '"></i>' +
-        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
         '<span>' + ech(m.nom) + ' · encodé le ' + libelleCourt(c.date) +
         ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div></div>';
     });
@@ -1361,10 +1379,16 @@ function carteCoursEnregistres(){
     const m = matiereDe(c.code);
     const reste = DB.revisions.filter(r =>
       r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
+    let optsAnnee = '<option value="">Année \u2014</option>';
+    ANNEES.forEach(a => {
+      optsAnnee += '<option value="' + ech(a) + '"' + (a === c.annee ? ' selected' : '') + '>' + ech(a) + '</option>';
+    });
     html += '<div class="hist-l">' +
       '<i class="puce" style="background:' + m.c + '"></i>' +
-      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
-      '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span></div>' +
+      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
+      '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span>' +
+      '<select class="annee-select" data-act="cours-annee" data-id="' + c.id + '">' + optsAnnee + '</select>' +
+      '</div>' +
       '<button data-act="cours-annuler-serie" data-id="' + c.id + '">Annuler la série</button>' +
       '<button class="sup" data-act="suppr" data-id="' + c.id + '">✕</button></div>';
   });
@@ -1866,21 +1890,46 @@ function demarrerEcouteChat(){
   window.SabosseSync.suivreChat(code, (msgs, erreur) => {
     if (erreur) { toast('Connexion au chat interrompue.'); return; }
     if (!msgs) return;
-    /* Ne notifie que les messages réellement nouveaux depuis le
-       dernier instantané — jamais tout l'historique à la première
-       connexion — et jamais mes propres messages. */
     const monNom = (DB.reglages.prenom || '').trim();
-    const nouveaux = messagesChat.length ? msgs.filter(m => !messagesChat.some(x => x.id === m.id)) : [];
+    const vuJusque = DB.reglages.chatVuJusque || 0;
+
+    if (!vuJusque && msgs.length) {
+      /* Toute première connexion à ce chat, jamais tout l'historique
+         existant : on marque simplement tout comme déjà vu. */
+      DB.reglages.chatVuJusque = Math.max.apply(null, msgs.map(m => m.quand || 0));
+      Store.ecrire(DB);
+    } else {
+      /* Repère persistant plutôt qu'un simple « messagesChat était
+         vide » : ce dernier repart à zéro à chaque rechargement de
+         l'app, ce qui, sur iPhone, où une PWA est régulièrement
+         déchargée de la mémoire, empêchait la notification de tout
+         message reçu pendant que l'app n'était pas en cours
+         d'exécution — la panne rapportée. */
+      const nouveaux = msgs.filter(m => (m.quand || 0) > vuJusque && m.auteur !== monNom);
+      nouveaux.forEach(m => notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id}));
+      if (nouveaux.length && vueActive !== 'chat') { chatNonLu = true; majBadgeChat(); }
+    }
+
     messagesChat = msgs;
-    nouveaux.forEach(m => {
-      if (m.auteur !== monNom) {
-        notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id});
-        if (vueActive !== 'chat') { chatNonLu = true; majBadgeChat(); }
-      }
-    });
-    if (vueActive === 'chat') rendre();
+    if (vueActive === 'chat') {
+      rendre();
+      marquerChatVu();
+    }
     purgerChatAncien(code);
   });
+}
+
+/* Avance le repère « vu jusque » au dernier message actuellement
+   connu — appelé chaque fois que l'utilisateur regarde réellement
+   le chat, pour que le prochain redémarrage de l'app sache ce qui a
+   déjà été lu. */
+function marquerChatVu(){
+  if (!messagesChat.length) return;
+  const dernier = Math.max.apply(null, messagesChat.map(m => m.quand || 0));
+  if (dernier > (DB.reglages.chatVuJusque || 0)) {
+    DB.reglages.chatVuJusque = dernier;
+    Store.ecrire(DB);
+  }
 }
 
 /* Purge les messages de plus de 30 jours, et — au cas où quelqu'un
@@ -2087,7 +2136,7 @@ function vueStats(){
         '<div class="mat-stats-entete"><i class="puce" style="background:' + g.m.c + '"></i>' +
         '<b>' + ech(g.m.nom) + '</b></div>';
       g.cours.forEach(c => {
-        html += '<div class="note-ligne"><b>' + ech(refCours(c)) + '</b>' +
+        html += '<div class="note-ligne"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
           '<span>' + ech(c.commentaire.trim()) + '</span></div>';
       });
       html += '</div>';
@@ -2183,7 +2232,7 @@ function planningImpression(){
             (i === 0 ? '<td class="pr-jour-cel" rowspan="' + nRangees + '">' + nomJour + '<br>' +
               libelleCourt(iso) + '</td>' : '') +
             '<td class="pr-cours-cel">' + ech(refCours(c)) +
-              '<span class="pr-mat">' + ech(m.nom) + '</span>' +
+              '<span class="pr-mat">' + ech(m.nom) + (c.annee ? ' · ' + ech(c.annee) : '') + '</span>' +
               '<span class="pr-rang">' + ech(libelleRang(r.rang)) + '</span></td>' +
             '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
             '<td class="pr-case-cel"><i class="pr-case"></i></td>' +
@@ -2457,7 +2506,7 @@ function importerSauvegarde(fichier){
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
       suivis: suivisActuels,
       reglages: Object.assign(
-        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: ''},
+        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: '', chatVuJusque: 0},
         o.reglages || {},
         syncActuelle,          // écrase toute valeur de synchro venue du fichier
         {afficherAncrage: true}
@@ -2572,7 +2621,7 @@ function ouvrirReport(id){
   const c = trouverCours(r.cours);
   reportEnCours = id;
   document.getElementById('voile-info').textContent =
-    (c ? refCours(c) + ' · ' : '') + libelleRang(r.rang) + ' · prévue le ' + libelleCourt(r.date);
+    (c ? refCours(c) + libelleAnnee(c) + ' · ' : '') + libelleRang(r.rang) + ' · prévue le ' + libelleCourt(r.date);
   document.getElementById('voile-date').value = isoDe(plus(dDe(r.date), 7));
   voile.classList.add('on');
 }
@@ -2600,7 +2649,7 @@ function ouvrirNote(coursId){
   const c = trouverCours(coursId);
   if (!c) return;
   noteEnCours = coursId;
-  document.getElementById('note-info').textContent = refCours(c) + ' · ' + matiereDe(c.code).nom;
+  document.getElementById('note-info').textContent = refCours(c) + libelleAnnee(c) + ' · ' + matiereDe(c.code).nom;
   document.getElementById('note-texte').value = c.commentaire || '';
   noteVoile.classList.add('on');
 }
@@ -2647,7 +2696,7 @@ function demanderConfirmation(id, statut){
       'data-confirm="annulee-une">Confirmer</button>';
   }
   document.getElementById('confirm-info').textContent =
-    (c ? refCours(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date);
+    (c ? refCours(c) + libelleAnnee(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date);
   confirmVoile.classList.add('on');
 }
 function fermerConfirmation(){ confirmVoile.classList.remove('on'); actionEnCours = null; }
@@ -2685,7 +2734,7 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'suppr-serie-hist') {
     const c = trouverCours(id);
-    if (c && confirm('Supprimer définitivement toute la série ' + refCours(c) +
+    if (c && confirm('Supprimer définitivement toute la série ' + refCours(c) + libelleAnnee(c) +
         ' (y compris les révisions encore à venir) ? Cette action est irréversible.')) {
       supprimerCours(id); rendre(); toast('Série ' + refCours(c) + ' supprimée.');
     }
@@ -2761,14 +2810,14 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'cours-annuler-serie') {
     const c = trouverCours(id);
-    if (c && confirm('Annuler toute la série ' + refCours(c) + ' encore en attente ? ' +
+    if (c && confirm('Annuler toute la série ' + refCours(c) + libelleAnnee(c) + ' encore en attente ? ' +
         'Réversible depuis l\u2019historique.')) {
       annulerSerie(id);
     }
   }
   else if (act === 'suppr') {
     const c = trouverCours(id);
-    if (c && confirm('Supprimer ' + refCours(c) + ' et toutes ses révisions ?')) {
+    if (c && confirm('Supprimer ' + refCours(c) + libelleAnnee(c) + ' et toutes ses révisions ?')) {
       supprimerCours(id); rendre(); toast('Cours supprimé.');
     }
   }
@@ -2797,6 +2846,16 @@ vue.addEventListener('change', e => {
     DB.reglages.tolerance = (isNaN(v) || v < 0) ? 3 : Math.min(v, 30);
     sauver();
     rendre();
+    return;
+  }
+  if (e.target.dataset && e.target.dataset.act === 'cours-annee') {
+    const c = DB.cours.find(x => x.id === e.target.dataset.id);
+    if (c) {
+      c.annee = e.target.value;
+      sauver();
+      rendre();
+      toast(c.annee ? 'Année mise à jour.' : 'Année retirée.');
+    }
     return;
   }
   if (e.target.id === 'fichier-import' && e.target.files && e.target.files[0]) {
