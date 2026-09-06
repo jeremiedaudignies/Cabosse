@@ -356,6 +356,47 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}
 .pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:6.8px;color:#888;
   display:flex;justify-content:space-between}
+
+/* --- Tâches bonus ------------------------------------------- */
+:root{--bonus:#7B3FB8;--bonus-doux:rgba(123,63,184,.12)}
+.recur-ligne{display:flex;gap:8px;align-items:center}
+.recur-ligne input[type="number"]{width:74px;flex:0 0 auto}
+.recur-ligne select{flex:1;min-width:0}
+.recur-detail{margin-top:12px}
+.jour-pions{display:flex;gap:5px;margin-top:6px}
+.jour-pion{flex:1;padding:9px 0;border-radius:8px;border:1px solid var(--filet);
+  background:var(--surface-2);font-size:12.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
+.jour-pion.actif{background:var(--bonus);border-color:var(--bonus);color:#fff}
+
+/* Deux colonnes dans l'agenda : révisions 66 %, tâches 33 %. */
+.jour-grille{display:grid;grid-template-columns:2fr 1fr;gap:9px;align-items:start}
+.jour-grille > .col-vide{display:none}
+@media (max-width:430px){.jour-grille{gap:6px}}
+.tache{background:var(--surface);border:1px solid var(--filet);border-left:3px solid var(--bonus);
+  border-radius:var(--r-m);padding:11px 12px;margin-bottom:9px}
+.tache.faite{opacity:.55}
+.t-tete{display:block;width:100%;text-align:left;background:none;border:0;padding:0;
+  font:inherit;color:inherit;cursor:pointer}
+.tache .t-titre{font-size:13px;font-weight:700;letter-spacing:-.01em;display:block;
+  overflow-wrap:anywhere}
+.tache .t-meta{font-size:11px;color:var(--texte-3);margin-top:3px;display:block}
+.tache .t-etat{font-size:10.5px;font-weight:700;margin-top:5px;display:inline-block;
+  padding:2px 7px;border-radius:99px;background:var(--bonus-doux);color:var(--bonus)}
+.tache .t-etat.attente{background:var(--accent-doux);color:var(--accent)}
+.tache .cmds{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.tache .cmds button{flex:1 1 46%;padding:8px 4px;border-radius:99px;background:var(--surface-2);
+  border:1px solid var(--filet);font-size:11.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
+.tache .cmds button.ok{background:var(--bonus);border-color:var(--bonus);color:#fff}
+.minuteur{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;
+  margin:9px 0 2px;letter-spacing:-.02em}
+.minuteur.fini{color:var(--faite)}
+.repos-scores.bonus{margin-top:7px}
+.repos-scores.bonus .repos-score{border-color:var(--bonus);background:var(--bonus-doux)}
+.repos-scores.bonus .repos-score b{color:var(--bonus)}
+.cagnotte{margin-top:7px;text-align:center;font-size:11.5px;font-weight:700;color:var(--bonus)}
+.cagnotte-etat{margin-top:7px;text-align:center;font-size:11px;font-weight:700;
+  color:var(--texte-3);padding:5px 8px;border-radius:99px;background:var(--surface-2)}
+.cagnotte-etat.versee{color:var(--bonus);background:var(--bonus-doux)}
 </style>
 </head>
 <body>
@@ -373,8 +414,8 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <main id="vue"></main>
   <nav id="barre">
     <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb" id="lb-agenda">Agenda</span></button>
-    <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter un cours</span></button>
-    <button data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
+    <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
+    <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
     <button data-vue="reglages"><span class="ic">⚙️</span><span class="lb">Réglages</span></button>
   </nav>
@@ -410,7 +451,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   </div>
 </div></div>
 <div id="motdepasse-voile"><div class="feuille">
-  <h3>Paramètres avancés</h3>
+  <h3 id="motdepasse-titre">Réglages avancés</h3>
   <p>Mot de passe requis pour y accéder.</p>
   <input type="password" id="motdepasse-champ" placeholder="Mot de passe" autocomplete="off">
   <div style="display:flex;gap:9px;margin-top:14px">
@@ -589,7 +630,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v28 · 5 septembre 2026';
+const VERSION = 'v29 · 6 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -681,6 +722,185 @@ function completerRappels(){
   });
   if (change) sauver();
   return change;
+}
+
+/* ============================================================
+   Tâches bonus — corvées et activités extrascolaires.
+
+   Rien à voir avec la rampe de réactivation mémorielle : une tâche
+   se planifie comme une réunion Outlook (quotidienne, hebdomadaire
+   sur jours choisis, mensuelle « le 15 » ou « le 3e jeudi »,
+   annuelle), avec une date de fin facultative.
+
+   La règle est stockée ; les occurrences sont matérialisées sur un
+   horizon glissant (même principe que les rappels long terme : on
+   ne génère jamais des années d'avance).
+   ============================================================ */
+const HORIZON_TACHES_MOIS = 3;
+
+/* n-ième jour de semaine d'un mois : position 1 à 4, ou -1 pour le
+   dernier. Renvoie null si le mois n'a pas de 5e occurrence, etc. */
+function niemeJourDuMois(annee, mois, jourSemaine, position){
+  if (position === -1) {
+    const dernier = new Date(annee, mois + 1, 0, 12, 0, 0, 0);
+    const recul = (dernier.getDay() - jourSemaine + 7) % 7;
+    return new Date(annee, mois + 1, 0 - recul, 12, 0, 0, 0);
+  }
+  const premier = new Date(annee, mois, 1, 12, 0, 0, 0);
+  const avance = (jourSemaine - premier.getDay() + 7) % 7;
+  const jour = 1 + avance + (position - 1) * 7;
+  const d = new Date(annee, mois, jour, 12, 0, 0, 0);
+  return d.getMonth() === mois ? d : null;
+}
+
+/* Dates attendues pour une tâche, de sa date de début jusqu'au plus
+   proche de : sa date de fin, ou l'horizon glissant. */
+function occurrencesAttendues(t){
+  const debut = dDe(t.debut);
+  const horizon = plusMois(aujourdhui(), HORIZON_TACHES_MOIS);
+  const fin = t.recur && t.recur.finLe ? dDe(t.recur.finLe) : null;
+  const butoir = (fin && fin < horizon) ? fin : horizon;
+  const sortie = [];
+  const r = t.recur || {type:'aucune'};
+  const pas = Math.max(1, parseInt(r.intervalle, 10) || 1);
+  const GARDE = 400; // filet de sécurité : jamais de boucle infinie
+
+  if (r.type === 'aucune' || !r.type) {
+    if (debut <= butoir) sortie.push(isoDe(debut));
+    return sortie;
+  }
+
+  if (r.type === 'jour') {
+    for (let d = debut, n = 0; d <= butoir && n < GARDE; d = plus(d, pas), n++) sortie.push(isoDe(d));
+    return sortie;
+  }
+
+  if (r.type === 'semaine') {
+    const jours = (r.jours && r.jours.length) ? r.jours : [debut.getDay()];
+    /* On avance semaine par semaine depuis le lundi de la semaine de
+       début, en ne retenant que les jours cochés. */
+    let lundi = lundiDe(debut);
+    for (let n = 0; n < GARDE; n++) {
+      for (let i = 0; i < 7; i++) {
+        const d = plus(lundi, i);
+        if (d < debut || d > butoir) continue;
+        if (jours.indexOf(d.getDay()) !== -1) sortie.push(isoDe(d));
+      }
+      lundi = plus(lundi, 7 * pas);
+      if (lundi > butoir) break;
+    }
+    return sortie;
+  }
+
+  if (r.type === 'mois') {
+    for (let n = 0; n < GARDE; n++) {
+      const ref = new Date(debut.getFullYear(), debut.getMonth() + n * pas, 1, 12, 0, 0, 0);
+      if (ref > butoir && ref.getMonth() !== butoir.getMonth()) break;
+      let d;
+      if (r.moisMode === 'position') {
+        d = niemeJourDuMois(ref.getFullYear(), ref.getMonth(),
+              parseInt(r.jourSemaine, 10), parseInt(r.position, 10));
+      } else {
+        const jour = Math.min(debut.getDate(),
+          new Date(ref.getFullYear(), ref.getMonth() + 1, 0).getDate());
+        d = new Date(ref.getFullYear(), ref.getMonth(), jour, 12, 0, 0, 0);
+      }
+      if (d && d >= debut && d <= butoir) sortie.push(isoDe(d));
+      if (ref > butoir) break;
+    }
+    return sortie;
+  }
+
+  if (r.type === 'an') {
+    for (let n = 0; n < GARDE; n++) {
+      const d = new Date(debut.getFullYear() + n * pas, debut.getMonth(), debut.getDate(), 12, 0, 0, 0);
+      if (d > butoir) break;
+      if (d >= debut) sortie.push(isoDe(d));
+    }
+    return sortie;
+  }
+  return sortie;
+}
+
+function idOccurrence(tacheId, iso){ return tacheId + '@' + iso; }
+
+/* Aligne les occurrences stockées sur ce qui est attendu — même
+   principe que completerRappels() : on ajoute les manquantes, on
+   retire les futures devenues caduques, on ne touche jamais au
+   passé ni à une occurrence déjà traitée. */
+function completerTaches(){
+  const ajISO = isoDe(aujourdhui());
+  let change = false;
+  DB.taches.forEach(t => {
+    const attendues = occurrencesAttendues(t);
+    const existantes = DB.occurrences.filter(o => o.tache === t.id);
+
+    attendues.forEach(iso => {
+      if (!existantes.some(o => o.date === iso)) {
+        DB.occurrences.push({
+          id: idOccurrence(t.id, iso), tache: t.id,
+          prevue: iso, date: iso, statut: 'aFaire',
+          controleFait: false, secondes: 0
+        });
+        change = true;
+      }
+    });
+
+    existantes.forEach(o => {
+      if (o.statut === 'aFaire' && o.date > ajISO && attendues.indexOf(o.date) === -1) {
+        DB.occurrences = DB.occurrences.filter(x => x.id !== o.id);
+        change = true;
+      }
+    });
+  });
+  /* Occurrences orphelines (tâche supprimée) */
+  const ids = DB.taches.map(t => t.id);
+  const avant = DB.occurrences.length;
+  DB.occurrences = DB.occurrences.filter(o => ids.indexOf(o.tache) !== -1);
+  if (DB.occurrences.length !== avant) change = true;
+
+  if (change) sauver();
+  return change;
+}
+
+function trouverTache(id){ return donneesLecture().taches.find(t => t.id === id); }
+
+function ajouterTache(t){
+  DB.taches.push(t);
+  completerTaches();
+  sauver();
+  return true;
+}
+
+function supprimerTache(id){
+  DB.taches = DB.taches.filter(t => t.id !== id);
+  DB.occurrences = DB.occurrences.filter(o => o.tache !== id);
+  sauver();
+}
+
+/* Résumé lisible d'une règle de récurrence, pour la liste des tâches. */
+function libelleRecurrence(t){
+  const r = t.recur || {type:'aucune'};
+  const n = Math.max(1, parseInt(r.intervalle, 10) || 1);
+  const chaque = n > 1 ? 'Toutes les ' + n + ' ' : '';
+  let base;
+  if (r.type === 'jour')         base = n > 1 ? chaque + 'jours' : 'Tous les jours';
+  else if (r.type === 'semaine') {
+    const noms = (r.jours || []).slice().sort().map(j => JOURS[j].slice(0, 3)).join(', ');
+    base = (n > 1 ? chaque + 'semaines' : 'Chaque semaine') + (noms ? ' · ' + noms : '');
+  }
+  else if (r.type === 'mois') {
+    if (r.moisMode === 'position') {
+      const pos = parseInt(r.position, 10);
+      const libPos = pos === -1 ? 'dernier' : (pos === 1 ? '1er' : pos + 'e');
+      base = (n > 1 ? chaque + 'mois' : 'Chaque mois') + ' · le ' + libPos + ' ' + JOURS[parseInt(r.jourSemaine, 10)];
+    } else {
+      base = (n > 1 ? chaque + 'mois' : 'Chaque mois') + ' · le ' + dDe(t.debut).getDate();
+    }
+  }
+  else if (r.type === 'an')      base = n > 1 ? chaque + 'ans' : 'Chaque année';
+  else                           base = 'Une seule fois';
+  return base + (r.finLe ? ' · jusqu\u2019au ' + libelleCourt(r.finLe) : '');
 }
 
 const MATIERES_DEFAUT = [
@@ -798,13 +1018,23 @@ const CLE = 'sabosse';
 const Store = {
   dispo: true,
   lire(){
+    const REGLAGES_DEFAUT = {afficherAncrage:true, prenom:'', email:'', typeCompte:'',
+                    role:'aucun', codePartage:'', affichage:'personnel', tolerance:3,
+                    derniereAnnee:'', chatVuJusquePar:{},
+                    /* Tâches bonus : cagnotte cumulée (alimentera le singe Cabosse)
+                       et trace des semaines déjà encaissées, pour ne jamais créditer
+                       deux fois la même semaine. */
+                    cagnotte:0, semainesEncaissees:{},
+                    /* Proposition hebdomadaire d'envoi de la sauvegarde par mail. */
+                    exportHebdo:true, dernierePropositionExport:''};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusquePar:{}}};
+                    taches:[], occurrences:[],
+                    reglages: Object.assign({}, REGLAGES_DEFAUT)};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
-      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusquePar:{}}, o.reglages || {});
+      const reglages = Object.assign({}, REGLAGES_DEFAUT, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
          resterait bloqué sans aucun moyen de la réactiver. */
@@ -828,6 +1058,8 @@ const Store = {
         revisions: o.revisions || [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
         suivis: suivis,
+        taches: Array.isArray(o.taches) ? o.taches : [],
+        occurrences: Array.isArray(o.occurrences) ? o.occurrences : [],
         reglages: reglages
       };
     } catch (e) { this.dispo = false; return defaut; }
@@ -858,6 +1090,8 @@ function donneesLecture(){
       cours: s.cours || [],
       revisions: s.revisions || [],
       matieres: (s.matieres && s.matieres.length) ? s.matieres : MATIERES_DEFAUT,
+      taches: s.taches || [],
+      occurrences: s.occurrences || [],
       afficherAncrage: (s.reglages && typeof s.reglages.afficherAncrage === 'boolean')
         ? s.reglages.afficherAncrage : true,
       prenom: (s.reglages && s.reglages.prenom) || ''
@@ -865,6 +1099,7 @@ function donneesLecture(){
   }
   return {
     cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
+    taches: DB.taches, occurrences: DB.occurrences,
     afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom
   };
 }
@@ -876,6 +1111,29 @@ function donneesLecture(){
    propre profil personnel, pleinement éditable, à un instant donné. */
 function modeLecture(){ return DB.reglages.affichage !== 'personnel'; }
 
+/* ============================================================
+   Type de compte et visibilité
+   Un compte ÉTUDIANT est autonome : pas de chat familial, et rien
+   à faire valider par un parent. Un compte ENFANT garde le chat
+   mais ne valide pas lui-même ses tâches contrôlées. Seul PARENT
+   voit la coche « Contrôle fait ».
+   Tant que le type n'est pas renseigné, tout reste visible : mieux
+   vaut un réglage trop permissif qu'un utilisateur enfermé dehors.
+   ============================================================ */
+const VISIBILITE = {
+  parent:   {chat:true,  controle:true},
+  etudiant: {chat:false, controle:false},
+  enfant:   {chat:true,  controle:false}
+};
+function typeCompte(){ return DB.reglages.typeCompte || ''; }
+function peutVoir(quoi){
+  const v = VISIBILITE[typeCompte()];
+  return v ? v[quoi] : true;
+}
+/* La coche « Contrôle fait » n'a de sens que sur son propre appareil
+   de parent, ou en suivant l'enfant concerné. */
+function peutControler(){ return peutVoir('controle'); }
+
 let derniereSyncEnvoi = null, echecsSyncConsecutifs = 0;
 
 function sauver(){
@@ -885,7 +1143,9 @@ function sauver(){
       window.SabosseSync && window.SabosseSync.disponible) {
     window.SabosseSync.envoyer(DB.reglages.codePartage, {
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
-      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
+      taches: DB.taches, occurrences: DB.occurrences,
+      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
+                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte}
     }).then(ok => {
       /* Un échec d'envoi était jusque-là totalement silencieux — c'est
          très probablement ce qui a causé le bug de suivi rapporté :
@@ -971,6 +1231,20 @@ function libelleAnnee(c){
 }
 function trouverCours(id){ return donneesLecture().cours.find(c => c.id === id); }
 
+/* Numéro par défaut proposé à la création d'un cours : le dernier
+   numéro utilisé pour la matière choisie, + 1. Toutes années scolaires
+   confondues (le numéro identifie la série de révisions d'un cours,
+   pas l'année). Renvoie '001' si aucun cours n'existe encore pour
+   cette matière. */
+function prochainNumero(code){
+  const nums = DB.cours
+    .filter(c => c.code === code)
+    .map(c => parseInt(c.numero, 10))
+    .filter(n => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 0;
+  return String(max + 1).padStart(3, '0');
+}
+
 function ajouterCours(code, numero, dateISO, annee){
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
@@ -1026,15 +1300,22 @@ document.addEventListener('toggle', e => {
   }
 }, true);
 
-/* Verrou des Paramètres avancés : un mot de passe simple, côté
-   client — un frein pour éviter qu'un enfant curieux ne modifie la
-   synchronisation ou les matières par mégarde, pas une protection
-   cryptographique (le mot de passe est visible dans le code source). */
-const MOT_DE_PASSE_PARAMETRES = 'bregmatique';
-let parametresDeverrouilles = false;
+/* Verrou des Réglages avancés / administrateur : deux mots de passe
+   simples, côté client — un frein pour éviter qu'un enfant curieux ne
+   modifie la synchronisation ou les matières par mégarde, pas une
+   protection cryptographique (les mots de passe sont visibles dans le
+   code source). « avance » couvre le type de compte, les matières, la
+   tolérance et les sauvegardes ; « admin » couvre uniquement la
+   synchronisation entre appareils. */
+const MOTS_DE_PASSE = {avance: 'carabin', admin: 'bregmatique'};
+const LIBELLES_VERROU = {avance: 'Réglages avancés', admin: 'Réglages administrateur'};
+let deverrouilles = {avance: false, admin: false};
+let cibleDeverrouillage = null;
 const mdpVoile = document.getElementById('motdepasse-voile');
 
-function ouvrirMotDePasse(){
+function ouvrirMotDePasse(cible){
+  cibleDeverrouillage = cible;
+  document.getElementById('motdepasse-titre').textContent = LIBELLES_VERROU[cible] || 'Réglages';
   document.getElementById('motdepasse-champ').value = '';
   mdpVoile.classList.add('on');
   setTimeout(() => document.getElementById('motdepasse-champ').focus(), 60);
@@ -1042,11 +1323,12 @@ function ouvrirMotDePasse(){
 function fermerMotDePasse(){ mdpVoile.classList.remove('on'); }
 function tenterDeverrouillage(){
   const val = document.getElementById('motdepasse-champ').value;
-  if (val === MOT_DE_PASSE_PARAMETRES) {
-    parametresDeverrouilles = true;
+  const cible = cibleDeverrouillage;
+  if (cible && val === MOTS_DE_PASSE[cible]) {
+    deverrouilles[cible] = true;
     fermerMotDePasse();
     rendre();
-    toast('Paramètres avancés déverrouillés.');
+    toast((LIBELLES_VERROU[cible] || 'Réglages') + ' déverrouillés.');
   } else {
     toast('Mot de passe incorrect.');
   }
@@ -1065,6 +1347,12 @@ function ech(s){
 }
 
 function rendre(){
+  /* Un compte ÉTUDIANT n'a pas de chat familial : on retire l'onglet
+     et on quitte la vue si elle était affichée. */
+  const ongletChat = document.getElementById('btn-tab-chat');
+  if (ongletChat) ongletChat.style.display = peutVoir('chat') ? '' : 'none';
+  if (vueActive === 'chat' && !peutVoir('chat')) vueActive = 'agenda';
+
   document.querySelectorAll('#barre button').forEach(b => {
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
@@ -1142,10 +1430,29 @@ function majBascule(){
 
 /* --- Agenda ------------------------------------------------ */
 
+/* Les échéances J+x (stockées telles quelles depuis l'origine, pour
+   ne jamais avoir à migrer les données déjà enregistrées) s'affichent
+   désormais sous la forme « Réactivation n°X ». Le numéro correspond
+   au rang de l'échéance dans la rampe RAMPE_INTERVALLES, prolongée
+   par paliers de 28 jours au-delà — recalculé à l'affichage, jamais
+   stocké. */
+function numeroReactivation(delta){
+  const deltas = [];
+  let cumul = 0;
+  RAMPE_INTERVALLES.forEach(ecart => { cumul += ecart; deltas.push(cumul); });
+  while (deltas[deltas.length - 1] < delta) deltas.push(deltas[deltas.length - 1] + 28);
+  const idx = deltas.indexOf(delta);
+  return idx === -1 ? null : idx + 1;
+}
+
 /* L'ancrage du samedi s'affiche sous un nom plus engageant que
    « Ancrage », y compris quand il coïncide avec une échéance J+x. */
 function libelleRang(rang){
-  return rang.replace(/^Ancrage/, 'Nouveau !');
+  const avecReactivations = rang.replace(/J\+(\d+)/g, (tout, n) => {
+    const numero = numeroReactivation(parseInt(n, 10));
+    return numero ? 'Réactivation n°' + numero : tout;
+  });
+  return avecReactivations.replace(/^Ancrage/, 'Nouveau !');
 }
 
 /* Une carte de révision, réutilisée pour les retards, la semaine
@@ -1244,12 +1551,131 @@ function carteRepos(dimancheISO){
     carteScore('Année', scoreAn, estRecord(histoAn)) +
   '</div>';
 
+  /* Compteur des tâches bonus : séparé, sous celui des révisions et
+     dans sa propre couleur. La cagnotte cumule les semaines closes. */
+  let bloc = '';
+  if ((dl.taches || []).length) {
+    const sem = semaineTaches(0);
+    const st = scoreTaches(dl, sem.debut, sem.fin);
+    const cagnotte = DB.reglages.cagnotte || 0;
+    const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
+    const dejaVersee = DB.reglages.semainesEncaissees[sem.cle] !== undefined;
+    /* L'enjeu doit être lisible : tant que le programme de révisions
+       de la semaine n'est pas bouclé, les points de tâches restent
+       en suspens. */
+    const etat = dejaVersee
+      ? '<div class="cagnotte-etat versee">✅ Points de la semaine versés</div>'
+      : (debloquee
+        ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — versement samedi</div>'
+        : '<div class="cagnotte-etat">🔒 Termine tes révisions pour débloquer ces points</div>');
+    bloc = '<div class="repos-scores bonus">' +
+        '<div class="repos-score"><span class="repos-score-titre">Tâches · semaine</span>' +
+        '<b>' + (st.score > 0 ? '+' : '') + st.score + '</b></div>' +
+        '<div class="repos-score"><span class="repos-score-titre">Réussies</span>' +
+        '<b>' + st.gagnes + '</b></div>' +
+        '<div class="repos-score"><span class="repos-score-titre">Manquées</span>' +
+        '<b>' + st.perdus + '</b></div>' +
+      '</div>' + etat +
+      '<div class="cagnotte">🐒 Cagnotte Cabosse : ' + cagnotte + ' point' +
+        (Math.abs(cagnotte) > 1 ? 's' : '') + '</div>';
+  }
+
   return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
     '<div class="repos-corps">' +
       '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
       '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
       detail + barre +
-    '</div>' + scores + '</article>';
+    '</div>' + scores + bloc + '</article>';
+}
+
+/* --- Carte d'une tâche bonus ---------------------------------
+   Repliée par défaut : un clic déplie le détail et ses commandes,
+   comme pour une révision. */
+let tacheDepliee = null;
+
+function carteTache(o){
+  const t = trouverTache(o.tache);
+  if (!t) return '';
+  const dl = donneesLecture();
+  const depliee = tacheDepliee === o.id;
+  const ajISO = isoDe(aujourdhui());
+
+  let etat = '';
+  if (o.statut === 'faite') {
+    etat = o.controleFait || !t.controleParent
+      ? '<span class="t-etat">✅ Fait</span>'
+      : '<span class="t-etat attente">⏳ Attente contrôle</span>';
+  } else if (o.statut === 'annulee') etat = '<span class="t-etat">🫣 Annulée</span>';
+  else if (o.statut === 'reportee') etat = '<span class="t-etat">😳 Reportée</span>';
+
+  let cmds = '';
+  if (depliee && !modeLecture()) {
+    if (o.statut === 'aFaire' || o.statut === 'reportee') {
+      cmds = '<div class="cmds">' +
+        '<button class="ok" data-act="tache-faite" data-id="' + o.id + '">Débuter la tâche</button>' +
+        '<button data-act="tache-timer" data-id="' + o.id + '">⏱ Lancer le timer</button>' +
+        '<button data-act="tache-reporter" data-id="' + o.id + '">Reporter</button>' +
+        '<button data-act="tache-annuler" data-id="' + o.id + '">Annuler</button>' +
+      '</div>';
+    } else {
+      cmds = '<div class="cmds">' +
+        '<button data-act="tache-reactiver" data-id="' + o.id + '">Remettre en attente</button>' +
+      '</div>';
+    }
+    /* Coche « Contrôle fait » : réservée aux comptes PARENT, et
+       seulement pour une tâche déclarée faite qui l'exige. */
+    if (t.controleParent && o.statut === 'faite' && peutControler()) {
+      cmds += '<label class="check-ligne" style="padding:8px 0 0">' +
+        '<input type="checkbox" data-act="tache-controle" data-id="' + o.id + '"' +
+        (o.controleFait ? ' checked' : '') + '>' +
+        '<span>Contrôle fait</span></label>';
+    }
+  }
+
+  const minuteur = (minuteurActif && minuteurActif.occurrence === o.id)
+    ? '<div class="minuteur' + (minuteurActif.restant <= 0 ? ' fini' : '') + '" id="minuteur-affichage">' +
+      formatChrono(minuteurActif.restant) + '</div>' : '';
+
+  const retard = o.date < ajISO && (o.statut === 'aFaire' || o.statut === 'reportee');
+
+  /* Carte en <div> et non en <button> : elle contient elle-même des
+     boutons et une case à cocher, qu'un bouton parent rendrait
+     inopérants (imbrication interdite en HTML). Seul l'en-tête est
+     cliquable pour déplier. */
+  return '<div class="tache' + (o.statut === 'faite' ? ' faite' : '') + '">' +
+    '<button type="button" class="t-tete" data-act="tache-ouvrir" data-id="' + o.id + '">' +
+      '<span class="t-titre">' + ech(t.intitule) + '</span>' +
+      '<span class="t-meta">' + t.duree + ' min' +
+        (t.heure ? ' · ' + ech(t.heure) : '') +
+        (retard ? ' · en retard' : '') + '</span>' +
+      etat +
+    '</button>' + minuteur + cmds +
+  '</div>';
+}
+
+/* Occurrences de tâches visibles pour une date donnée. */
+function tachesDuJour(iso){
+  return donneesLecture().occurrences.filter(o => o.date === iso);
+}
+
+/* Une section de jour : révisions à gauche (66 %), tâches à droite
+   (33 %). La grille disparaît d'elle-même s'il n'y a aucune tâche
+   ce jour-là, pour que les révisions gardent toute la largeur. */
+function sectionJour(titre, revisions, iso, classe, estAujourdhui){
+  const taches = tachesDuJour(iso);
+  const compte = revisions.length + taches.length;
+  let html = '<section class="jour' + (classe ? ' ' + classe : '') + '"><h2>' + titre +
+    (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>';
+  let gauche = '';
+  revisions.forEach(r => gauche += carteRevision(r, estAujourdhui));
+  if (!taches.length) {
+    html += gauche;
+  } else {
+    let droite = '';
+    taches.forEach(o => droite += carteTache(o));
+    html += '<div class="jour-grille"><div>' + gauche + '</div><div>' + droite + '</div></div>';
+  }
+  return {html: html, compte: compte};
 }
 
 function grouperParDate(liste){
@@ -1267,12 +1693,12 @@ function vueAgenda(){
   const dl = donneesLecture();
   const banniere = modeLecture()
     ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
-  if (!dl.cours.length) {
+  if (!dl.cours.length && !dl.taches.length) {
     return banniere + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>' + (modeLecture()
         ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
-        : 'Ajoute un cours pour lancer son échéancier.') + '</p></div>';
+        : 'Ajoute un cours ou une tâche pour lancer son échéancier.') + '</p></div>';
   }
 
   const auj = aujourdhui();
@@ -1288,45 +1714,59 @@ function vueAgenda(){
   const proches  = enAttente.filter(r => r.date >= ajISO && r.date <= dimSuivant);
   const plusTard = enAttente.filter(r => r.date > dimSuivant);
 
+  /* Les tâches suivent le même découpage temporel que les révisions,
+     pour que chaque jour affiche ses deux colonnes au bon endroit. */
+  const occEnAttente = dl.occurrences.filter(o =>
+    o.statut === 'aFaire' || o.statut === 'reportee' || o.date === ajISO);
+  const datesAvecTache = quand => occEnAttente.filter(quand).map(o => o.date);
+
   let html = banniere;
 
-  if (retard.length) {
-    grouperParDate(retard).forEach(g => {
-      html += '<section class="jour retard"><h2>En retard · ' + libelleJour(g.date) +
-        '<span class="compte">' + g.items.length + '</span></h2>';
-      g.items.forEach(r => html += carteRevision(r));
-      html += '</section>';
-    });
-  }
+  /* En retard : révisions et tâches non traitées avant aujourd'hui. */
+  const datesRetard = uniqueTriees(
+    grouperParDate(retard).map(g => g.date)
+      .concat(datesAvecTache(o => o.date < ajISO &&
+        (o.statut === 'aFaire' || o.statut === 'reportee'))));
+  datesRetard.forEach(iso => {
+    html += sectionJour('En retard · ' + libelleJour(iso),
+      retard.filter(r => r.date === iso), iso, 'retard', false).html + '</section>';
+  });
 
-  const grProches = grouperParDate(proches);
-  if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
-  grProches.sort((a, b) => a.date < b.date ? -1 : 1);
+  const datesProches = uniqueTriees(
+    grouperParDate(proches).map(g => g.date)
+      .concat(datesAvecTache(o => o.date >= ajISO && o.date <= dimSuivant))
+      .concat([dimActuel]));
 
-  grProches.forEach(g => {
-    const estAujourdhui = g.date === ajISO;
-    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
-    html += '<section class="jour"><h2>' + titre +
-      (g.items.length ? '<span class="compte">' + g.items.length + '</span>' : '') + '</h2>';
-    g.items.forEach(r => html += carteRevision(r, estAujourdhui));
-    if (g.date === dimActuel) html += carteRepos(g.date);
+  datesProches.forEach(iso => {
+    const estAujourdhui = iso === ajISO;
+    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(iso);
+    html += sectionJour(titre, proches.filter(r => r.date === iso), iso, '', estAujourdhui).html;
+    if (iso === dimActuel) html += carteRepos(iso);
     html += '</section>';
   });
 
-  if (plusTard.length) {
+  const datesPlusTard = uniqueTriees(
+    grouperParDate(plusTard).map(g => g.date)
+      .concat(datesAvecTache(o => o.date > dimSuivant)));
+  if (datesPlusTard.length) {
+    const total = plusTard.length +
+      occEnAttente.filter(o => o.date > dimSuivant).length;
     html += '<details class="pliable" data-cle="semaines"' + ouvert('semaines') + '>' +
-      '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
+      '<summary>Semaines suivantes<span class="compte">' + total + '</span></summary>' +
       '<div class="contenu-pliable">';
-    grouperParDate(plusTard).forEach(g => {
-      html += '<section class="jour"><h2>' + libelleJour(g.date) +
-        '<span class="compte">' + g.items.length + '</span></h2>';
-      g.items.forEach(r => html += carteRevision(r));
-      html += '</section>';
+    datesPlusTard.forEach(iso => {
+      html += sectionJour(libelleJour(iso),
+        plusTard.filter(r => r.date === iso), iso, '', false).html + '</section>';
     });
     html += '</div></details>';
   }
 
   return html;
+}
+
+/* Dates uniques, triées chronologiquement. */
+function uniqueTriees(liste){
+  return liste.filter((v, i) => liste.indexOf(v) === i).sort();
 }
 
 /* --- Ajout ------------------------------------------------- */
@@ -1366,7 +1806,8 @@ function vueAjout(){
     '<details class="pliable" data-cle="echeancier"' + ouvert('echeancier') + ' style="margin-top:16px">' +
       '<summary>Échéancier prévisionnel<span class="compte" id="apercu-compte"></span></summary>' +
       '<div class="contenu-pliable"><div class="apercu" id="apercu"></div></div>' +
-    '</details>';
+    '</details>' +
+    blocNouvelleTache();
 
   if (DB.cours.length) {
     const tries = DB.cours.slice().sort((a, b) => a.date < b.date ? 1 : -1);
@@ -1381,6 +1822,91 @@ function vueAjout(){
         '<span>' + ech(m.nom) + ' · encodé le ' + libelleCourt(c.date) +
         ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div></div>';
     });
+  }
+  return html;
+}
+
+/* --- Nouvelle tâche ------------------------------------------
+   Corvées et activités extrascolaires. Planification calquée sur une
+   réunion Outlook : périodicité jour / semaine / mois / an, jours de
+   la semaine cochables, et pour le mensuel le choix entre « le 15 »
+   et « le 3e jeudi ». */
+function blocNouvelleTache(){
+  const ajISO = isoDe(aujourdhui());
+  let jours = '';
+  /* Ordre lundi → dimanche, comme dans Outlook. */
+  [1,2,3,4,5,6,0].forEach(j => {
+    jours += '<button type="button" class="jour-pion" data-act="tache-jour" data-jour="' + j + '">' +
+      JOURS[j].charAt(0).toUpperCase() + '</button>';
+  });
+
+  let html = '<p class="etiquette" style="margin-top:26px">Nouvelle tâche</p>' +
+    '<div class="carte">' +
+      '<div class="champ"><label for="t-intitule">Intitulé</label>' +
+        '<input type="text" id="t-intitule" placeholder="ex. Vider le lave-vaisselle"></div>' +
+      '<div class="champ"><label for="t-duree">Durée (minutes)</label>' +
+        '<input type="number" id="t-duree" min="1" max="480" inputmode="numeric" placeholder="15">' +
+        '<span class="aide-champ">Sert de minuteur dans l\u2019agenda.</span></div>' +
+      '<div class="champ"><label for="t-debut">Date de début</label>' +
+        '<input type="date" id="t-debut" value="' + ajISO + '"></div>' +
+      '<div class="champ"><label for="t-heure">Heure (facultative)</label>' +
+        '<input type="time" id="t-heure"></div>' +
+      '<div class="champ" style="margin-bottom:0"><label for="t-type">Répéter</label>' +
+        '<div class="recur-ligne">' +
+          '<input type="number" id="t-intervalle" min="1" max="52" value="1" inputmode="numeric">' +
+          '<select id="t-type">' +
+            '<option value="aucune">une seule fois</option>' +
+            '<option value="jour">jour</option>' +
+            '<option value="semaine">semaine</option>' +
+            '<option value="mois">mois</option>' +
+            '<option value="an">an</option>' +
+          '</select>' +
+        '</div></div>' +
+      '<div id="t-bloc-semaine" class="recur-detail" style="display:none">' +
+        '<span class="aide-champ">Jours concernés</span>' +
+        '<div class="jour-pions">' + jours + '</div></div>' +
+      '<div id="t-bloc-mois" class="recur-detail" style="display:none">' +
+        '<label class="check-ligne"><input type="radio" name="t-moismode" value="date" checked>' +
+          '<span>Le même jour du mois</span></label>' +
+        '<label class="check-ligne"><input type="radio" name="t-moismode" value="position">' +
+          '<span>Le n-ième jour de la semaine</span></label>' +
+        '<div class="recur-ligne" id="t-bloc-position" style="display:none">' +
+          '<select id="t-position">' +
+            '<option value="1">1er</option><option value="2">2e</option>' +
+            '<option value="3">3e</option><option value="4">4e</option>' +
+            '<option value="-1">dernier</option>' +
+          '</select>' +
+          '<select id="t-jour-semaine">' +
+            [1,2,3,4,5,6,0].map(j => '<option value="' + j + '">' + JOURS[j] + '</option>').join('') +
+          '</select>' +
+        '</div></div>' +
+      '<div class="champ" id="t-bloc-fin" style="display:none;margin-top:12px;margin-bottom:0">' +
+        '<label for="t-fin">Jusqu\u2019au (facultatif)</label>' +
+        '<input type="date" id="t-fin"></div>' +
+    '</div>';
+
+  /* Le contrôle parental n'a pas de sens pour un étudiant autonome :
+     champ masqué et valeur forcée à NON dans ce cas. */
+  if (typeCompte() !== 'etudiant') {
+    html += '<label class="check-ligne" style="margin-top:12px">' +
+      '<input type="checkbox" id="t-controle">' +
+      '<span>Contrôle de la réalisation par un parent</span></label>';
+  }
+
+  html += '<button class="bouton principal" id="t-ok" style="margin-top:6px">Enregistrer la tâche</button>';
+
+  if (DB.taches.length) {
+    html += '<p class="etiquette" style="margin-top:22px">Tâches enregistrées · ' + DB.taches.length + '</p>' +
+      '<div class="carte" style="padding:5px 15px">';
+    DB.taches.forEach(t => {
+      html += '<div class="hist-l">' +
+        '<i class="puce" style="background:var(--bonus)"></i>' +
+        '<div class="txt"><b>' + ech(t.intitule) + '</b>' +
+        '<span>' + t.duree + ' min · ' + ech(libelleRecurrence(t)) +
+        (t.controleParent ? ' · contrôle parent' : '') + '</span></div>' +
+        '<button class="sup" data-act="tache-suppr" data-id="' + t.id + '">✕</button></div>';
+    });
+    html += '</div>';
   }
   return html;
 }
@@ -1499,51 +2025,92 @@ function blocAide(){
     '</div></details>';
 }
 
-function blocParametres(){
-  if (!parametresDeverrouilles) {
-    return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller">' +
+/* --- Réglages de base : accès libre, sans mot de passe -------
+   Ton fils doit pouvoir les utiliser sans connaître aucun mot de
+   passe : impression, prénom, e-mail, mise à jour. L'affichage/masquage
+   de l'onglet « Cabosse » (fonctionnalité à venir, pas encore
+   développée) sera ajouté ici une fois cette fonctionnalité détaillée. */
+function blocReglagesBase(){
+  return '<p class="etiquette" style="margin-top:20px">Réglages de base</p>' +
+    '<button class="bouton discret" data-act="imprimer-planning">Imprimer mon planning (J+14)</button>' +
+    '<div class="carte" style="margin-top:10px">' +
+      '<div class="champ"><label for="f-prenom">Mon prénom</label>' +
+        '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
+      '<div class="champ" style="margin-bottom:0"><label for="f-email">Mon adresse e-mail</label>' +
+        '<input type="email" id="f-email" placeholder="prenom@exemple.com" value="' + ech(DB.reglages.email || '') + '"></div>' +
+    '</div>' +
+    '<label class="check-ligne" style="margin-top:12px">' +
+      '<input type="checkbox" id="f-export-hebdo"' +
+      (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
+      '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
+    '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
+    '<button class="bouton discret" data-act="maj" style="margin-top:10px">Forcer la mise à jour</button>';
+}
+
+/* --- Réglages avancés : mot de passe « carabin » --------------
+   Type de compte, matières, tolérance et sauvegardes. */
+function blocReglagesAvances(){
+  if (!deverrouilles.avance) {
+    return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller" ' +
+      'data-cible="avance" style="margin-top:20px">' +
       '<span class="ic">🔒</span>' +
-      '<span class="txt"><b>Paramètres avancés</b><span>Protégés par mot de passe</span></span>' +
+      '<span class="txt"><b>Réglages avancés</b><span>Protégés par mot de passe</span></span>' +
     '</button>';
   }
-  return '<details class="pliable" data-cle="parametres"' + ouvert('parametres') + ' style="margin-top:20px">' +
-    '<summary>Paramètres avancés</summary>' +
+  const tc = DB.reglages.typeCompte || '';
+  const optsType = '<option value="">Non renseigné</option>' +
+    '<option value="etudiant"' + (tc === 'etudiant' ? ' selected' : '') + '>Étudiant</option>' +
+    '<option value="enfant"' + (tc === 'enfant' ? ' selected' : '') + '>Enfant</option>' +
+    '<option value="parent"' + (tc === 'parent' ? ' selected' : '') + '>Parent</option>';
+  return '<details class="pliable" data-cle="reglages-avances"' + ouvert('reglages-avances') + ' style="margin-top:20px">' +
+    '<summary>Réglages avancés</summary>' +
     '<div class="contenu-pliable">' +
-      '<div class="champ" style="margin-top:12px"><label for="f-tolerance">Tolérance « révisé dans les temps » (± jours)</label>' +
-        '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
-        '<span class="aide-champ">Une révision cochée dans cette fenêtre autour de sa date prévue ' +
-        'compte comme faite à l\u2019heure dans les statistiques.</span></div>' +
-      blocSynchronisation() +
-      '<p class="etiquette" style="margin-top:6px">Matières</p>' +
+      '<div class="champ" style="margin-top:12px"><label for="f-type-compte">Type de compte</label>' +
+        '<select id="f-type-compte">' + optsType + '</select></div>' +
+      '<p class="etiquette" style="margin-top:6px">Intitulé des matières disponibles</p>' +
       carteMatieres() +
       '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
       carteCoursEnregistres() +
+      '<div class="champ" style="margin-top:18px"><label for="f-tolerance">Tolérance de délai de révision (± jours)</label>' +
+        '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
+        '<span class="aide-champ">Une révision cochée dans cette fenêtre avant ou après sa date prévue ' +
+        'compte comme faite à l\u2019heure dans les statistiques.</span></div>' +
       '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
-      '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Restaurer une sauvegarde</button>' +
+      '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Importer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
-      '<p class="aide-champ" style="margin-top:10px">Restauration rapide, sans fichier :</p>' +
+      '<p class="aide-champ" style="margin-top:10px">Restaurer l\u2019appli comme il y a :</p>' +
       '<div style="display:flex;gap:6px;margin-top:4px">' +
-        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-1h">Il y a 1 h</button>' +
-        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">Il y a 24 h</button>' +
-        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">Il y a 7 j</button>' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-1h">1 heure</button>' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">24 h</button>' +
+        '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">7 jours</button>' +
       '</div>' +
     '</div></details>';
 }
 
-/* --- Réglages (onglet) --------------------------------------
-   Aide, prénom et mise à jour restent libres d'accès — ton fils
-   doit pouvoir les utiliser sans le mot de passe. Synchronisation,
-   matières et sauvegarde restent protégées, dans blocParametres(). */
+/* --- Réglages administrateur : mot de passe « bregmatique » ---
+   Uniquement la synchronisation entre appareils. */
+function blocReglagesAdmin(){
+  if (!deverrouilles.admin) {
+    return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller" ' +
+      'data-cible="admin" style="margin-top:20px">' +
+      '<span class="ic">🔒</span>' +
+      '<span class="txt"><b>Réglages administrateur</b><span>Protégés par mot de passe</span></span>' +
+    '</button>';
+  }
+  return '<details class="pliable" data-cle="reglages-admin"' + ouvert('reglages-admin') + ' style="margin-top:20px">' +
+    '<summary>Réglages administrateur</summary>' +
+    '<div class="contenu-pliable">' +
+      blocSynchronisation() +
+    '</div></details>';
+}
+
+/* --- Réglages (onglet) : trois paliers, dans l'ordre demandé. --- */
 function vueReglages(){
   return blocAide() +
-    '<p class="etiquette" style="margin-top:20px">Général</p>' +
-    '<div class="carte">' +
-      '<div class="champ" style="margin-bottom:0"><label for="f-prenom">Prénom utilisé dans l\u2019agenda et le Chat</label>' +
-        '<input type="text" id="f-prenom" placeholder="Prénom" value="' + ech(DB.reglages.prenom || '') + '"></div>' +
-    '</div>' +
-    '<button class="bouton discret" data-act="maj" style="margin-top:10px">Forcer la mise à jour</button>' +
-    blocParametres() +
+    blocReglagesBase() +
+    blocReglagesAvances() +
+    blocReglagesAdmin() +
     '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
     'Cabosse ' + VERSION + ' · données conservées sur cet appareil uniquement</p>';
 }
@@ -1678,6 +2245,135 @@ function calculerScore(dl, debutISO, finISO){
 
   const score = nouveauxCours + validees * validees - reportees - malusEligibles * malusEligibles;
   return {score, nouveauxCours, validees, reportees, malusEligibles};
+}
+
+/* ============================================================
+   Score des tâches bonus — compteur séparé de celui des révisions.
+     + 1 point si la tâche est réalisée le jour prévu
+     - 1 point si elle ne l'est pas (annulée, ou passée sans être faite)
+   Une tâche soumise à contrôle parental ne rapporte son point qu'une
+   fois la coche « Contrôle fait » validée par un parent.
+   ============================================================ */
+function scoreTaches(dl, debutISO, finISO){
+  const ajISO = isoDe(aujourdhui());
+  let gagnes = 0, perdus = 0;
+  dl.occurrences.forEach(o => {
+    if (o.date < debutISO || o.date > finISO) return;
+    const t = (dl.taches || []).find(x => x.id === o.tache);
+    if (!t) return;
+    if (o.statut === 'faite') {
+      const aLHeure = o.date === o.prevue;
+      const validee = !t.controleParent || o.controleFait;
+      if (aLHeure && validee) gagnes++;
+      else if (!aLHeure) perdus++;
+      return;
+    }
+    if (o.statut === 'annulee') { perdus++; return; }
+    /* Encore à faire alors que la date est passée : point perdu. */
+    if (o.date < ajISO) perdus++;
+  });
+  return {score: gagnes - perdus, gagnes: gagnes, perdus: perdus};
+}
+
+/* Semaine de tâches : lundi → samedi, le samedi clôturant la semaine
+   comme demandé (le dimanche reste la carte « repos »). */
+function semaineTaches(decalage){
+  const lundi = plus(lundiDe(aujourdhui()), -7 * (decalage || 0));
+  return {debut: isoDe(lundi), fin: isoDe(plus(lundi, 5)), cle: isoDe(lundi)};
+}
+
+/* Une semaine de tâches est-elle « débloquée » ?
+   Le solde de tâches n'est encaissé que si le programme de révisions
+   de la semaine a bien été mené à son terme : plus aucune révision
+   du lundi au samedi ne reste en attente. C'est le geste de cocher la
+   dernière révision du samedi qui fait basculer la cagnotte — les
+   tâches bonus récompensent une semaine de révisions tenue, pas le
+   simple écoulement du temps.
+   Une semaine sans aucune révision programmée est considérée comme
+   tenue d'office : sinon ses points bonus seraient perdus sans qu'il
+   y ait eu quoi que ce soit à réviser. */
+function semaineDebloquee(dl, debutISO, finISO){
+  const revs = dl.revisions.filter(r => r.date >= debutISO && r.date <= finISO &&
+    (dl.afficherAncrage || !r.ancrage));
+  if (!revs.length) return true;
+  return !revs.some(r => r.statut === 'aFaire' || r.statut === 'reportee');
+}
+
+/* Encaissement : dès qu'une semaine close a vu son programme de
+   révisions bouclé, son solde de points bascule une fois pour toutes
+   dans la cagnotte, qui alimentera le singe Cabosse. Idempotent : une
+   semaine déjà encaissée n'est jamais recomptée. Rattrapage possible :
+   une semaine terminée en retard est encaissée au moment où la
+   dernière révision manquante est enfin cochée. */
+function encaisserSemaines(){
+  if (modeLecture()) return false;
+  const ajISO = isoDe(aujourdhui());
+  const dl = donneesLecture();
+  let change = false, gagnees = 0;
+  for (let i = 0; i <= 12; i++) {
+    const s = semaineTaches(i);
+    /* Le samedi lui-même compte : cocher la dernière révision ce
+       jour-là doit verser la cagnotte immédiatement, sans attendre
+       le lendemain. */
+    if (s.fin > ajISO) continue;
+    if (DB.reglages.semainesEncaissees[s.cle] !== undefined) continue;
+    if (!semaineDebloquee(dl, s.debut, s.fin)) continue; // programme non tenu : rien n'est versé
+    const pts = scoreTaches(dl, s.debut, s.fin).score;
+    DB.reglages.semainesEncaissees[s.cle] = pts;
+    DB.reglages.cagnotte = (DB.reglages.cagnotte || 0) + pts;
+    gagnees += pts;
+    change = true;
+  }
+  if (change) {
+    sauver();
+    if (gagnees > 0) toast('Semaine bouclée ! ' + gagnees + ' point' +
+      (gagnees > 1 ? 's' : '') + ' versé' + (gagnees > 1 ? 's' : '') + ' à la cagnotte 🐒');
+  }
+  return change;
+}
+
+/* ============================================================
+   Minuteur d'une tâche
+   ============================================================ */
+let minuteurActif = null;
+
+function formatChrono(s){
+  const neg = s < 0;
+  const abs = Math.abs(s);
+  const m = Math.floor(abs / 60), r = abs % 60;
+  return (neg ? '+' : '') + String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+}
+
+function lancerMinuteur(idOcc){
+  const o = DB.occurrences.find(x => x.id === idOcc);
+  if (!o) return;
+  const t = trouverTache(o.tache);
+  if (!t) return;
+  arreterMinuteur(false);
+  minuteurActif = {
+    occurrence: idOcc,
+    restant: Math.max(1, parseInt(t.duree, 10) || 1) * 60,
+    tick: null
+  };
+  minuteurActif.tick = setInterval(() => {
+    minuteurActif.restant--;
+    const el = document.getElementById('minuteur-affichage');
+    if (el) {
+      el.textContent = formatChrono(minuteurActif.restant);
+      el.classList.toggle('fini', minuteurActif.restant <= 0);
+    }
+    if (minuteurActif.restant === 0) {
+      notifier('Cabosse', 'Tâche terminée : ' + t.intitule, {tag: 'tache-' + idOcc});
+      toast('Temps écoulé — ' + t.intitule);
+    }
+  }, 1000);
+  rendre();
+}
+
+function arreterMinuteur(rafraichir){
+  if (minuteurActif && minuteurActif.tick) clearInterval(minuteurActif.tick);
+  minuteurActif = null;
+  if (rafraichir !== false) rendre();
 }
 
 function limitesSemaine(decalage){
@@ -2327,18 +3023,18 @@ function planningImpression(){
    feuille d'impression iOS : on repeint l'icône en sablier AVANT,
    via un double requestAnimationFrame qui garantit que le navigateur
    a réellement affiché le changement avant de se figer. */
-function imprimerPlanning(){
-  const btn = document.getElementById('btn-imprimer');
+function imprimerPlanning(bouton){
+  const btn = bouton || document.getElementById('btn-imprimer');
   document.getElementById('impression').innerHTML = planningImpression();
-  btn.textContent = '⏳';
-  btn.disabled = true;
+  const texteOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   requestAnimationFrame(() => requestAnimationFrame(() => {
     try { window.print(); }
-    finally { btn.textContent = '🖨️'; btn.disabled = false; }
+    finally { if (btn) { btn.textContent = texteOriginal; btn.disabled = false; } }
   }));
 }
 
-document.getElementById('btn-imprimer').addEventListener('click', imprimerPlanning);
+document.getElementById('btn-imprimer').addEventListener('click', () => imprimerPlanning(document.getElementById('btn-imprimer')));
 
 /* --- Synchronisation entre appareils ------------------------- */
 
@@ -2537,6 +3233,68 @@ function exporterSauvegarde(){
   } catch (e) { toast('Export impossible.'); }
 }
 
+/* ============================================================
+   Proposition hebdomadaire : s'envoyer la sauvegarde par mail.
+
+   Une page web ne peut pas expédier un mail toute seule — il n'y a
+   pas de serveur derrière Cabosse. On prépare donc le fichier et on
+   passe la main au téléphone : la feuille de partage iOS permet de
+   choisir Mail avec la pièce jointe déjà attachée. En repli (partage
+   de fichiers indisponible), le fichier est téléchargé et le brouillon
+   ouvert, la pièce jointe restant à ajouter à la main.
+   ============================================================ */
+function fichierSauvegarde(){
+  const nom = 'cabosse-' + isoDe(aujourdhui()) + '.json';
+  return new File([JSON.stringify(DB)], nom, {type: 'application/json'});
+}
+
+function envoyerSauvegardeParMail(){
+  const dest = (DB.reglages.email || '').trim();
+  const sujet = 'Sauvegarde Cabosse du ' + libelleCourt(isoDe(aujourdhui()));
+  try {
+    const fichier = fichierSauvegarde();
+    if (navigator.canShare && navigator.canShare({files: [fichier]})) {
+      navigator.share({files: [fichier], title: sujet, text: sujet})
+        .then(() => toast('Sauvegarde partagée.'))
+        .catch(() => {});
+      return;
+    }
+  } catch (e) { /* Constructeur File indisponible : on bascule sur le repli */ }
+
+  exporterSauvegarde();
+  if (dest) {
+    const lien = 'mailto:' + encodeURIComponent(dest) +
+      '?subject=' + encodeURIComponent(sujet) +
+      '&body=' + encodeURIComponent(
+        'Sauvegarde Cabosse en pièce jointe.\n\n' +
+        'Le fichier vient d\u2019être téléchargé sur l\u2019appareil : ' +
+        'ajoute-le en pièce jointe avant d\u2019envoyer.');
+    setTimeout(() => { location.href = lien; }, 600);
+  } else {
+    toast('Renseigne ton adresse e-mail dans les réglages.');
+  }
+}
+
+/* Une fois par semaine au plus, et seulement si une adresse est
+   configurée : on propose, on n'impose jamais. */
+function proposerExportHebdo(){
+  if (modeLecture()) return;
+  if (DB.reglages.exportHebdo === false) return;
+  if (!(DB.reglages.email || '').trim()) return;
+  const ajISO = isoDe(aujourdhui());
+  const derniere = DB.reglages.dernierePropositionExport || '';
+  if (derniere && Math.round((dDe(ajISO) - dDe(derniere)) / 86400000) < 7) return;
+
+  DB.reglages.dernierePropositionExport = ajISO;
+  sauver();
+  setTimeout(() => {
+    if (confirm('Sauvegarde hebdomadaire\n\nT\u2019envoyer une copie de tes données par mail ' +
+        'à ' + DB.reglages.email + ' ?')) {
+      envoyerSauvegardeParMail();
+    }
+  }, 1200);
+}
+
 function importerSauvegarde(fichier){
   const lecteur = new FileReader();
   lecteur.onload = () => {
@@ -2588,6 +3346,10 @@ function marquer(id, statut){
      permet de savoir si la révision a été faite dans les temps. */
   if (statut === 'faite') r.faitLe = isoDe(aujourdhui());
   sauver();
+  /* C'est ici que la cagnotte se joue : si cette validation était la
+     dernière révision en attente de la semaine, le solde des tâches
+     bonus bascule dans la cagnotte (voir encaisserSemaines). */
+  encaisserSemaines();
   rendre();
   toast(statut === 'faite' ? 'Révision faite.' : 'Révision annulée.');
 }
@@ -2684,15 +3446,35 @@ function ouvrirReport(id){
   document.getElementById('voile-date').value = isoDe(plus(dDe(r.date), 7));
   voile.classList.add('on');
 }
-function fermerReport(){ voile.classList.remove('on'); reportEnCours = null; }
+/* Report d'une occurrence de tâche : même feuille que pour une
+   révision, avec son propre marqueur pour ne pas confondre les deux. */
+let reportTacheEnCours = null;
+function ouvrirReportTache(id){
+  const o = DB.occurrences.find(x => x.id === id);
+  if (!o) return;
+  const t = trouverTache(o.tache);
+  reportTacheEnCours = id;
+  reportEnCours = null;
+  document.getElementById('voile-info').textContent =
+    (t ? t.intitule + ' · ' : '') + 'prévue le ' + libelleCourt(o.date);
+  document.getElementById('voile-date').value = isoDe(plus(dDe(o.date), 1));
+  voile.classList.add('on');
+}
+
+function fermerReport(){ voile.classList.remove('on'); reportEnCours = null; reportTacheEnCours = null; }
 
 document.getElementById('voile-annuler').addEventListener('click', fermerReport);
 voile.addEventListener('click', e => { if (e.target === voile) fermerReport(); });
 document.getElementById('voile-ok').addEventListener('click', () => {
   const d = document.getElementById('voile-date').value;
-  if (!d || !reportEnCours) return;
-  const r = DB.revisions.find(x => x.id === reportEnCours);
-  if (r) { r.date = d; r.statut = 'reportee'; sauver(); }
+  if (!d) return;
+  if (reportTacheEnCours) {
+    const o = DB.occurrences.find(x => x.id === reportTacheEnCours);
+    if (o) { o.date = d; o.statut = 'reportee'; sauver(); }
+  } else if (reportEnCours) {
+    const r = DB.revisions.find(x => x.id === reportEnCours);
+    if (r) { r.date = d; r.statut = 'reportee'; sauver(); }
+  } else return;
   fermerReport();
   rendre();
   toast('Reportée au ' + libelleCourt(d) + '.');
@@ -2799,6 +3581,7 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'export') exporterSauvegarde();
+  else if (act === 'export-mail') envoyerSauvegardeParMail();
   else if (act === 'importDeclencheur') {
     const f = document.getElementById('fichier-import');
     if (f) f.click();
@@ -2806,7 +3589,43 @@ vue.addEventListener('click', e => {
   else if (act === 'maj') {
     if (confirm('Forcer la mise à jour ? L\'application va se recharger.')) forcerMiseAJour();
   }
-  else if (act === 'parametres-deverrouiller') ouvrirMotDePasse();
+  /* --- Tâches bonus --- */
+  else if (act === 'tache-jour') {
+    b.classList.toggle('actif');
+    return;
+  }
+  else if (act === 'tache-ouvrir') {
+    tacheDepliee = (tacheDepliee === id) ? null : id;
+    rendre();
+  }
+  else if (act === 'tache-faite') {
+    const o = DB.occurrences.find(x => x.id === id);
+    if (o) {
+      o.statut = 'faite';
+      arreterMinuteur(false);
+      sauver(); rendre();
+      const t = trouverTache(o.tache);
+      toast(t && t.controleParent ? 'Fait — en attente du contrôle parent.' : 'Bravo, tâche faite !');
+    }
+  }
+  else if (act === 'tache-timer') lancerMinuteur(id);
+  else if (act === 'tache-annuler') {
+    const o = DB.occurrences.find(x => x.id === id);
+    if (o) { o.statut = 'annulee'; sauver(); rendre(); toast('Tâche annulée.'); }
+  }
+  else if (act === 'tache-reactiver') {
+    const o = DB.occurrences.find(x => x.id === id);
+    if (o) { o.statut = 'aFaire'; o.controleFait = false; sauver(); rendre(); toast('Tâche remise en attente.'); }
+  }
+  else if (act === 'tache-reporter') ouvrirReportTache(id);
+  else if (act === 'tache-suppr') {
+    const t = DB.taches.find(x => x.id === id);
+    if (t && confirm('Supprimer la tâche « ' + t.intitule + ' » et toutes ses occurrences ?')) {
+      supprimerTache(id); rendre(); toast('Tâche supprimée.');
+    }
+  }
+  else if (act === 'parametres-deverrouiller') ouvrirMotDePasse(b.dataset.cible);
+  else if (act === 'imprimer-planning') imprimerPlanning(b);
   else if (act === 'chat-nom') ouvrirChatNom();
   else if (act === 'chat-envoyer') envoyerMessageChat();
   else if (act === 'notif-activer') demanderNotifications();
@@ -2904,11 +3723,59 @@ vue.addEventListener('change', e => {
     sauver();
     return;
   }
+  if (e.target.id === 'f-email') {
+    DB.reglages.email = e.target.value;
+    sauver();
+    return;
+  }
+  if (e.target.id === 'f-type-compte') {
+    DB.reglages.typeCompte = e.target.value;
+    sauver();
+    rendre(); // la visibilité des onglets et du contrôle parental en dépend
+    return;
+  }
+  if (e.target.id === 'f-export-hebdo') {
+    DB.reglages.exportHebdo = e.target.checked;
+    sauver();
+    return;
+  }
   if (e.target.id === 'f-tolerance') {
     const v = parseInt(e.target.value, 10);
     DB.reglages.tolerance = (isNaN(v) || v < 0) ? 3 : Math.min(v, 30);
     sauver();
     rendre();
+    return;
+  }
+  if (e.target.id === 'f-mat') {
+    const champNum = document.getElementById('f-num');
+    if (champNum) champNum.value = e.target.value ? prochainNumero(e.target.value) : '';
+    return;
+  }
+  /* Formulaire de tâche : on n'affiche que les options utiles au
+     type de récurrence choisi. */
+  if (e.target.id === 't-type') {
+    const t = e.target.value;
+    const bs = document.getElementById('t-bloc-semaine');
+    const bm = document.getElementById('t-bloc-mois');
+    const bf = document.getElementById('t-bloc-fin');
+    if (bs) bs.style.display = (t === 'semaine') ? '' : 'none';
+    if (bm) bm.style.display = (t === 'mois') ? '' : 'none';
+    if (bf) bf.style.display = (t === 'aucune') ? 'none' : '';
+    return;
+  }
+  if (e.target.name === 't-moismode') {
+    const bp = document.getElementById('t-bloc-position');
+    if (bp) bp.style.display = (e.target.value === 'position') ? '' : 'none';
+    return;
+  }
+  /* Coche « Contrôle fait » d'une occurrence, réservée aux parents. */
+  if (e.target.dataset && e.target.dataset.act === 'tache-controle') {
+    const o = DB.occurrences.find(x => x.id === e.target.dataset.id);
+    if (o) {
+      o.controleFait = e.target.checked;
+      sauver(); rendre();
+      toast(o.controleFait ? 'Contrôle validé — bonus acquis.' : 'Contrôle retiré.');
+    }
     return;
   }
   if (e.target.dataset && e.target.dataset.act === 'cours-annee') {
@@ -2925,6 +3792,52 @@ vue.addEventListener('change', e => {
     importerSauvegarde(e.target.files[0]);
     e.target.value = '';
   }
+});
+
+/* Enregistrement d'une nouvelle tâche bonus. */
+vue.addEventListener('click', e => {
+  if (e.target.id !== 't-ok') return;
+  const intitule = (document.getElementById('t-intitule').value || '').trim();
+  const duree = parseInt(document.getElementById('t-duree').value, 10);
+  const debut = document.getElementById('t-debut').value;
+  const heure = document.getElementById('t-heure').value || '';
+  const type = document.getElementById('t-type').value;
+  const intervalle = parseInt(document.getElementById('t-intervalle').value, 10) || 1;
+  const fin = (document.getElementById('t-fin') || {}).value || '';
+  const chControle = document.getElementById('t-controle');
+
+  if (!intitule) { toast('Donne un intitulé à la tâche.'); return; }
+  if (!duree || duree < 1) { toast('Indique une durée en minutes.'); return; }
+  if (!debut) { toast('Indique une date de début.'); return; }
+
+  const recur = {type: type, intervalle: intervalle, finLe: fin};
+  if (type === 'semaine') {
+    recur.jours = Array.from(document.querySelectorAll('.jour-pion.actif'))
+      .map(b => parseInt(b.dataset.jour, 10));
+    if (!recur.jours.length) { toast('Choisis au moins un jour de la semaine.'); return; }
+  }
+  if (type === 'mois') {
+    const mode = document.querySelector('input[name="t-moismode"]:checked');
+    recur.moisMode = mode ? mode.value : 'date';
+    if (recur.moisMode === 'position') {
+      recur.position = parseInt(document.getElementById('t-position').value, 10);
+      recur.jourSemaine = parseInt(document.getElementById('t-jour-semaine').value, 10);
+    }
+  }
+
+  ajouterTache({
+    id: 'T' + Date.now().toString(36),
+    intitule: intitule,
+    duree: duree,
+    debut: debut,
+    heure: heure,
+    recur: recur,
+    /* Jamais de contrôle parental sur un compte étudiant autonome. */
+    controleParent: !!(chControle && chControle.checked) && typeCompte() !== 'etudiant'
+  });
+  vueActive = 'agenda';
+  rendre();
+  toast('Tâche « ' + intitule + ' » planifiée.');
 });
 
 vue.addEventListener('click', e => {
@@ -2965,8 +3878,11 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
 });
 
 completerRappels(); // étend l'horizon des rappels à long terme
+completerTaches();  // matérialise les occurrences de tâches sur l'horizon glissant
+encaisserSemaines(); // bascule dans la cagnotte les semaines de tâches désormais closes
 rendre();
 verifierRappelJournalier();
+proposerExportHebdo();
 
 /* Le module de synchronisation se charge après ce script (il est
    différé) : on attend son signal avant de démarrer l'écoute ou de
@@ -2976,7 +3892,9 @@ window.addEventListener('sabosse-sync-pret', () => {
   else if (DB.reglages.role === 'source' && DB.reglages.codePartage) {
     window.SabosseSync.envoyer(DB.reglages.codePartage, {
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
-      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom}
+      taches: DB.taches, occurrences: DB.occurrences,
+      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
+                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte}
     });
   }
   demarrerEcouteChat();
