@@ -32,6 +32,15 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .emo{font-size:1.5em}
+/* Écran de démarrage : couvre tout le premier instant, le temps que
+   l'app démarre réellement — même fond que l'icône, pour un
+   enchaînement visuel sans coupure au lancement. */
+#ecran-demarrage{position:fixed;inset:0;z-index:999;background:#094639;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .4s ease}
+#ecran-demarrage img{width:132px;height:132px;border-radius:28px;
+  box-shadow:0 12px 32px rgba(0,0,0,.25)}
+#ecran-demarrage.sortie{opacity:0;pointer-events:none}
 html,body{margin:0;padding:0;height:100%}
 body{background:var(--fond);color-scheme:light;color:var(--texte);font-family:var(--corps);
   font-size:16px;line-height:1.45;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
@@ -350,6 +359,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 </style>
 </head>
 <body>
+<div id="ecran-demarrage"><img src="icone-512.png" alt="Cabosse"></div>
 <div id="app">
   <header id="entete">
     <img class="glyphe" src="icone-180.png" alt="Cabosse">
@@ -457,7 +467,8 @@ const FIREBASE_CONFIG = {
 };
 
 const configure = Object.values(FIREBASE_CONFIG).every(v => typeof v === 'string' && !v.startsWith('COLLE_'));
-let bdd = null, auth = null, arreterEcouteChat = null;
+let bdd = null, auth = null;
+const ecoutesChat = {}; // une désinscription par canal de chat, plusieurs à la fois possibles
 const ecoutesSuivi = {}; // une désinscription par code suivi, plusieurs enfants possibles à la fois
 if (configure) {
   try {
@@ -540,11 +551,14 @@ window.SabosseSync = {
         deleteDoc(doc(bdd, 'sabosse_chat', code, 'messages', id)).catch(() => {})));
     } catch (e) { console.error('SABOSSE sync : purge du chat impossible', e); }
   },
+  /* Un canal de chat par code suivi (et un pour son propre partage) :
+     sans quoi, seul le canal du profil actuellement affiché à l'écran
+     recevait ses messages, et changer de profil coupait les autres. */
   suivreChat(code, callback){
     if (!this.disponible || !code) return;
-    if (arreterEcouteChat) arreterEcouteChat();
+    if (ecoutesChat[code]) ecoutesChat[code]();
     const q = query(collection(bdd, 'sabosse_chat', code, 'messages'), orderBy('quand', 'asc'), limitToLast(200));
-    arreterEcouteChat = onSnapshot(q,
+    ecoutesChat[code] = onSnapshot(q,
       snap => {
         const msgs = [];
         snap.forEach(d => msgs.push(Object.assign({id: d.id}, d.data())));
@@ -553,8 +567,12 @@ window.SabosseSync = {
       err => { console.error('SABOSSE sync : chat interrompu', err); callback(null, err); }
     );
   },
-  arreterChat(){
-    if (arreterEcouteChat) { arreterEcouteChat(); arreterEcouteChat = null; }
+  arreterChat(code){
+    if (code) {
+      if (ecoutesChat[code]) { ecoutesChat[code](); delete ecoutesChat[code]; }
+      return;
+    }
+    Object.keys(ecoutesChat).forEach(c => { ecoutesChat[c](); delete ecoutesChat[c]; });
   }
 };
 
@@ -571,7 +589,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v27 · 5 septembre 2026';
+const VERSION = 'v28 · 5 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -781,12 +799,12 @@ const Store = {
   dispo: true,
   lire(){
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
-                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusque:0}};
+                    reglages:{afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusquePar:{}}};
     try {
       const brut = localStorage.getItem(CLE);
       if (!brut) return defaut;
       const o = JSON.parse(brut);
-      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusque:0}, o.reglages || {});
+      const reglages = Object.assign({afficherAncrage:true, prenom:'', role:'aucun', codePartage:'', affichage:'personnel', tolerance:3, derniereAnnee:'', chatVuJusquePar:{}}, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
          resterait bloqué sans aucun moyen de la réactiver. */
@@ -1046,8 +1064,6 @@ function ech(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-let chatNonLu = false;
-
 function rendre(){
   document.querySelectorAll('#barre button').forEach(b => {
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
@@ -1055,7 +1071,7 @@ function rendre(){
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
-  else if (vueActive === 'chat') { chatNonLu = false; vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(); }
+  else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
   else vue.innerHTML = vueStats();
   if (vueActive !== 'chat') vue.scrollTop = 0;
@@ -1094,9 +1110,16 @@ function majIconeAgenda(){
 
 /* Pastille clignotante sur l'onglet Chat : s'éteint dès qu'on
    consulte réellement le chat (voir rendre() ci-dessus). */
+/* Le canal actuellement affiché ne passe jamais par
+   chatNonLuParCanal (voir surCeCanal dans demarrerEcouteChatCanal) :
+   tout ce qui s'y trouve concerne donc forcément un AUTRE canal que
+   celui regardé. Pas de condition sur vueActive ici — être sur le
+   chat de Clément ne doit pas masquer une pastille due à Léa. */
 function majBadgeChat(){
   const badge = document.getElementById('badge-chat');
-  if (badge) badge.classList.toggle('on', chatNonLu && vueActive !== 'chat');
+  if (!badge) return;
+  const nonLu = Object.keys(chatNonLuParCanal).some(c => chatNonLuParCanal[c]);
+  badge.classList.toggle('on', nonLu);
 }
 
 /* Bascule « Mes révisions / Enfant 1 / Enfant 2… » : un segment par
@@ -1851,16 +1874,35 @@ function verifierRappelJournalier(){
 }
 
 /* Le chat utilise le même code que la synchronisation : pas de canal
-   séparé à gérer. Contextuel au profil affiché — en suivant Clément,
-   on discute dans le canal de Clément ; en suivant Léa, dans celui de
-   Léa ; sur son propre profil, dans celui qu'on partage soi-même. */
+   séparé à gérer. codeFamille() dit quel canal est à L'ÉCRAN (celui
+   du profil actuellement affiché) ; canauxChat() dit lesquels sont
+   ÉCOUTÉS — tous ceux auxquels cet appareil a accès, pour recevoir
+   une notification quel que soit le profil affiché au moment où un
+   message arrive. */
 function codeFamille(){
   const s = suiviActif();
   if (s) return s.code;
   return DB.reglages.role === 'source' ? DB.reglages.codePartage : '';
 }
 
-let messagesChat = [];
+function canauxChat(){
+  const codes = DB.suivis.map(s => s.code);
+  if (DB.reglages.role === 'source' && DB.reglages.codePartage) codes.push(DB.reglages.codePartage);
+  return codes;
+}
+
+/* Un jeu de messages et un indicateur « non lu » par canal — pas une
+   seule variable globale, sinon suivre deux enfants ne pouvait
+   notifier que pour celui actuellement affiché à l'écran. */
+let messagesChatPar = {};
+let chatNonLuParCanal = {};
+
+/* Messages du canal actuellement affiché — c'est ce que vueChat()
+   doit montrer, peu importe combien de canaux tournent en tâche de
+   fond. */
+function messagesChatActuel(){
+  return messagesChatPar[codeFamille()] || [];
+}
 
 function libelleHeure(ts){
   if (!ts) return '';
@@ -1884,52 +1926,66 @@ function libelleDepuis(ts){
   return 'il y a ' + Math.round(ecartH / 24) + ' j';
 }
 
+/* Relance l'écoute de TOUS les canaux accessibles à cet appareil —
+   pas seulement celui actuellement affiché — pour recevoir une
+   notification même en étant sur « Mes révisions » ou sur le canal
+   d'un autre enfant. */
 function demarrerEcouteChat(){
-  const code = codeFamille();
+  canauxChat().forEach(demarrerEcouteChatCanal);
+}
+
+function demarrerEcouteChatCanal(code){
   if (!window.SabosseSync || !window.SabosseSync.disponible || !code) return;
   window.SabosseSync.suivreChat(code, (msgs, erreur) => {
     if (erreur) { toast('Connexion au chat interrompue.'); return; }
     if (!msgs) return;
     const monNom = (DB.reglages.prenom || '').trim();
-    const vuJusque = DB.reglages.chatVuJusque || 0;
+    const vuJusquePar = DB.reglages.chatVuJusquePar || {};
+    const vuJusque = vuJusquePar[code] || 0;
+    const surCeCanal = vueActive === 'chat' && codeFamille() === code;
 
     if (!vuJusque && msgs.length) {
-      /* Toute première connexion à ce chat, jamais tout l'historique
+      /* Toute première connexion à ce canal, jamais tout l'historique
          existant : on marque simplement tout comme déjà vu. */
-      DB.reglages.chatVuJusque = Math.max.apply(null, msgs.map(m => m.quand || 0));
+      vuJusquePar[code] = Math.max.apply(null, msgs.map(m => m.quand || 0));
+      DB.reglages.chatVuJusquePar = vuJusquePar;
       Store.ecrire(DB);
-    } else {
-      /* Repère persistant plutôt qu'un simple « messagesChat était
-         vide » : ce dernier repart à zéro à chaque rechargement de
-         l'app, ce qui, sur iPhone, où une PWA est régulièrement
-         déchargée de la mémoire, empêchait la notification de tout
-         message reçu pendant que l'app n'était pas en cours
-         d'exécution — la panne rapportée. */
+    } else if (!surCeCanal) {
+      /* Repère persistant par canal plutôt qu'une simple variable en
+         mémoire, qui repart à zéro à chaque rechargement de l'app —
+         sur iPhone, où une PWA est régulièrement déchargée de la
+         mémoire, cela empêchait toute notification pour un message
+         reçu pendant que l'app n'était pas en cours d'exécution. */
       const nouveaux = msgs.filter(m => (m.quand || 0) > vuJusque && m.auteur !== monNom);
       nouveaux.forEach(m => notifier(m.auteur || 'Cabosse', m.texte || '', {tag: 'chat-' + m.id}));
-      if (nouveaux.length && vueActive !== 'chat') { chatNonLu = true; majBadgeChat(); }
+      if (nouveaux.length) { chatNonLuParCanal[code] = true; majBadgeChat(); }
     }
 
-    messagesChat = msgs;
-    if (vueActive === 'chat') {
+    messagesChatPar[code] = msgs;
+    if (surCeCanal) {
       rendre();
-      marquerChatVu();
+      marquerChatVu(code);
     }
-    purgerChatAncien(code);
+    purgerChatAncien(code, msgs);
   });
 }
 
-/* Avance le repère « vu jusque » au dernier message actuellement
-   connu — appelé chaque fois que l'utilisateur regarde réellement
-   le chat, pour que le prochain redémarrage de l'app sache ce qui a
-   déjà été lu. */
-function marquerChatVu(){
-  if (!messagesChat.length) return;
-  const dernier = Math.max.apply(null, messagesChat.map(m => m.quand || 0));
-  if (dernier > (DB.reglages.chatVuJusque || 0)) {
-    DB.reglages.chatVuJusque = dernier;
+/* Avance le repère « vu jusque » d'UN canal au dernier message qu'il
+   contient — appelé chaque fois que l'utilisateur regarde réellement
+   ce canal précis, pour que le prochain redémarrage de l'app sache ce
+   qui a déjà été lu, canal par canal. */
+function marquerChatVu(code){
+  const msgs = messagesChatPar[code];
+  if (!msgs || !msgs.length) return;
+  const dernier = Math.max.apply(null, msgs.map(m => m.quand || 0));
+  const vuJusquePar = DB.reglages.chatVuJusquePar || {};
+  if (dernier > (vuJusquePar[code] || 0)) {
+    vuJusquePar[code] = dernier;
+    DB.reglages.chatVuJusquePar = vuJusquePar;
     Store.ecrire(DB);
   }
+  chatNonLuParCanal[code] = false;
+  majBadgeChat();
 }
 
 /* Purge les messages de plus de 30 jours, et — au cas où quelqu'un
@@ -1940,12 +1996,12 @@ function marquerChatVu(){
 const CHAT_AGE_MAX_MS = 30 * 24 * 3600000;
 const CHAT_VOLUME_MAX = 150;
 
-function purgerChatAncien(code){
-  if (!messagesChat.length) return;
+function purgerChatAncien(code, msgs){
+  if (!msgs.length) return;
   const limiteAge = Date.now() - CHAT_AGE_MAX_MS;
-  const aSupprimer = new Set(messagesChat.filter(m => m.quand < limiteAge).map(m => m.id));
-  if (messagesChat.length > CHAT_VOLUME_MAX) {
-    messagesChat.slice(0, messagesChat.length - CHAT_VOLUME_MAX).forEach(m => aSupprimer.add(m.id));
+  const aSupprimer = new Set(msgs.filter(m => m.quand < limiteAge).map(m => m.id));
+  if (msgs.length > CHAT_VOLUME_MAX) {
+    msgs.slice(0, msgs.length - CHAT_VOLUME_MAX).forEach(m => aSupprimer.add(m.id));
   }
   if (aSupprimer.size) window.SabosseSync.purgerMessages(code, Array.from(aSupprimer));
 }
@@ -1966,10 +2022,11 @@ function vueChat(){
         '<span class="emo">🔔</span> Activer le son des notifications</button>'
     : '';
   let html = banniereNotif + '<div id="chat-fil">';
-  if (!messagesChat.length) {
+  const msgsCanal = messagesChatActuel();
+  if (!msgsCanal.length) {
     html += '<p class="vide-chat">Aucun message pour l\u2019instant.</p>';
   } else {
-    messagesChat.forEach(m => {
+    msgsCanal.forEach(m => {
       const moi = nom && m.auteur === nom;
       html += '<div class="msg' + (moi ? ' moi' : '') + '">' +
         (moi ? '' : '<b class="msg-auteur">' + ech(m.auteur || '?') + '</b>') +
@@ -2314,7 +2371,8 @@ function regenererCodePartage(){
   DB.reglages.role = 'source';
   echecsSyncConsecutifs = 0;
   derniereSyncEnvoi = null;
-  messagesChat = [];
+  messagesChatPar = {};
+  chatNonLuParCanal = {};
   sauver();
   demarrerEcouteChat();
   rendre();
@@ -2439,11 +2497,12 @@ function traiterLienSuivi(){
 }
 
 function retirerSuivi(code){
-  if (window.SabosseSync) window.SabosseSync.arreter(code);
+  if (window.SabosseSync) { window.SabosseSync.arreter(code); window.SabosseSync.arreterChat(code); }
   DB.suivis = DB.suivis.filter(s => s.code !== code);
   if (DB.reglages.affichage === code) DB.reglages.affichage = 'personnel';
   if (!DB.suivis.length && DB.reglages.role === 'suivi') DB.reglages.role = 'aucun';
-  messagesChat = [];
+  delete messagesChatPar[code];
+  delete chatNonLuParCanal[code];
   sauver();
   demarrerEcouteChat();
   rendre();
@@ -2506,7 +2565,7 @@ function importerSauvegarde(fichier){
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
       suivis: suivisActuels,
       reglages: Object.assign(
-        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: '', chatVuJusque: 0},
+        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: '', chatVuJusquePar: {}},
         o.reglages || {},
         syncActuelle,          // écrase toute valeur de synchro venue du fichier
         {afficherAncrage: true}
@@ -2777,10 +2836,14 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'sync-desactiver') {
     if (confirm('Désactiver le partage sur cet appareil ?')) {
-      if (window.SabosseSync) { window.SabosseSync.arreter(); window.SabosseSync.arreterChat(); }
+      if (window.SabosseSync) {
+        window.SabosseSync.arreter();
+        window.SabosseSync.arreterChat(DB.reglages.codePartage);
+      }
+      delete messagesChatPar[DB.reglages.codePartage];
+      delete chatNonLuParCanal[DB.reglages.codePartage];
       DB.reglages.role = 'aucun';
       DB.reglages.affichage = 'personnel';
-      messagesChat = [];
       sauver();
       rendre();
       toast('Partage désactivé.');
@@ -2894,8 +2957,10 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
   if (b.dataset.code === DB.reglages.affichage) return;
   DB.reglages.affichage = b.dataset.code;
   sauver();
-  messagesChat = []; // le chat change de canal avec le profil affiché
-  demarrerEcouteChat();
+  /* Chaque canal tourne déjà en tâche de fond (voir canauxChat()) :
+     changer de profil affiché ne fait que changer lequel est à
+     l'écran, ses messages sont déjà là. rendre() marquera ce canal
+     comme vu si on est sur l'onglet Chat au moment du changement. */
   rendre();
 });
 
@@ -2945,6 +3010,17 @@ document.addEventListener('visibilitychange', () => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+/* Écran de démarrage : 2 secondes fixes, puis fondu. Se déclenche à
+   chaque chargement complet de la page — c'est la seule chose que le
+   Javascript puisse distinguer d'un « kill » depuis l'écran d'accueil,
+   un vrai lancement d'app natif se comportant d'ailleurs pareil. */
+setTimeout(() => {
+  const ecran = document.getElementById('ecran-demarrage');
+  if (!ecran) return;
+  ecran.classList.add('sortie');
+  setTimeout(() => ecran.remove(), 420);
+}, 2000);
 </script>
 </body>
 </html>
