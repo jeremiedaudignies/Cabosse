@@ -708,7 +708,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v32 · 7 septembre 2026';
+const VERSION = 'v33 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1210,13 +1210,24 @@ function rafraichirGamification(silencieux){
     if (!silencieux) annonces.push({type:'ultime', texte:'CABOSSE SUPRÊME DÉBLOQUÉ !', emoji:'✨'});
   }
 
+  /* On ne réécrit — et surtout on ne repousse vers Firebase — que si
+     l'état a réellement bougé. Sans cela, le recalcul de démarrage
+     resterait local (Store.ecrire n'envoie rien) et un parent qui suit
+     l'appareil ne verrait jamais les XP tant que l'enfant n'aurait pas
+     fait une action. Comparaison avant/après pour éviter un envoi
+     inutile à chaque ouverture. */
+  const avantEtat = JSON.stringify({x: g.xpTotal, n: g.niveauGlobal, j: g.jauges, a: g.artefacts});
+
   g.xpTotal = calc.xpTotal;
   g.niveauGlobal = calc.niveauGlobal;
   g.rangIndex = calc.rangIndex;
   g.rangLabel = calc.rangLabel;
   CARACTERISTIQUES.forEach(c => { g.jauges[c.cle] = calc.jauges[c.cle]; });
 
-  Store.ecrire(DB);
+  const apresEtat = JSON.stringify({x: g.xpTotal, n: g.niveauGlobal, j: g.jauges, a: g.artefacts});
+  if (avantEtat !== apresEtat) sauver();   // pousse aussi vers les appareils qui suivent
+  else Store.ecrire(DB);                   // simple persistance des annonces déjà faites
+
   if (annonces.length) annonces.forEach(a => filerRecompense(a));
   return annonces;
 }
