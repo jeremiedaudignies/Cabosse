@@ -708,7 +708,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v33 · 7 septembre 2026';
+const VERSION = 'v34 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1717,7 +1717,13 @@ function enregistrerInstantane(){
     let liste = JSON.parse(localStorage.getItem(CLE_INSTANTANES) || '[]');
     const dernier = liste[liste.length - 1];
     if (dernier && maintenant - dernier.quand < 3600000) return; // au plus un par heure
-    liste.push({quand: maintenant, cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres});
+    liste.push({quand: maintenant, cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
+                /* Tâches bonus, occurrences et cagnotte doivent suivre :
+                   sans elles, une restauration rapide effacerait tout
+                   le volet bonus sans prévenir. */
+                taches: DB.taches, occurrences: DB.occurrences,
+                cagnotte: DB.reglages.cagnotte,
+                semainesEncaissees: DB.reglages.semainesEncaissees});
 
     const limite24h = maintenant - 24 * 3600000;
     const limite7j = maintenant - 7 * 24 * 3600000;
@@ -1747,11 +1753,18 @@ function restaurerInstantane(decalageMs){
   const quand = new Date(meilleur.quand).toLocaleString('fr-FR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
-  if (!confirm('Restaurer l\u2019état du ' + quand + ' ? Cela remplace tes cours et révisions actuels.')) return;
+  if (!confirm('Restaurer l\u2019état du ' + quand + ' ? Cela remplace tes cours, révisions et tâches actuels.')) return;
   DB.cours = meilleur.cours;
   DB.revisions = meilleur.revisions;
   DB.matieres = meilleur.matieres;
+  /* Instantanés d'avant la v33 : ces champs peuvent manquer. On ne
+     touche alors à rien plutôt que d'écraser par du vide. */
+  if (Array.isArray(meilleur.taches)) DB.taches = meilleur.taches;
+  if (Array.isArray(meilleur.occurrences)) DB.occurrences = meilleur.occurrences;
+  if (typeof meilleur.cagnotte === 'number') DB.reglages.cagnotte = meilleur.cagnotte;
+  if (meilleur.semainesEncaissees) DB.reglages.semainesEncaissees = meilleur.semainesEncaissees;
   sauver();
+  rafraichirGamification(true);   // l'état RPG se recalcule depuis l'historique restauré
   rendre();
   toast('Restauré à l\u2019état du ' + quand + '.');
 }
