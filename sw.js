@@ -2,7 +2,7 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v30';
+const CACHE = 'sabosse-v31';
 
 /* Deux listes distinctes, volontairement.
    FICHIERS : le strict nécessaire pour que l'app démarre hors ligne.
@@ -14,7 +14,6 @@ const CACHE = 'sabosse-v30';
 const FICHIERS = ['./', './index.html', './manifest.json'];
 
 const ASSETS_OPTIONNELS = [
-  './assets/cabosse/cabosse-base.png',
   './assets/cabosse/stats/energie.png',
   './assets/cabosse/stats/intelligence.png',
   './assets/cabosse/stats/sagesse.png',
@@ -29,7 +28,13 @@ const ASSETS_OPTIONNELS = [
   './assets/sons/cabosse-happy.wav',
   './assets/sons/revision-reported-soft.wav',
   './assets/sons/revision-cancelled-soft.wav'
-];
+].concat(
+  /* Les 40 illustrations de rangs. Générées plutôt qu'écrites à la
+     main, et toutes optionnelles : celles qui n'existent pas encore
+     échouent silencieusement sans bloquer l'installation. */
+  Array.from({length: 40}, (_, i) =>
+    './assets/cabosse/rangs/cabosse-' + String(i + 1).padStart(2, '0') + '.png')
+);
 
 self.addEventListener('install', e => {
   e.waitUntil(

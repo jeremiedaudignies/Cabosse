@@ -79,13 +79,24 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
-#barre{flex:0 0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);
+/* Six onglets sur une seule ligne. Flex plutôt que grille fixe :
+   quand un onglet est masqué (le Chat, sur un compte ÉTUDIANT), les
+   autres se répartissent la place au lieu de laisser un trou. */
+#barre{flex:0 0 auto;display:flex;background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
-#barre button{position:relative;padding:10px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
+#barre button{position:relative;flex:1 1 0;min-width:0;
+  padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:30px;line-height:1;filter:grayscale(1) opacity(.55);
-  display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%}
-#barre button .lb{font-size:10px;font-weight:600;text-align:center;line-height:1.15;padding:0 2px}
+#barre button .ic{font-size:23px;line-height:1;filter:grayscale(1) opacity(.55);
+  display:inline-flex;align-items:center;justify-content:center;
+  width:31px;height:31px;border-radius:50%}
+#barre button .lb{font-size:9px;font-weight:600;text-align:center;line-height:1.1;
+  padding:0 1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Écrans très étroits (iPhone SE et similaires) : on resserre encore. */
+@media (max-width:360px){
+  #barre button .ic{font-size:20px;width:27px;height:27px}
+  #barre button .lb{font-size:8.5px}
+}
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
 #barre button .ic.ic-rouge{filter:none;background:#FBDCDA}
@@ -479,7 +490,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
-    <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
+    <button data-vue="stats"><span class="ic">📊</span><span class="lb">Stats</span></button>
     <button data-vue="reglages"><span class="ic">⚙️</span><span class="lb">Réglages</span></button>
   </nav>
 </div>
@@ -694,7 +705,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v30 · 6 septembre 2026';
+const VERSION = 'v31 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1213,7 +1224,12 @@ function rafraichirGamification(silencieux){
    produits, l'app reste parfaitement utilisable.
    ============================================================ */
 const CABOSSE_ASSETS = {
-  base: {src:'assets/cabosse/cabosse-base.png', repli:'🐒'},
+  /* Une illustration par rang : cabosse-01.png … cabosse-40.png,
+     l'index du fichier correspondant exactement au niveau global.
+     Les fichiers sont livrés au fil de l'eau ; tant qu'un niveau n'a
+     pas son image, on retombe sur le dernier rang disponible, puis
+     sur l'emoji. */
+  rangs: {dossier:'assets/cabosse/rangs/', repli:'🐒'},
   stats: {
     energie:      {src:'assets/cabosse/stats/energie.png',      repli:'🍫'},
     intelligence: {src:'assets/cabosse/stats/intelligence.png', repli:'🧠'},
@@ -1240,9 +1256,25 @@ const CABOSSE_ASSETS = {
    Les calques dont le PNG n'existe pas encore restent invisibles
    (onerror), ce qui permet de livrer les visuels au fil de l'eau
    sans retoucher le code. */
+/* Avatar : l'illustration du rang atteint porte l'apparence
+   générale. Les calques de caractéristiques restent prévus par
+   dessus (accessoires, halos) et s'afficheront le jour où les PNG
+   correspondants existeront — un fichier absent reste simplement
+   invisible, sans casser l'affichage. */
+function fichierRang(niveau){
+  const n = Math.max(1, Math.min(NIVEAU_MAX, niveau || 1));
+  return CABOSSE_ASSETS.rangs.dossier + 'cabosse-' + String(n).padStart(2, '0') + '.png';
+}
+
 function avatarCabosse(taille){
   const g = gamif();
   const cls = taille === 'grand' ? ' grand' : '';
+  /* Repli en cascade : si l'image du rang n'est pas encore livrée,
+     on redescend d'un niveau, jusqu'à l'emoji. Évite un trou visuel
+     pendant que tu produis les 40 illustrations. */
+  const replis = [];
+  for (let n = g.niveauGlobal; n >= 1; n--) replis.push(fichierRang(n));
+  const chaine = replis.slice(1, 4).map(s => "'" + s + "'").join(',');
   let calques = '';
   CARACTERISTIQUES.forEach(c => {
     const a = CABOSSE_ASSETS.stats[c.cle];
@@ -1251,10 +1283,27 @@ function avatarCabosse(taille){
       'src="' + a.src + '" onerror="this.style.display=\'none\'">';
   });
   return '<div class="cabosse-avatar' + cls + '">' +
-    '<span class="cabosse-repli">' + CABOSSE_ASSETS.base.repli + '</span>' +
-    '<img class="cabosse-base" alt="Cabosse" src="' + CABOSSE_ASSETS.base.src + '" ' +
-      'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+    '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
+    '<img class="cabosse-base" alt="Cabosse" src="' + replis[0] + '" ' +
+      'data-replis="' + ech(chaine) + '" ' +
+      'onerror="reculerAvatar(this)" ' +
+      'onload="this.parentNode.classList.add(\'avec-image\')">' +
     calques + '</div>';
+}
+
+/* Descend d'un cran dans la liste de replis, puis abandonne. */
+function reculerAvatar(img){
+  let liste = [];
+  try { liste = JSON.parse('[' + (img.dataset.replis || '').replace(/'/g, '"') + ']'); }
+  catch (e) { liste = []; }
+  if (liste.length) {
+    const suivant = liste.shift();
+    img.dataset.replis = liste.map(s => "'" + s + "'").join(',');
+    img.src = suivant;
+  } else {
+    img.style.display = 'none';
+    img.parentNode.classList.remove('avec-image');
+  }
 }
 
 /* ============================================================
