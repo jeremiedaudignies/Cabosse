@@ -2,7 +2,7 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v35';
+const CACHE = 'sabosse-v36';
 
 /* Deux listes distinctes, volontairement.
    FICHIERS : le strict nécessaire pour que l'app démarre hors ligne.

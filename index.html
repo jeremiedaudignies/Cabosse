@@ -460,6 +460,41 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cbs-ultime{margin-top:10px;padding:12px;border-radius:var(--r-m);text-align:center;
   font-weight:800;font-size:13px;color:#fff;background:linear-gradient(135deg,#7B3FB8,#F2A104)}
 
+/* Carte agenda : uniquement les points de la semaine. */
+.cc-semaine-val{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--xp);line-height:1}
+.cc-semaine-lb{font-size:12px;color:var(--texte-2);font-weight:600;margin-top:2px}
+
+/* Bloc « faire évoluer » de la vue Cabosse. */
+.cbs-evolution{display:flex;align-items:center;gap:14px;margin-top:14px;padding:14px 16px;
+  background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m)}
+.cbs-evolution.pret{border-color:var(--xp);background:var(--xp-doux)}
+.cbs-solde{flex:1;display:flex;flex-direction:column}
+.cbs-solde b{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.cbs-solde span{font-size:11.5px;color:var(--texte-2);font-weight:600;margin-top:2px}
+.cbs-plus{flex:0 0 auto;width:56px;height:56px;border-radius:50%;font-size:30px;font-weight:800;
+  background:var(--xp);color:#fff;border:0;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(242,161,4,.4)}
+.cbs-plus:disabled{background:var(--surface-2);color:var(--texte-3);box-shadow:none;cursor:default}
+.cbs-evolution.pret .cbs-plus{animation:pulse-plus 1.6s ease-in-out infinite}
+@keyframes pulse-plus{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.cbs-max{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--xp)}
+
+/* Galerie plein écran des évolutions. */
+.gal-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.gal-case{position:relative;background:var(--surface);border:1px solid var(--filet);
+  border-radius:var(--r-m);padding:8px 6px 10px;text-align:center;min-height:118px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+.gal-case img{width:100%;aspect-ratio:1/1;object-fit:contain}
+.gal-repli{display:none;font-size:38px}
+.gal-case.sans-image .gal-repli{display:block}
+.gal-case.verrouille{opacity:.5;background:var(--surface-2)}
+.gal-cadenas{font-size:34px;padding:14px 0}
+.gal-num{position:absolute;top:5px;left:6px;font-family:var(--mono);font-size:9.5px;
+  font-weight:700;color:var(--texte-3)}
+.gal-nom{font-size:9.5px;font-weight:700;line-height:1.15;margin-top:4px;
+  color:var(--texte-2);overflow-wrap:anywhere}
+@media (prefers-reduced-motion: reduce){.cbs-evolution.pret .cbs-plus{animation:none}}
+
 /* File de récompenses */
 #recompenses{position:fixed;left:0;right:0;bottom:96px;z-index:60;
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
@@ -715,7 +750,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v35 · 7 septembre 2026';
+const VERSION = 'v36 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -958,9 +993,15 @@ function ajouterTache(t){
 }
 
 function supprimerTache(id){
+  if (!DB.taches.some(t => t.id === id)) return;
   DB.taches = DB.taches.filter(t => t.id !== id);
   DB.occurrences = DB.occurrences.filter(o => o.tache !== id);
+  /* Même raison que pour un cours supprimé : le malus doit être
+     compté au moment du geste, il ne sera plus recalculable. */
+  const g = gamif();
+  g.penalites.tachesPerdues = (g.penalites.tachesPerdues || 0) + 1;
   sauver();
+  rafraichirGamification(true);
 }
 
 /* Résumé lisible d'une règle de récurrence, pour la liste des tâches. */
@@ -1005,31 +1046,31 @@ function libelleRecurrence(t){
    ============================================================ */
 
 /* Barème, volontairement regroupé ici pour rester réglable. */
+/* Barème Cabosse — points unitaires, volontairement lisibles par un
+   enfant : chaque geste vaut 1 point (ou en retire 1), pas 5 ou 8.
+   Regroupé ici pour rester réglable d'un seul endroit. */
 const XP_CABOSSE = {
-  coursNouveau:        8,   // 🍫 Énergie
-  cagnottePointPositif: 2,  // 🍫 Énergie, par point positif réellement versé
-  revisionFaite:       5,   // 🧠 Intelligence
-  revisionAvecNote:    1,   // 🧠 Intelligence, bonus si note de difficulté
-  revisionDansLesTemps: 6,  // 🧘 Sagesse
-  revisionHorsTolerance: 2, // 🧘 Sagesse
-  revisionReportee:   -2,   // 🧘 Sagesse
-  revisionAnnulee:    -4,   // 🧘 Sagesse
-  tacheAJour:          5,   // 💪 Force
-  tacheApresReport:    3    // 💪 Force
+  coursEncode:        1,   // 🍫 Énergie
+  revisionFaite:      1,   // 🧠 Intelligence  (+ 1 🧘 Sagesse, voir ci-dessous)
+  revisionFaiteSagesse: 1, // 🧘 Sagesse
+  revisionReportee:  -1,   // 🧘 Sagesse
+  coursSupprimeIntel: -2,  // 🧠 Intelligence
+  coursSupprimeSagesse: -2,// 🧘 Sagesse
+  tacheValidee:       1,   // 💪 Force        (+ 1 🧘 Sagesse)
+  tacheValideeSagesse: 1,  // 🧘 Sagesse
+  tachePerdueForce:  -1,   // 💪 Force        (annulée ou supprimée)
+  tachePerdueSagesse: -1   // 🧘 Sagesse
 };
 
-/* Cinq paliers visuels par caractéristique. */
-const SEUILS_PALIERS = [0, 100, 250, 450, 700];
-function palierDepuisXp(xp){
-  let p = 1;
-  for (let i = 0; i < SEUILS_PALIERS.length; i++) if (xp >= SEUILS_PALIERS[i]) p = i + 1;
-  return p;
-}
+/* Un niveau tous les 5 points dépensés. */
+const POINTS_PAR_NIVEAU = 5;
+/* Un accessoire légendaire par caractéristique, à 100 points. */
+const SEUIL_ACCESSOIRE = 100;
 
 const CARACTERISTIQUES = [
   {cle:'energie',      nom:'Énergie',      emoji:'🍫', aide:'Nourris Cabosse en ajoutant de nouveaux cours.'},
   {cle:'intelligence', nom:'Intelligence', emoji:'🧠', aide:'Chaque révision validée muscle le cerveau de Cabosse.'},
-  {cle:'sagesse',      nom:'Sagesse',      emoji:'🧘', aide:'Révise à l\u2019heure prévue : Cabosse gagne en sagesse.'},
+  {cle:'sagesse',      nom:'Sagesse',      emoji:'🧘', aide:'Révise et fais tes tâches sans rien annuler.'},
   {cle:'force',        nom:'Force',        emoji:'💪', aide:'Réalise des tâches bonus pour que Cabosse devienne plus fort.'}
 ];
 
@@ -1046,37 +1087,6 @@ const RANGS_CABOSSE = [
 ];
 const NIVEAU_MAX = RANGS_CABOSSE.length; // 40
 
-/* Courbe de progression : douce au début (le niveau 2 tombe après un
-   seul cours encodé), puis de plus en plus exigeante.
-   Seuil(n) = 12 · (n-1) + 4 · (n-1)^1.85, arrondi à la dizaine.
-   Généré une fois au chargement plutôt qu'écrit à la main. */
-const SEUILS_NIVEAUX_CABOSSE = (function(){
-  const s = [];
-  for (let n = 1; n <= NIVEAU_MAX; n++) {
-    const x = n - 1;
-    s.push(Math.round((12 * x + 4 * Math.pow(x, 1.85)) / 10) * 10);
-  }
-  return s;
-})();
-
-function niveauDepuisXp(xpTotal){
-  let n = 1;
-  for (let i = 0; i < SEUILS_NIVEAUX_CABOSSE.length; i++) {
-    if (xpTotal >= SEUILS_NIVEAUX_CABOSSE[i]) n = i + 1;
-  }
-  return Math.min(n, NIVEAU_MAX);
-}
-
-/* Progression vers le niveau suivant, en pourcentage. */
-function progressionNiveau(xpTotal){
-  const n = niveauDepuisXp(xpTotal);
-  if (n >= NIVEAU_MAX) return {niveau: n, pct: 100, actuel: xpTotal, cible: xpTotal};
-  const bas = SEUILS_NIVEAUX_CABOSSE[n - 1];
-  const haut = SEUILS_NIVEAUX_CABOSSE[n];
-  const pct = haut > bas ? Math.round((xpTotal - bas) / (haut - bas) * 100) : 0;
-  return {niveau: n, pct: Math.max(0, Math.min(100, pct)), actuel: xpTotal - bas, cible: haut - bas};
-}
-
 const ARTEFACTS_CABOSSE = [
   {cle:'cabosseOr',         carac:'energie',      nom:'Cabosse d\u2019or',      emoji:'🏅'},
   {cle:'couronneNeuronale', carac:'intelligence', nom:'Couronne neuronale',     emoji:'👑'},
@@ -1086,20 +1096,24 @@ const ARTEFACTS_CABOSSE = [
 
 function gamificationVierge(){
   return {
-    version: 1,
-    xpTotal: 0, niveauGlobal: 1, rangIndex: 0, rangLabel: RANGS_CABOSSE[0],
+    version: 2,
+    pointsTotaux: 0, pointsDepenses: 0,
+    niveauGlobal: 1, rangIndex: 0, rangLabel: RANGS_CABOSSE[0],
     jauges: {
-      energie:      {xp:0, palier:1},
-      intelligence: {xp:0, palier:1},
-      sagesse:      {xp:0, palier:1},
-      force:        {xp:0, palier:1}
+      energie:      {points:0},
+      intelligence: {points:0},
+      sagesse:      {points:0},
+      force:        {points:0}
     },
     artefacts: {cabosseOr:false, couronneNeuronale:false, bandeauMaitre:false,
                 braceletsGorille:false, formeUltime:false},
-    progression: {
-      dernierNiveauAnnonce: 1,
-      derniersPaliersAnnonces: {energie:1, intelligence:1, sagesse:1, force:1}
-    },
+    /* Suppressions : elles ne laissent aucune trace dans l'historique
+       (le cours ou la tâche a disparu de DB), donc leur malus ne peut
+       pas être recalculé. C'est la seule entorse au principe « tout
+       se recalcule » : ces deux compteurs sont incrémentés au moment
+       de la suppression et conservés tels quels. */
+    penalites: {coursSupprimes:0, tachesPerdues:0},
+    progression: {dernierNiveauAnnonce: 1},
     preferences: {sons:true, animations:true}
   };
 }
@@ -1109,58 +1123,71 @@ function gamificationVierge(){
    Ne lit rien d'autre que `dl` (+ la tolérance, réglage global) et
    n'écrit nulle part. C'est elle la source de vérité.
    ------------------------------------------------------------ */
-function calculerGamification(dl, semainesEncaissees){
-  const jauges = {energie:0, intelligence:0, sagesse:0, force:0};
+function calculerGamification(dl, penalites){
+  const j = {energie:0, intelligence:0, sagesse:0, force:0};
+  const pen = penalites || {coursSupprimes:0, tachesPerdues:0};
 
-  /* 🍫 ÉNERGIE — les cours appris, plus les points positifs
-     réellement versés à la cagnotte. Les points négatifs ne retirent
-     rien : l'énergie ne redescend jamais. */
-  jauges.energie += (dl.cours || []).length * XP_CABOSSE.coursNouveau;
-  const encaissees = semainesEncaissees || {};
-  Object.keys(encaissees).forEach(cle => {
-    const pts = encaissees[cle];
-    if (pts > 0) jauges.energie += pts * XP_CABOSSE.cagnottePointPositif;
-  });
+  /* 🍫 ÉNERGIE — un point par cours encodé. */
+  j.energie += (dl.cours || []).length * XP_CABOSSE.coursEncode;
 
-  /* 🧠 INTELLIGENCE et 🧘 SAGESSE — le travail de réactivation. */
+  /* 🧠 INTELLIGENCE et 🧘 SAGESSE — le travail de réactivation.
+     Une révision faite rapporte 1 de chaque ; une reportée coûte
+     1 de sagesse. La ponctualité n'entre plus en compte : le barème
+     doit rester lisible par un enfant. */
   (dl.revisions || []).forEach(r => {
     if (r.statut === 'faite') {
-      jauges.intelligence += XP_CABOSSE.revisionFaite;
-      const c = (dl.cours || []).find(x => x.id === r.cours);
-      if (c && (c.commentaire || '').trim()) jauges.intelligence += XP_CABOSSE.revisionAvecNote;
-      /* Ponctualité : on réutilise la logique existante dansLesTemps(). */
-      jauges.sagesse += dansLesTemps(r) ? XP_CABOSSE.revisionDansLesTemps
-                                        : XP_CABOSSE.revisionHorsTolerance;
+      j.intelligence += XP_CABOSSE.revisionFaite;
+      j.sagesse      += XP_CABOSSE.revisionFaiteSagesse;
     } else if (r.statut === 'reportee') {
-      jauges.sagesse += XP_CABOSSE.revisionReportee;
-    } else if (r.statut === 'annulee') {
-      jauges.sagesse += XP_CABOSSE.revisionAnnulee;
+      j.sagesse      += XP_CABOSSE.revisionReportee;
     }
   });
 
-  /* 💪 FORCE — uniquement les occurrences de tâches bonus. */
+  /* 💪 FORCE et 🧘 SAGESSE — les tâches bonus. Une tâche ne compte
+     qu'une fois réellement validée : si elle exige un contrôle
+     parental, le point attend la coche du parent. */
   (dl.occurrences || []).forEach(o => {
-    if (o.statut !== 'faite') return;
     const t = (dl.taches || []).find(x => x.id === o.tache);
     if (!t) return;
-    /* Contrôle parental : pas d'XP tant que le parent n'a pas validé. */
-    if (t.controleParent && !o.controleFait) return;
-    jauges.force += (o.date === o.prevue) ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport;
+    if (o.statut === 'faite') {
+      if (t.controleParent && !o.controleFait) return;
+      j.force   += XP_CABOSSE.tacheValidee;
+      j.sagesse += XP_CABOSSE.tacheValideeSagesse;
+    } else if (o.statut === 'annulee') {
+      j.force   += XP_CABOSSE.tachePerdueForce;
+      j.sagesse += XP_CABOSSE.tachePerdueSagesse;
+    }
   });
 
-  /* Plancher absolu à 0 : la sagesse peut être entamée, jamais négative. */
+  /* Malus de suppression : impossibles à recalculer depuis
+     l'historique (l'élément supprimé n'y est plus), d'où ces deux
+     compteurs persistés. */
+  j.intelligence += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeIntel;
+  j.sagesse      += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeSagesse;
+  j.force        += (pen.tachesPerdues || 0) * XP_CABOSSE.tachePerdueForce;
+  j.sagesse      += (pen.tachesPerdues || 0) * XP_CABOSSE.tachePerdueSagesse;
+
+  /* Plancher absolu à 0 : une caractéristique peut être entamée,
+     jamais négative. */
   const sortie = {jauges:{}};
-  let xpTotal = 0;
+  let total = 0;
   CARACTERISTIQUES.forEach(c => {
-    const xp = Math.max(0, jauges[c.cle]);
-    sortie.jauges[c.cle] = {xp: xp, palier: palierDepuisXp(xp)};
-    xpTotal += xp;
+    const p = Math.max(0, j[c.cle]);
+    sortie.jauges[c.cle] = {points: p};
+    total += p;
   });
-  sortie.xpTotal = xpTotal;
-  sortie.niveauGlobal = niveauDepuisXp(xpTotal);
-  sortie.rangIndex = sortie.niveauGlobal - 1;
-  sortie.rangLabel = RANGS_CABOSSE[sortie.rangIndex];
+  sortie.pointsTotaux = total;
   return sortie;
+}
+
+/* Points gagnés mais pas encore dépensés : c'est ce que l'enfant
+   peut convertir en niveaux depuis la vue Cabosse, via le « + ». */
+function pointsDisponibles(g){
+  return Math.max(0, (g.pointsTotaux || 0) - (g.pointsDepenses || 0));
+}
+function niveauxAchetables(g){
+  return Math.min(Math.floor(pointsDisponibles(g) / POINTS_PAR_NIVEAU),
+                  NIVEAU_MAX - (g.niveauGlobal || 1));
 }
 
 function gamif(){
@@ -1183,29 +1210,15 @@ function gamif(){
 function rafraichirGamification(silencieux){
   if (modeLecture()) return;                    // jamais sur le miroir d'un autre appareil
   const g = gamif();
-  const calc = calculerGamification(donneesLecture(), DB.reglages.semainesEncaissees);
+  const calc = calculerGamification(donneesLecture(), g.penalites);
 
   const annonces = [];
-  CARACTERISTIQUES.forEach(c => {
-    const avant = (g.progression.derniersPaliersAnnonces || {})[c.cle] || 1;
-    const apres = calc.jauges[c.cle].palier;
-    if (apres > avant && !silencieux) {
-      annonces.push({type:'palier', texte: c.nom.toUpperCase() + ' ' +
-        ['I','II','III','IV','V'][apres - 1] + ' DÉBLOQUÉE !', emoji: c.emoji});
-    }
-    g.progression.derniersPaliersAnnonces[c.cle] = apres;
-  });
 
-  if (calc.niveauGlobal > (g.progression.dernierNiveauAnnonce || 1) && !silencieux) {
-    annonces.push({type:'niveau',
-      texte: 'NIVEAU ' + calc.niveauGlobal + ' ! ' + calc.rangLabel, emoji:'⭐'});
-  }
-  g.progression.dernierNiveauAnnonce = calc.niveauGlobal;
-
-  /* Artefacts : acquis une fois pour toutes. Une baisse ultérieure de
-     sagesse ne reprend jamais un artefact déjà annoncé à l'enfant. */
+  /* Accessoires légendaires : 100 points dans la caractéristique
+     correspondante. Acquis une fois pour toutes — une baisse
+     ultérieure ne reprend jamais un accessoire déjà annoncé. */
   ARTEFACTS_CABOSSE.forEach(a => {
-    if (calc.jauges[a.carac].palier >= 5 && !g.artefacts[a.cle]) {
+    if (calc.jauges[a.carac].points >= SEUIL_ACCESSOIRE && !g.artefacts[a.cle]) {
       g.artefacts[a.cle] = true;
       if (!silencieux) annonces.push({type:'artefact',
         texte: a.emoji + ' ' + a.nom + ' débloqué !', emoji: a.emoji});
@@ -1218,25 +1231,48 @@ function rafraichirGamification(silencieux){
   }
 
   /* On ne réécrit — et surtout on ne repousse vers Firebase — que si
-     l'état a réellement bougé. Sans cela, le recalcul de démarrage
-     resterait local (Store.ecrire n'envoie rien) et un parent qui suit
-     l'appareil ne verrait jamais les XP tant que l'enfant n'aurait pas
-     fait une action. Comparaison avant/après pour éviter un envoi
-     inutile à chaque ouverture. */
-  const avantEtat = JSON.stringify({x: g.xpTotal, n: g.niveauGlobal, j: g.jauges, a: g.artefacts});
+     l'état a réellement bougé, pour éviter une écriture à chaque
+     ouverture de l'app. */
+  const avantEtat = JSON.stringify({t: g.pointsTotaux, j: g.jauges, a: g.artefacts});
 
-  g.xpTotal = calc.xpTotal;
-  g.niveauGlobal = calc.niveauGlobal;
-  g.rangIndex = calc.rangIndex;
-  g.rangLabel = calc.rangLabel;
+  g.pointsTotaux = calc.pointsTotaux;
   CARACTERISTIQUES.forEach(c => { g.jauges[c.cle] = calc.jauges[c.cle]; });
+  /* Le niveau ne suit plus automatiquement les points : il ne monte
+     que lorsque l'enfant dépense ses points via le « + » de la vue
+     Cabosse (voir monterNiveauCabosse). On se contente de garder le
+     libellé de rang cohérent avec le niveau déjà atteint. */
+  g.niveauGlobal = Math.max(1, Math.min(NIVEAU_MAX, g.niveauGlobal || 1));
+  g.rangIndex = g.niveauGlobal - 1;
+  g.rangLabel = RANGS_CABOSSE[g.rangIndex];
 
-  const apresEtat = JSON.stringify({x: g.xpTotal, n: g.niveauGlobal, j: g.jauges, a: g.artefacts});
+  const apresEtat = JSON.stringify({t: g.pointsTotaux, j: g.jauges, a: g.artefacts});
   if (avantEtat !== apresEtat) sauver();   // pousse aussi vers les appareils qui suivent
   else Store.ecrire(DB);                   // simple persistance des annonces déjà faites
 
   if (annonces.length) annonces.forEach(a => filerRecompense(a));
   return annonces;
+}
+
+/* Dépense de 5 points pour gagner un niveau — déclenchée par le
+   « + » de la vue Cabosse, jamais automatiquement. */
+function monterNiveauCabosse(){
+  const g = gamif();
+  if (modeLecture()) return false;
+  if (g.niveauGlobal >= NIVEAU_MAX) { toast('Cabosse est déjà au niveau maximum 🎉'); return false; }
+  if (pointsDisponibles(g) < POINTS_PAR_NIVEAU) {
+    toast('Il faut ' + POINTS_PAR_NIVEAU + ' points pour faire évoluer Cabosse.');
+    return false;
+  }
+  g.pointsDepenses = (g.pointsDepenses || 0) + POINTS_PAR_NIVEAU;
+  g.niveauGlobal += 1;
+  g.rangIndex = g.niveauGlobal - 1;
+  g.rangLabel = RANGS_CABOSSE[g.rangIndex];
+  g.progression.dernierNiveauAnnonce = g.niveauGlobal;
+  sauver();
+  filerRecompense({type:'niveau', emoji:'⭐',
+    texte:'NIVEAU ' + g.niveauGlobal + ' ! ' + g.rangLabel});
+  rendre();
+  return true;
 }
 
 /* ============================================================
@@ -1589,23 +1625,38 @@ const Store = {
       }
       if (reglages.affichage === 'suivi' && suivis[0]) reglages.affichage = suivis[0].code;
 
-      /* Migration RPG (v30) : on ajoute `gamification` si elle manque,
-         sans jamais toucher aux cours, révisions, tâches ni cagnotte.
-         Les sous-objets sont fusionnés un par un pour qu'une sauvegarde
-         partielle (structure d'une version intermédiaire) ne laisse pas
-         de trou. L'état sera de toute façon recalculé depuis
-         l'historique au démarrage. */
+      /* Migration RPG. La v2 (barème en points unitaires) remplace la
+         v1 (XP à 5/6/8 points, paliers, niveau automatique). Les XP
+         de la v1 n'ont plus de sens dans la nouvelle échelle : on
+         repart des jauges à zéro, elles seront intégralement
+         recalculées depuis l'historique au démarrage. En revanche on
+         CONSERVE le niveau déjà atteint et les accessoires déjà
+         annoncés — reprendre à un enfant un niveau ou un accessoire
+         acquis serait la pire des punitions. Les points déjà
+         « consommés » par ce niveau sont reconstitués pour que le
+         solde disponible reste juste. */
       const gVierge = gamificationVierge();
       const gStocke = reglages.gamification || {};
+      const ancienneVersion = (gStocke.version || 1) < 2;
+      const niveauAcquis = Math.max(1, Math.min(NIVEAU_MAX, gStocke.niveauGlobal || 1));
       reglages.gamification = Object.assign(gVierge, gStocke, {
-        jauges:      Object.assign(gVierge.jauges,      gStocke.jauges || {}),
+        version: 2,
+        niveauGlobal: niveauAcquis,
+        rangIndex: niveauAcquis - 1,
+        rangLabel: RANGS_CABOSSE[niveauAcquis - 1],
+        /* v1 : les niveaux étaient offerts, pas achetés. On considère
+           qu'ils ont été payés, sinon l'enfant se retrouverait avec
+           un solde négatif. */
+        pointsDepenses: ancienneVersion
+          ? (niveauAcquis - 1) * POINTS_PAR_NIVEAU
+          : (gStocke.pointsDepenses || 0),
+        pointsTotaux: ancienneVersion ? 0 : (gStocke.pointsTotaux || 0),
+        jauges:      ancienneVersion ? gVierge.jauges
+                                     : Object.assign(gVierge.jauges, gStocke.jauges || {}),
         artefacts:   Object.assign(gVierge.artefacts,   gStocke.artefacts || {}),
+        penalites:   Object.assign(gVierge.penalites,   gStocke.penalites || {}),
         preferences: Object.assign(gVierge.preferences, gStocke.preferences || {}),
-        progression: Object.assign(gVierge.progression, gStocke.progression || {}, {
-          derniersPaliersAnnonces: Object.assign(
-            gVierge.progression.derniersPaliersAnnonces,
-            (gStocke.progression || {}).derniersPaliersAnnonces || {})
-        })
+        progression: {dernierNiveauAnnonce: niveauAcquis}
       });
 
       return {
@@ -1838,15 +1889,21 @@ function ajouterCours(code, numero, dateISO, annee){
   completerRappels();
   sauver();
   /* 🍫 Nourrir Cabosse : un nouveau cours, c'est de l'énergie. */
-  gainCabosse('energie', XP_CABOSSE.coursNouveau);
+  gainCabosse('energie', XP_CABOSSE.coursEncode);
   rafraichirGamification();
   return true;
 }
 
 function supprimerCours(id){
+  if (!DB.cours.some(c => c.id === id)) return;
   DB.cours = DB.cours.filter(c => c.id !== id);
   DB.revisions = DB.revisions.filter(r => r.cours !== id);
+  /* Le malus de suppression ne peut pas se recalculer depuis
+     l'historique — le cours n'y est plus. On le compte ici. */
+  const g = gamif();
+  g.penalites.coursSupprimes = (g.penalites.coursSupprimes || 0) + 1;
   sauver();
+  rafraichirGamification(true);
 }
 
 /* Suppression définitive d'une seule révision de l'historique —
@@ -1948,12 +2005,15 @@ function rendre(){
   if (vueActive === 'chat' && !peutVoir('chat')) vueActive = 'agenda';
 
   document.querySelectorAll('#barre button').forEach(b => {
-    if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
+    /* La galerie est une sous-vue de Cabosse : son onglet reste actif. */
+    const vueOnglet = (vueActive === 'cabosse-galerie') ? 'cabosse' : vueActive;
+    if (b.dataset.vue === vueOnglet) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'taches') vue.innerHTML = vueTaches();
   else if (vueActive === 'cabosse') vue.innerHTML = vueCabosse();
+  else if (vueActive === 'cabosse-galerie') vue.innerHTML = vueGalerieCabosse();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
@@ -2053,34 +2113,50 @@ function majBascule(){
 
 /* --- Agenda ------------------------------------------------ */
 
-/* Les échéances J+x (stockées telles quelles depuis l'origine, pour
-   ne jamais avoir à migrer les données déjà enregistrées) s'affichent
-   désormais sous la forme « Réactivation n°X ». Le numéro correspond
-   au rang de l'échéance dans la rampe RAMPE_INTERVALLES, prolongée
-   par paliers de 28 jours au-delà — recalculé à l'affichage, jamais
-   stocké. */
-function numeroReactivation(delta){
-  const deltas = [];
-  let cumul = 0;
-  RAMPE_INTERVALLES.forEach(ecart => { cumul += ecart; deltas.push(cumul); });
-  while (deltas[deltas.length - 1] < delta) deltas.push(deltas[deltas.length - 1] + 28);
-  const idx = deltas.indexOf(delta);
+/* Numérotation des réactivations.
+   Elle ne se déduit plus du delta J+x : l'ancrage du samedi n'a pas
+   de delta fixe, et les renforts ajoutés après un « pas encore
+   retenu » s'intercalent. On numérote donc CHRONOLOGIQUEMENT, par
+   cours, toutes les échéances qui ne sont ni l'encodage ni un
+   renfort. Résultat : la première échéance après l'encodage est la
+   « Réactivation n°1 », quelle que soit sa nature (ancrage du samedi
+   ou palier de la rampe), et l'insertion d'un renfort ne décale
+   jamais la numérotation des autres.
+   Recalculé à l'affichage, jamais stocké — les données restent
+   intactes et compatibles avec les sauvegardes existantes. */
+function estEncodage(r){ return (r.rang || '').indexOf('Encodage') !== -1; }
+function estRenfort(r){ return (r.rang || '').indexOf('Renfort') !== -1; }
+
+function numeroReactivation(r, dl){
+  if (estEncodage(r) || estRenfort(r)) return null;
+  const source = dl || donneesLecture();
+  const fratrie = (source.revisions || [])
+    .filter(x => x.cours === r.cours && !estEncodage(x) && !estRenfort(x))
+    .sort((a, b) => {
+      const da = a.prevue || a.date, db = b.prevue || b.date;
+      return da < db ? -1 : (da > db ? 1 : (a.id < b.id ? -1 : 1));
+    });
+  const idx = fratrie.findIndex(x => x.id === r.id);
   return idx === -1 ? null : idx + 1;
 }
 
-/* Deux checkpoints ont un nom plus engageant que leur rang brut :
-   la révision du jour d'encodage (« Nouveau ! ») et l'ancrage du
-   samedi, qui agit comme la révision globale de la semaine — elle
-   récupère naturellement tous les cours encodés du lundi au vendredi,
-   puisque chacun y calcule sa propre échéance d'ancrage. */
+/* Libellé affiché sur la pastille d'une révision.
+   L'ancrage du samedi n'a plus de traitement particulier : il compte
+   comme une réactivation ordinaire, exactement comme demandé. */
+function libelleRevision(r, dl){
+  if (estEncodage(r)) return 'Nouveau !';
+  if (estRenfort(r))  return 'Renfort';
+  const n = numeroReactivation(r, dl);
+  return n ? 'Réactivation n°' + n : (r.rang || '');
+}
+
+/* Conservé pour les écrans qui n'ont qu'une chaîne de rang sous la
+   main (impression, aperçu d'échéancier, statistiques). */
 function libelleRang(rang){
-  const avecReactivations = rang.replace(/J\+(\d+)/g, (tout, n) => {
-    const numero = numeroReactivation(parseInt(n, 10));
-    return numero ? 'Réactivation n°' + numero : tout;
-  });
-  return avecReactivations
-    .replace(/^Encodage/, 'Nouveau !')
-    .replace(/^Ancrage/, 'Révision de la semaine');
+  if ((rang || '').indexOf('Encodage') !== -1) return 'Nouveau !';
+  if ((rang || '').indexOf('Renfort') !== -1) return 'Renfort';
+  if ((rang || '').indexOf('Ancrage') !== -1) return 'Réactivation';
+  return (rang || '').replace(/J\+(\d+)/g, 'Réactivation');
 }
 
 /* Une carte de révision, réutilisée pour les retards, la semaine
@@ -2104,13 +2180,13 @@ function carteRevision(r, aujourdhuiCarte){
   const zoneNote = commentaire
     ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">📝</span> ' + texteNote + '</button>'
     : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
-  /* Deux styles de pastille en plus de l'ancrage : « Nouveau ! » (le
-     jour d'encodage) et « Renfort » (rappel J+7 ajouté après un
-     « pas encore retenu »). Détectés sur le rang plutôt que stockés
-     en champ séparé — plus simple, sans impact sur les données. */
-  const estNouveau = r.rang.indexOf('Encodage') !== -1;
-  const estRenfort = r.rang.indexOf('Renfort') !== -1;
-  const classeRang = (r.ancrage ? ' ancrage' : '') + (estNouveau ? ' nouveau' : '') + (estRenfort ? ' renfort' : '');
+  /* Deux styles de pastille seulement : « Nouveau ! » (jour
+     d'encodage) et « Renfort » (rappel ajouté après un « pas encore
+     retenu »). L'ancrage du samedi n'a plus de style propre : il
+     s'affiche comme n'importe quelle « Réactivation n°X ». */
+  const nouveau = estEncodage(r);
+  const renfort = estRenfort(r);
+  const classeRang = (nouveau ? ' nouveau' : '') + (renfort ? ' renfort' : '');
   let messageFenetre = '';
   if (!validable && !modeLecture()) {
     messageFenetre = joursAvant(r.date) > 0
@@ -2124,7 +2200,7 @@ function carteRevision(r, aujourdhuiCarte){
       '<i class="puce" style="background:' + m.c + '"></i>' +
       '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
       '<span class="matiere">' + ech(m.nom) + '</span>' +
-      '<span class="rang' + classeRang + '">' + ech(libelleRang(r.rang)) + '</span>' +
+      '<span class="rang' + classeRang + '">' + ech(libelleRevision(r)) + '</span>' +
     '</div>' +
     (r.statut === 'reportee'
       ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
@@ -2179,93 +2255,11 @@ function carteBilanSemaine(samediISO){
     lignes + '</div>';
 }
 
-function carteRepos(dimancheISO){
-  const dl = donneesLecture();
-  const lundi = isoDe(plus(dDe(dimancheISO), -6));
-  let semaine = dl.revisions.filter(r => r.date >= lundi && r.date < dimancheISO);
-  if (!dl.afficherAncrage) semaine = semaine.filter(r => !r.ancrage);
-  const total = semaine.length;
-  const reste = semaine.filter(r => r.statut === 'aFaire' || r.statut === 'reportee').length;
-  const succes = reste === 0;
-  const pct = total ? Math.round((total - reste) / total * 100) : 100;
-
-  let detail = '';
-  if (!succes) {
-    const prenom = (dl.prenom || '').trim();
-    detail = '<div class="repos-detail">Il reste ' + reste + ' cours sur ' + total + '</div>' +
-      (prenom ? '<div class="repos-detail">Courage ' + ech(prenom) + ' <span class="emo">💪</span></div>' : '');
-  }
-
-  const barre = total
-    ? '<div class="repos-barre"><div class="repos-barre-remplie" style="width:' + pct +
-      '%;background:' + couleurProgression(pct) + '"></div></div>' +
-      '<span class="repos-pct">' + pct + '&nbsp;%</span>'
-    : '';
-
-  /* Trois scores affichés côte à côte, chacun comparé à son propre
-     historique récent pour détecter un éventuel record. */
-  const histoSem = historiqueScores(dl, 'semaine', 8);
-  const histoMois = historiqueScores(dl, 'mois', 6);
-  const histoAn = historiqueScores(dl, 'annee', 4);
-  const scoreSem = histoSem[histoSem.length - 1];
-  const scoreMois = histoMois[histoMois.length - 1];
-  const scoreAn = histoAn[histoAn.length - 1];
-
-  function carteScore(titre, s, record){
-    return '<div class="repos-score' + (record ? ' record' : '') + '">' +
-      '<span class="repos-score-titre">' + titre + '</span>' +
-      '<b>' + (s.score > 0 ? '+' : '') + s.score + '</b>' +
-      (record ? '<span class="repos-record">🏅 RECORD !</span>' : '') +
-    '</div>';
-  }
-  const scores = '<div class="repos-scores">' +
-    carteScore('Semaine', scoreSem, estRecord(histoSem)) +
-    carteScore('Mois', scoreMois, estRecord(histoMois)) +
-    carteScore('Année', scoreAn, estRecord(histoAn)) +
-  '</div>';
-
-  return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
-    '<div class="repos-corps">' +
-      '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
-      '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
-      detail + barre +
-    '</div>' + scores + '</article>';
-}
-
-/* Pendant du carteRepos ci-dessus, mais pour les tâches bonus :
-   score de la semaine et état de la cagnotte. Vit désormais dans
-   l'onglet Tâches (et non plus dans l'Agenda, qui n'affiche que des
-   révisions), au même repère temporel — le dimanche de la semaine. */
-function carteReposTaches(dimancheISO){
-  const dl = donneesLecture();
-  if (!(dl.taches || []).length) return '';
-  const sem = semaineTaches(0);
-  const st = scoreTaches(dl, sem.debut, sem.fin);
-  const cagnotte = DB.reglages.cagnotte || 0;
-  const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
-  const dejaVersee = DB.reglages.semainesEncaissees[sem.cle] !== undefined;
-  const etat = dejaVersee
-    ? '<div class="cagnotte-etat versee">✅ Points de la semaine versés</div>'
-    : (debloquee
-      ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — versement samedi</div>'
-      : '<div class="cagnotte-etat">🔒 Termine tes révisions et tes tâches pour débloquer ces points</div>');
-  return '<article class="rev repos">' +
-    '<div class="repos-corps">' +
-      '<span class="repos-ic">💪</span>' +
-      '<span class="repos-txt">Bilan de la semaine</span>' +
-    '</div>' +
-    '<div class="repos-scores bonus">' +
-      '<div class="repos-score"><span class="repos-score-titre">Tâches · semaine</span>' +
-      '<b>' + (st.score > 0 ? '+' : '') + st.score + '</b></div>' +
-      '<div class="repos-score"><span class="repos-score-titre">Réussies</span>' +
-      '<b>' + st.gagnes + '</b></div>' +
-      '<div class="repos-score"><span class="repos-score-titre">Manquées</span>' +
-      '<b>' + st.perdus + '</b></div>' +
-    '</div>' + etat +
-    '<div class="cagnotte">🐒 Cagnotte Cabosse : ' + cagnotte + ' point' +
-      (Math.abs(cagnotte) > 1 ? 's' : '') + '</div>' +
-  '</article>';
-}
+/* Les anciennes carteRepos / carteReposTaches (scores semaine, mois,
+   année et cagnotte détaillée) ont été retirées : redondantes avec
+   le singe Cabosse, elles alourdissaient le dimanche. Le dimanche
+   affiche désormais blocDimancheCabosse(), identique dans l'Agenda
+   et dans l'onglet Tâches. */
 
 /* --- Carte d'une tâche bonus ---------------------------------
    Repliée par défaut : un clic déplie le détail et ses commandes,
@@ -2366,61 +2360,126 @@ function pointsPalier(palier){
 
 function carteCabosseCompacte(){
   const g = gamif();
-  const p = progressionNiveau(g.xpTotal);
-  let jauges = '';
-  CARACTERISTIQUES.forEach(c => {
-    jauges += '<span class="cc-jauge">' + c.emoji + ' <span class="cc-pts">' +
-      pointsPalier((g.jauges[c.cle] || {}).palier || 1) + '</span></span>';
-  });
-  /* Ni titre ni rang ici : le menu Cabosse les porte déjà. La carte
-     ne garde que l'essentiel — le singe, la progression, les jauges. */
+  /* Volontairement dépouillée : le singe, et le nombre de points
+     gagnés cette semaine. Ni jauges ni pastilles — le détail vit
+     dans l'onglet Cabosse, le répéter ici encombrait l'agenda. */
+  const pts = pointsSemaineCabosse();
   return '<button type="button" class="carte-cabosse" data-act="ouvrir-cabosse" ' +
     'aria-label="Cabosse, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
     avatarCabosse() +
     '<div class="cc-corps">' +
-      '<div class="cc-barre"><i style="width:' + p.pct + '%"></i></div>' +
-      '<div class="cc-jauges">' + jauges + '</div>' +
+      '<div class="cc-semaine-val">' + (pts > 0 ? '+' : '') + pts + '</div>' +
+      '<div class="cc-semaine-lb">point' + (Math.abs(pts) > 1 ? 's' : '') + ' cette semaine</div>' +
     '</div></button>';
 }
 
+/* Points Cabosse gagnés sur la semaine en cours (lundi → samedi).
+   Recalculé depuis l'historique, comme le reste du moteur : on
+   applique le même barème, restreint à la fenêtre de la semaine. */
+function pointsSemaineCabosse(){
+  const dl = donneesLecture();
+  const sem = semaineTaches(0);
+  let pts = 0;
+  (dl.cours || []).forEach(c => {
+    if (c.date >= sem.debut && c.date <= sem.fin) pts += XP_CABOSSE.coursEncode;
+  });
+  (dl.revisions || []).forEach(r => {
+    const quand = r.faitLe || r.date;
+    if (quand < sem.debut || quand > sem.fin) return;
+    if (r.statut === 'faite') pts += XP_CABOSSE.revisionFaite + XP_CABOSSE.revisionFaiteSagesse;
+    else if (r.statut === 'reportee') pts += XP_CABOSSE.revisionReportee;
+  });
+  (dl.occurrences || []).forEach(o => {
+    if (o.date < sem.debut || o.date > sem.fin) return;
+    const t = (dl.taches || []).find(x => x.id === o.tache);
+    if (!t) return;
+    if (o.statut === 'faite') {
+      if (t.controleParent && !o.controleFait) return;
+      pts += XP_CABOSSE.tacheValidee + XP_CABOSSE.tacheValideeSagesse;
+    } else if (o.statut === 'annulee') {
+      pts += XP_CABOSSE.tachePerdueForce + XP_CABOSSE.tachePerdueSagesse;
+    }
+  });
+  return pts;
+}
+
+/* Bloc affiché le dimanche, dans l'Agenda comme dans l'onglet
+   Tâches : plus de scores semaine/mois/année (redondants avec le
+   singe), seulement l'enjeu et les points en attente. */
+function blocDimancheCabosse(){
+  const dl = donneesLecture();
+  const sem = semaineTaches(0);
+  const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
+  const pts = pointsSemaineCabosse();
+  const message = debloquee
+    ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — points débloqués !</div>'
+    : '<div class="cagnotte-etat">🔒 Termine les révisions et tâches du samedi pour débloquer des points Cabosse !</div>';
+  return '<article class="rev repos">' +
+    message +
+    '<div class="cagnotte">' + (pts > 0 ? '+' : '') + pts + ' point' +
+      (Math.abs(pts) > 1 ? 's' : '') + ' à venir</div>' +
+  '</article>';
+}
+
 /* --- Vue détaillée de progression ---------------------------- */
+/* --- Vue détaillée Cabosse -----------------------------------
+   Le niveau ne monte plus tout seul : l'enfant clique sur le « + »
+   pour dépenser 5 points et faire évoluer son singe. C'est lui qui
+   décide du moment, ce qui rend la récompense bien plus concrète. */
 function vueCabosse(){
   const g = gamif();
-  const p = progressionNiveau(g.xpTotal);
-  const romains = ['I','II','III','IV','V'];
+  const dispo = pointsDisponibles(g);
+  const peutMonter = dispo >= POINTS_PAR_NIVEAU && g.niveauGlobal < NIVEAU_MAX && !modeLecture();
+  const pctVersNiveau = g.niveauGlobal >= NIVEAU_MAX
+    ? 100
+    : Math.min(100, Math.round((dispo % POINTS_PAR_NIVEAU) / POINTS_PAR_NIVEAU * 100));
 
   let html = '<div class="cbs-entete">' + avatarCabosse('grand') +
     '<div class="cbs-rang">' + ech(g.rangLabel) + '</div>' +
     '<div class="cbs-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
-    '<div class="cbs-xp">' + g.xpTotal + ' XP au total</div>' +
-    '<div class="cc-barre" style="margin-top:10px"><i style="width:' + p.pct + '%"></i></div>' +
-    '<div class="cbs-xp">' + (g.niveauGlobal >= NIVEAU_MAX
-      ? 'Niveau maximum atteint 🎉'
-      : p.actuel + ' / ' + p.cible + ' XP vers le niveau ' + (g.niveauGlobal + 1)) + '</div>' +
   '</div>';
+
+  /* Bloc « faire évoluer » : le cœur de la vue. */
+  html += '<div class="cbs-evolution' + (peutMonter ? ' pret' : '') + '">' +
+    '<div class="cbs-solde"><b>' + dispo + '</b><span>point' + (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
+    (g.niveauGlobal >= NIVEAU_MAX
+      ? '<div class="cbs-max">Niveau maximum atteint 🎉</div>'
+      : '<button type="button" class="cbs-plus" data-act="cabosse-evoluer"' +
+        (peutMonter ? '' : ' disabled') + ' aria-label="Faire évoluer Cabosse">+</button>') +
+  '</div>' +
+  (g.niveauGlobal >= NIVEAU_MAX ? '' :
+    '<div class="cc-barre" style="margin-top:4px"><i style="width:' + pctVersNiveau + '%"></i></div>' +
+    '<p class="aide-champ" style="text-align:center;margin-top:6px">' +
+      (peutMonter
+        ? 'Appuie sur le + pour dépenser ' + POINTS_PAR_NIVEAU + ' points et faire évoluer Cabosse.'
+        : 'Encore ' + (POINTS_PAR_NIVEAU - (dispo % POINTS_PAR_NIVEAU)) +
+          ' point(s) avant la prochaine évolution.') + '</p>');
+
+  html += '<button class="bouton discret" data-act="cabosse-galerie" style="margin-top:12px">' +
+    '🖼️ Voir toutes les évolutions débloquées</button>';
 
   html += '<p class="etiquette" style="margin-top:18px">Caractéristiques</p>';
   CARACTERISTIQUES.forEach(c => {
-    const j = g.jauges[c.cle] || {xp:0, palier:1};
-    const suivant = SEUILS_PALIERS[j.palier]; // undefined au palier 5
+    const pts = (g.jauges[c.cle] || {points:0}).points;
+    const pct = Math.min(100, Math.round(pts / SEUIL_ACCESSOIRE * 100));
+    const acc = ARTEFACTS_CABOSSE.find(a => a.carac === c.cle);
+    const acquis = acc && g.artefacts[acc.cle];
     html += '<div class="cbs-carte">' +
       '<div class="h">' + c.emoji + ' <b>' + c.nom + '</b>' +
-        '<span class="p">Palier ' + romains[j.palier - 1] + '</span></div>' +
-      '<div class="cc-barre" style="margin-top:7px"><i style="width:' +
-        (suivant ? Math.min(100, Math.round(j.xp / suivant * 100)) : 100) + '%"></i></div>' +
-      '<span class="aide">' + j.xp + ' XP' +
-        (suivant ? ' · ' + (suivant - j.xp) + ' XP avant le palier ' + romains[j.palier] : ' · palier maximum') +
+        '<span class="p">' + pts + ' pt' + (pts > 1 ? 's' : '') + '</span></div>' +
+      '<div class="cc-barre" style="margin-top:7px"><i style="width:' + pct + '%"></i></div>' +
+      '<span class="aide">' +
+        (acquis
+          ? acc.emoji + ' ' + ech(acc.nom) + ' débloqué !'
+          : (acc ? 'Encore ' + (SEUIL_ACCESSOIRE - pts) + ' points pour ' + ech(acc.nom) : '')) +
         '<br>' + c.aide + '</span>' +
     '</div>';
   });
 
   html += '<p class="etiquette" style="margin-top:18px">Accessoires légendaires</p>' +
     '<div class="cbs-artefacts">';
-  let prochain = null;
   ARTEFACTS_CABOSSE.forEach(a => {
     const acquis = !!g.artefacts[a.cle];
-    const carac = CARACTERISTIQUES.find(c => c.cle === a.carac);
-    if (!acquis && !prochain) prochain = {a: a, carac: carac, j: g.jauges[a.carac]};
     html += '<div class="cbs-art ' + (acquis ? 'acquis' : 'verrouille') + '">' +
       '<span class="e">' + (acquis ? a.emoji : '🔒') + '</span>' +
       '<span>' + ech(a.nom) + '</span></div>';
@@ -2429,36 +2488,33 @@ function vueCabosse(){
 
   if (g.artefacts.formeUltime) {
     html += '<div class="cbs-ultime">✨ CABOSSE SUPRÊME DÉBLOQUÉ ! ✨</div>';
-  } else if (prochain) {
-    const manque = SEUILS_PALIERS[4] - prochain.j.xp;
-    html += '<p class="aide-champ" style="margin-top:10px">Prochain accessoire : ' +
-      ech(prochain.a.nom) + ' — encore ' + manque + ' XP de ' +
-      prochain.carac.nom.toLowerCase() + '.</p>';
-  }
-
-  /* Derniers gains significatifs : lecture directe de l'historique,
-     pour rester cohérent avec le principe « pas de compteur ». */
-  const dl = donneesLecture();
-  const recents = [];
-  (dl.revisions || []).filter(r => r.statut === 'faite' && r.faitLe)
-    .sort((a, b) => a.faitLe < b.faitLe ? 1 : -1).slice(0, 4)
-    .forEach(r => {
-      const c = (dl.cours || []).find(x => x.id === r.cours);
-      recents.push({date: r.faitLe, txt: '🧠 ' + (c ? refCours(c) : 'Révision') + ' révisé' +
-        (dansLesTemps(r) ? ' · 🧘 dans les temps' : '')});
-    });
-  if (recents.length) {
-    html += '<p class="etiquette" style="margin-top:18px">Derniers gains</p>' +
-      '<div class="carte" style="padding:10px 14px">';
-    recents.forEach(r => {
-      html += '<div style="font-size:12px;color:var(--texte-2);padding:3px 0">' +
-        ech(r.txt) + ' <span style="color:var(--texte-3)">· ' + libelleCourt(r.date) + '</span></div>';
-    });
-    html += '</div>';
   }
 
   html += '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
     'Cabosse grandit avec ta régularité 🐒</p>';
+  return html;
+}
+
+/* --- Galerie plein écran des évolutions déjà débloquées ------- */
+function vueGalerieCabosse(){
+  const g = gamif();
+  let html = '<button class="bouton discret" data-act="cabosse-retour">← Retour à Cabosse</button>' +
+    '<p class="etiquette" style="margin-top:16px">Évolutions débloquées · ' +
+      g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</p>' +
+    '<div class="gal-grille">';
+  for (let n = 1; n <= NIVEAU_MAX; n++) {
+    const acquis = n <= g.niveauGlobal;
+    html += '<div class="gal-case' + (acquis ? '' : ' verrouille') + '">' +
+      (acquis
+        ? '<img src="' + fichierRang(n) + '" alt="' + ech(RANGS_CABOSSE[n-1]) + '" ' +
+          'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'sans-image\')">' +
+          '<span class="gal-repli">🐒</span>'
+        : '<span class="gal-cadenas">🔒</span>') +
+      '<span class="gal-num">' + n + '</span>' +
+      '<span class="gal-nom">' + (acquis ? ech(RANGS_CABOSSE[n-1]) : '???') + '</span>' +
+    '</div>';
+  }
+  html += '</div>';
   return html;
 }
 
@@ -2526,7 +2582,7 @@ function vueAgenda(){
     const estAujourdhui = g.date === ajISO;
     const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
     html += sectionJour(titre, g.items, g.date, '', estAujourdhui).html + bilanDuJour(g.date);
-    if (g.date === dimActuel) html += carteRepos(g.date);
+    if (g.date === dimActuel) html += blocDimancheCabosse();
     html += '</section>';
   });
 
@@ -2586,7 +2642,7 @@ function vueTaches(){
   grProches.forEach(g => {
     const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
     html += sectionJourTaches(titre, g.items, '').html;
-    if (g.date === dimActuel) html += carteReposTaches(g.date);
+    if (g.date === dimActuel) html += blocDimancheCabosse();
     html += '</section>';
   });
 
@@ -4217,14 +4273,11 @@ function marquer(id, statut){
      les petites bulles sont cosmétiques, le vrai état vient toujours
      de calculerGamification(). */
   if (statut === 'faite') {
-    const c = trouverCours(r.cours);
-    gainCabosse('intelligence', XP_CABOSSE.revisionFaite +
-      (c && (c.commentaire || '').trim() ? XP_CABOSSE.revisionAvecNote : 0));
-    gainCabosse('sagesse', dansLesTemps(r) ? XP_CABOSSE.revisionDansLesTemps
-                                           : XP_CABOSSE.revisionHorsTolerance);
+    gainCabosse('intelligence', XP_CABOSSE.revisionFaite);
+    gainCabosse('sagesse', XP_CABOSSE.revisionFaiteSagesse);
   } else if (statut === 'annulee') {
     jouerSonCabosse('cancelled');
-    filerRecompense({type:'gain', emoji:'🧘', texte:'Un peu de sagesse en moins. On continue !'});
+    filerRecompense({type:'gain', emoji:'🧘', texte:'On continue, Cabosse t\u2019attend !'});
   }
   rafraichirGamification();
   rendre();
@@ -4521,7 +4574,8 @@ vue.addEventListener('click', e => {
       /* 💪 Force : accordée tout de suite, sauf si un parent doit
          encore valider — dans ce cas le gain viendra à la coche. */
       if (!(t && t.controleParent)) {
-        gainCabosse('force', o.date === o.prevue ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport);
+        gainCabosse('force', XP_CABOSSE.tacheValidee);
+        gainCabosse('sagesse', XP_CABOSSE.tacheValideeSagesse);
         jouerSonCabosse('happy');
       }
       rafraichirGamification();
@@ -4545,6 +4599,9 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
+  else if (act === 'cabosse-evoluer') monterNiveauCabosse();
+  else if (act === 'cabosse-galerie') { vueActive = 'cabosse-galerie'; rendre(); }
+  else if (act === 'cabosse-retour') { vueActive = 'cabosse'; rendre(); }
   else if (act === 'parametres-deverrouiller') ouvrirMotDePasse(b.dataset.cible);
   else if (act === 'imprimer-planning') imprimerPlanning(b);
   else if (act === 'chat-nom') ouvrirChatNom();
@@ -4708,7 +4765,8 @@ vue.addEventListener('change', e => {
       sauver();
       encaisserSemaines();
       if (o.controleFait) {
-        gainCabosse('force', o.date === o.prevue ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport);
+        gainCabosse('force', XP_CABOSSE.tacheValidee);
+        gainCabosse('sagesse', XP_CABOSSE.tacheValideeSagesse);
         jouerSonCabosse('happy');
       }
       rafraichirGamification();
