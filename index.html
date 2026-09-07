@@ -409,10 +409,13 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 
 /* --- Cabosse RPG -------------------------------------------- */
 :root{--xp:#F2A104; --xp-doux:rgba(242,161,4,.14)}
-.cabosse-avatar{position:relative;width:46px;height:46px;flex:0 0 auto;
+.cabosse-avatar{position:relative;flex:0 0 auto;
   display:flex;align-items:center;justify-content:center}
+/* Dans la carte de l'agenda : un tiers de la largeur, carré. */
+.carte-cabosse .cabosse-avatar{flex:0 0 33%;width:33%;aspect-ratio:1/1;height:auto}
 .cabosse-avatar.grand{width:104px;height:104px;margin:0 auto}
 .cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
+.carte-cabosse .cabosse-repli{font-size:min(15vw,64px)}
 .cabosse-avatar.grand .cabosse-repli{font-size:76px}
 .cabosse-avatar.avec-image .cabosse-repli{display:none}
 .cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
@@ -705,7 +708,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v31 · 7 septembre 2026';
+const VERSION = 'v32 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1017,10 +1020,10 @@ function palierDepuisXp(xp){
 }
 
 const CARACTERISTIQUES = [
-  {cle:'energie',      nom:'Énergie',      emoji:'🍫', aide:'Nourris Cabosse avec de nouvelles connaissances.'},
-  {cle:'intelligence', nom:'Intelligence', emoji:'🧠', aide:'Chaque révision muscle le cerveau de Cabosse.'},
+  {cle:'energie',      nom:'Énergie',      emoji:'🍫', aide:'Nourris Cabosse en ajoutant de nouveaux cours.'},
+  {cle:'intelligence', nom:'Intelligence', emoji:'🧠', aide:'Chaque révision validée muscle le cerveau de Cabosse.'},
   {cle:'sagesse',      nom:'Sagesse',      emoji:'🧘', aide:'Révise à l\u2019heure prévue : Cabosse gagne en sagesse.'},
-  {cle:'force',        nom:'Force',        emoji:'💪', aide:'Bouge, joue, crée : Cabosse devient plus fort.'}
+  {cle:'force',        nom:'Force',        emoji:'💪', aide:'Réalise des tâches bonus pour que Cabosse devienne plus fort.'}
 ];
 
 /* Les 40 rangs. Centralisés pour être retouchés facilement. */
@@ -1243,12 +1246,12 @@ const CABOSSE_ASSETS = {
     braceletsGorille:  {src:'assets/cabosse/artefacts/bracelets-gorille.png',  repli:'🦾'}
   },
   sons: {
-    reward:    'assets/sons/reward-small.wav',
-    powerup:   'assets/sons/power-up.wav',
-    levelup:   'assets/sons/level-up-badge.wav',
-    happy:     'assets/sons/cabosse-happy.wav',
-    reported:  'assets/sons/revision-reported-soft.wav',
-    cancelled: 'assets/sons/revision-cancelled-soft.wav'
+    reward:    'assets/sons/reward_small.wav',
+    powerup:   'assets/sons/power_up.wav',
+    levelup:   'assets/sons/level_up_badge.wav',
+    happy:     'assets/sons/cabosse_happy.wav',
+    reported:  'assets/sons/revision_reported_soft.wav',
+    cancelled: 'assets/sons/revision_cancelled_soft.wav'
   }
 };
 
@@ -2224,11 +2227,12 @@ function carteCabosseCompacte(){
     jauges += '<span class="cc-jauge">' + c.emoji + ' <span class="cc-pts">' +
       pointsPalier((g.jauges[c.cle] || {}).palier || 1) + '</span></span>';
   });
-  return '<button type="button" class="carte-cabosse" data-act="ouvrir-cabosse">' +
+  /* Ni titre ni rang ici : le menu Cabosse les porte déjà. La carte
+     ne garde que l'essentiel — le singe, la progression, les jauges. */
+  return '<button type="button" class="carte-cabosse" data-act="ouvrir-cabosse" ' +
+    'aria-label="Cabosse, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
     avatarCabosse() +
     '<div class="cc-corps">' +
-      '<div class="cc-titre">CABOSSE</div>' +
-      '<div class="cc-niveau">Niveau ' + g.niveauGlobal + ' · ' + ech(g.rangLabel) + '</div>' +
       '<div class="cc-barre"><i style="width:' + p.pct + '%"></i></div>' +
       '<div class="cc-jauges">' + jauges + '</div>' +
     '</div></button>';
@@ -2265,7 +2269,7 @@ function vueCabosse(){
     '</div>';
   });
 
-  html += '<p class="etiquette" style="margin-top:18px">Artefacts légendaires</p>' +
+  html += '<p class="etiquette" style="margin-top:18px">Accessoires légendaires</p>' +
     '<div class="cbs-artefacts">';
   let prochain = null;
   ARTEFACTS_CABOSSE.forEach(a => {
@@ -2282,7 +2286,7 @@ function vueCabosse(){
     html += '<div class="cbs-ultime">✨ CABOSSE SUPRÊME DÉBLOQUÉ ! ✨</div>';
   } else if (prochain) {
     const manque = SEUILS_PALIERS[4] - prochain.j.xp;
-    html += '<p class="aide-champ" style="margin-top:10px">Prochain artefact : ' +
+    html += '<p class="aide-champ" style="margin-top:10px">Prochain accessoire : ' +
       ech(prochain.a.nom) + ' — encore ' + manque + ' XP de ' +
       prochain.carac.nom.toLowerCase() + '.</p>';
   }
