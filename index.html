@@ -474,12 +474,24 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cbs-plus{flex:0 0 auto;width:56px;height:56px;border-radius:50%;font-size:30px;font-weight:800;
   background:var(--xp);color:#fff;border:0;cursor:pointer;display:flex;
   align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(242,161,4,.4)}
-.cbs-plus:disabled{background:var(--surface-2);color:var(--texte-3);box-shadow:none;cursor:default}
+.cbs-plus.pas-assez{background:var(--surface-2);color:var(--texte-3);box-shadow:none}
 .cbs-evolution.pret .cbs-plus{animation:pulse-plus 1.6s ease-in-out infinite}
 @keyframes pulse-plus{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .cbs-max{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--xp)}
 
 /* Galerie plein écran des évolutions. */
+/* Galerie en overlay plein écran : au-dessus de tout, y compris
+   l'en-tête, la bascule de profil et la barre du bas. */
+#galerie-voile{position:fixed;inset:0;z-index:50;background:var(--fond);
+  display:none;flex-direction:column}
+#galerie-voile.on{display:flex}
+.gal-entete{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(var(--safe-t) + 12px) 18px 14px;background:var(--surface);
+  border-bottom:1px solid var(--filet)}
+.gal-titre{font-size:16px;font-weight:800;letter-spacing:-.01em}
+.gal-fermer{width:34px;height:34px;border-radius:50%;background:var(--surface-2);
+  border:0;font-size:15px;color:var(--texte-2);cursor:pointer}
+.gal-contenu{flex:1;overflow-y:auto;padding:16px 16px calc(var(--safe-b) + 16px)}
 .gal-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .gal-case{position:relative;background:var(--surface);border:1px solid var(--filet);
   border-radius:var(--r-m);padding:8px 6px 10px;text-align:center;min-height:118px;
@@ -540,6 +552,13 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   </nav>
 </div>
 <div id="recompenses" aria-live="polite"></div>
+<div id="galerie-voile">
+  <div class="gal-entete">
+    <span class="gal-titre">🐒 Évolutions de Cabosse</span>
+    <button type="button" class="gal-fermer" data-act="cabosse-retour" aria-label="Fermer">✕</button>
+  </div>
+  <div id="galerie-contenu" class="gal-contenu"></div>
+</div>
 <div id="voile"><div class="feuille">
   <h3>Reporter la révision</h3>
   <p id="voile-info"></p>
@@ -750,7 +769,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v36 · 7 septembre 2026';
+const VERSION = 'v37 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2005,15 +2024,12 @@ function rendre(){
   if (vueActive === 'chat' && !peutVoir('chat')) vueActive = 'agenda';
 
   document.querySelectorAll('#barre button').forEach(b => {
-    /* La galerie est une sous-vue de Cabosse : son onglet reste actif. */
-    const vueOnglet = (vueActive === 'cabosse-galerie') ? 'cabosse' : vueActive;
-    if (b.dataset.vue === vueOnglet) b.setAttribute('aria-current', 'page');
+    if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'taches') vue.innerHTML = vueTaches();
   else if (vueActive === 'cabosse') vue.innerHTML = vueCabosse();
-  else if (vueActive === 'cabosse-galerie') vue.innerHTML = vueGalerieCabosse();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
@@ -2444,8 +2460,8 @@ function vueCabosse(){
     '<div class="cbs-solde"><b>' + dispo + '</b><span>point' + (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
     (g.niveauGlobal >= NIVEAU_MAX
       ? '<div class="cbs-max">Niveau maximum atteint 🎉</div>'
-      : '<button type="button" class="cbs-plus" data-act="cabosse-evoluer"' +
-        (peutMonter ? '' : ' disabled') + ' aria-label="Faire évoluer Cabosse">+</button>') +
+      : '<button type="button" class="cbs-plus' + (peutMonter ? '' : ' pas-assez') + '" ' +
+        'data-act="cabosse-evoluer" aria-label="Faire évoluer Cabosse">+</button>') +
   '</div>' +
   (g.niveauGlobal >= NIVEAU_MAX ? '' :
     '<div class="cc-barre" style="margin-top:4px"><i style="width:' + pctVersNiveau + '%"></i></div>' +
@@ -2498,8 +2514,7 @@ function vueCabosse(){
 /* --- Galerie plein écran des évolutions déjà débloquées ------- */
 function vueGalerieCabosse(){
   const g = gamif();
-  let html = '<button class="bouton discret" data-act="cabosse-retour">← Retour à Cabosse</button>' +
-    '<p class="etiquette" style="margin-top:16px">Évolutions débloquées · ' +
+  let html = '<p class="etiquette">Évolutions débloquées · ' +
       g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</p>' +
     '<div class="gal-grille">';
   for (let n = 1; n <= NIVEAU_MAX; n++) {
@@ -2517,6 +2532,25 @@ function vueGalerieCabosse(){
   html += '</div>';
   return html;
 }
+
+/* Ouverte en overlay plein écran (voir #galerie-voile dans le HTML),
+   par-dessus l'en-tête, la bascule de profil et la barre du bas —
+   pour que « pleine page » veuille vraiment dire pleine page. */
+function ouvrirGalerieCabosse(){
+  document.getElementById('galerie-contenu').innerHTML = vueGalerieCabosse();
+  document.getElementById('galerie-voile').classList.add('on');
+}
+function fermerGalerieCabosse(){
+  document.getElementById('galerie-voile').classList.remove('on');
+}
+/* Écouteur dédié : #galerie-voile est un frère de #vue dans le DOM,
+   pas un descendant — le clic sur son bouton ✕ n'atteindrait jamais
+   le gestionnaire attaché à #vue. */
+document.getElementById('galerie-voile').addEventListener('click', e => {
+  if (e.target.id === 'galerie-voile' || e.target.closest('[data-act="cabosse-retour"]')) {
+    fermerGalerieCabosse();
+  }
+});
 
 /* --- Carte Cabosse compacte fin ------------------------------ */
 
@@ -2550,6 +2584,11 @@ function vueAgenda(){
   const ajISO = isoDe(auj);
   const dimActuel = isoDe(dimancheDe(auj));
   const dimSuivant = isoDe(plus(dimancheDe(auj), 7));
+  /* Samedi de la semaine en cours : forcé dans le rendu même sans
+     révision en attente, sinon le bilan de la semaine disparaît dès
+     que tout est validé (bug constaté : la section entière du samedi
+     s'évanouissait une fois les révisions cochées). */
+  const samediActuel = isoDe(plus(lundiDe(auj), 5));
 
   const enAttente = dl.revisions.filter(r =>
     (r.statut === 'aFaire' || r.statut === 'reportee') &&
@@ -2576,6 +2615,10 @@ function vueAgenda(){
 
   const grProches = grouperParDate(proches);
   if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
+  if (samediActuel >= ajISO && samediActuel <= dimSuivant &&
+      !grProches.find(g => g.date === samediActuel)) {
+    grProches.push({date: samediActuel, items: []});
+  }
   grProches.sort((a, b) => a.date < b.date ? -1 : 1);
 
   grProches.forEach(g => {
@@ -4600,8 +4643,7 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
   else if (act === 'cabosse-evoluer') monterNiveauCabosse();
-  else if (act === 'cabosse-galerie') { vueActive = 'cabosse-galerie'; rendre(); }
-  else if (act === 'cabosse-retour') { vueActive = 'cabosse'; rendre(); }
+  else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
   else if (act === 'parametres-deverrouiller') ouvrirMotDePasse(b.dataset.cible);
   else if (act === 'imprimer-planning') imprimerPlanning(b);
   else if (act === 'chat-nom') ouvrirChatNom();
