@@ -513,7 +513,8 @@ button.gal-case:active{transform:scale(.97)}
 /* Vue détail plein écran d'une évolution. */
 .gal-detail{display:flex;flex-direction:column;align-items:center;text-align:center;
   padding:24px 8px}
-.gal-detail .cabosse-avatar.grand{width:170px;height:170px}
+.gal-detail .cabosse-avatar.grand{width:510px;height:510px;max-width:100%}
+.gal-detail .cabosse-avatar.grand .cabosse-repli{font-size:min(38vw,228px)}
 .gal-detail-niveau{margin-top:16px;font-size:13px;font-weight:700;color:var(--texte-3);
   text-transform:uppercase;letter-spacing:.06em}
 .gal-detail-nom{margin-top:4px;font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -786,7 +787,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v38 · 7 septembre 2026';
+const VERSION = 'v39 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
