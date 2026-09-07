@@ -2,11 +2,46 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v29';
+const CACHE = 'sabosse-v30';
+
+/* Deux listes distinctes, volontairement.
+   FICHIERS : le strict nécessaire pour que l'app démarre hors ligne.
+   Si l'un manque, l'installation doit échouer — c'est un vrai problème.
+   ASSETS_OPTIONNELS : visuels et sons de Cabosse. Ils sont livrés au
+   fil de l'eau ; un PNG ou un WAV absent ne doit JAMAIS empêcher le
+   service worker de s'installer, sinon toute l'app resterait bloquée
+   sur une ancienne version à cause d'une image manquante. */
 const FICHIERS = ['./', './index.html', './manifest.json'];
 
+const ASSETS_OPTIONNELS = [
+  './assets/cabosse/cabosse-base.png',
+  './assets/cabosse/stats/energie.png',
+  './assets/cabosse/stats/intelligence.png',
+  './assets/cabosse/stats/sagesse.png',
+  './assets/cabosse/stats/force.png',
+  './assets/cabosse/artefacts/cabosse-or.png',
+  './assets/cabosse/artefacts/couronne-neuronale.png',
+  './assets/cabosse/artefacts/bandeau-maitre.png',
+  './assets/cabosse/artefacts/bracelets-gorille.png',
+  './assets/sons/reward-small.wav',
+  './assets/sons/power-up.wav',
+  './assets/sons/level-up-badge.wav',
+  './assets/sons/cabosse-happy.wav',
+  './assets/sons/revision-reported-soft.wav',
+  './assets/sons/revision-cancelled-soft.wav'
+];
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE).then(c =>
+      c.addAll(FICHIERS).then(() =>
+        /* Chaque asset optionnel est tenté isolément : un échec est
+           avalé, les autres sont quand même mis en cache. */
+        Promise.all(ASSETS_OPTIONNELS.map(u =>
+          c.add(u).catch(() => null)))
+      )
+    ).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {

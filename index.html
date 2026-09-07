@@ -72,8 +72,6 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--accent);font-weight:600}
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#btn-imprimer{flex:0 0 auto;width:44px;height:44px;border-radius:var(--r-s);
-  background:var(--surface-2);font-size:28.5px;display:flex;align-items:center;justify-content:center}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
   border-bottom:1px solid var(--filet);overflow-x:auto}
@@ -397,6 +395,71 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cagnotte-etat{margin-top:7px;text-align:center;font-size:11px;font-weight:700;
   color:var(--texte-3);padding:5px 8px;border-radius:99px;background:var(--surface-2)}
 .cagnotte-etat.versee{color:var(--bonus);background:var(--bonus-doux)}
+
+/* --- Cabosse RPG -------------------------------------------- */
+:root{--xp:#F2A104; --xp-doux:rgba(242,161,4,.14)}
+.cabosse-avatar{position:relative;width:46px;height:46px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center}
+.cabosse-avatar.grand{width:104px;height:104px;margin:0 auto}
+.cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
+.cabosse-avatar.grand .cabosse-repli{font-size:76px}
+.cabosse-avatar.avec-image .cabosse-repli{display:none}
+.cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.carte-cabosse{display:flex;gap:12px;align-items:center;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:12px 14px;margin-bottom:14px;font:inherit;color:inherit;cursor:pointer}
+.cc-corps{flex:1;min-width:0}
+.cc-titre{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--texte-3)}
+.cc-niveau{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-barre{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+.cc-barre i{display:block;height:100%;background:var(--xp);border-radius:99px;
+  transition:width .5s ease}
+.cc-jauges{display:flex;gap:9px;margin-top:7px;flex-wrap:wrap}
+.cc-jauge{font-size:10.5px;color:var(--texte-2);white-space:nowrap}
+.cc-pts{letter-spacing:1px;color:var(--xp)}
+.cc-pts .vide{color:var(--filet)}
+
+.cbs-entete{text-align:center;padding:6px 0 2px}
+.cbs-rang{font-size:17px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+.cbs-niv{font-size:12px;color:var(--texte-2);margin-top:2px}
+.cbs-xp{font-size:11.5px;color:var(--texte-3);margin-top:4px}
+.cbs-carte{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:12px 14px;margin-bottom:9px}
+.cbs-carte .h{display:flex;align-items:baseline;gap:8px}
+.cbs-carte .h b{font-size:13.5px;font-weight:800;flex:1}
+.cbs-carte .h .p{font-size:11px;font-weight:700;color:var(--xp);
+  background:var(--xp-doux);padding:2px 8px;border-radius:99px}
+.cbs-carte .aide{font-size:11.5px;color:var(--texte-2);margin-top:5px;display:block}
+.cbs-artefacts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.cbs-art{flex:1 1 44%;display:flex;align-items:center;gap:8px;padding:9px 10px;
+  border:1px solid var(--filet);border-radius:var(--r-s);background:var(--surface);font-size:11.5px}
+.cbs-art.acquis{border-color:var(--xp);background:var(--xp-doux);font-weight:700}
+.cbs-art.verrouille{opacity:.55}
+.cbs-art .e{font-size:19px}
+.cbs-ultime{margin-top:10px;padding:12px;border-radius:var(--r-m);text-align:center;
+  font-weight:800;font-size:13px;color:#fff;background:linear-gradient(135deg,#7B3FB8,#F2A104)}
+
+/* File de récompenses */
+#recompenses{position:fixed;left:0;right:0;bottom:96px;z-index:60;
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+.recompense{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:99px;
+  background:var(--surface);border:1px solid var(--filet);box-shadow:0 6px 22px rgba(20,23,28,.16);
+  font-size:13px;font-weight:700;max-width:88vw}
+.recompense.grande{padding:13px 20px;font-size:14px;background:linear-gradient(135deg,#7B3FB8,#F2A104);
+  color:#fff;border-color:transparent;text-align:center}
+.recompense .rc-emoji{font-size:19px}
+.recompense.grande .rc-emoji{font-size:23px}
+.recompense.anim{animation:rc-pop .32s cubic-bezier(.2,1.5,.4,1)}
+.recompense.grande.anim{animation:rc-pop .38s cubic-bezier(.2,1.6,.4,1), rc-glow 1.1s ease-in-out .38s 1}
+.recompense.sortie{opacity:0;transform:translateY(-8px);transition:opacity .25s, transform .25s}
+@keyframes rc-pop{from{opacity:0;transform:scale(.7) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes rc-glow{0%,100%{box-shadow:0 6px 22px rgba(20,23,28,.16)}
+  50%{box-shadow:0 6px 34px rgba(242,161,4,.6)}}
+@media (prefers-reduced-motion: reduce){
+  .recompense,.recompense.grande{animation:none!important}
+  .cc-barre i{transition:none}
+}
 </style>
 </head>
 <body>
@@ -408,7 +471,6 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
       <div class="eyebrow">Réactivation mémorielle</div>
       <h1>Cabosse</h1>
     </div>
-    <button id="btn-imprimer" title="Imprimer le planning des 2 semaines" aria-label="Imprimer">🖨️</button>
   </header>
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
@@ -416,10 +478,12 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
     <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb" id="lb-agenda">Agenda</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
+    <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Statistiques</span></button>
     <button data-vue="reglages"><span class="ic">⚙️</span><span class="lb">Réglages</span></button>
   </nav>
 </div>
+<div id="recompenses" aria-live="polite"></div>
 <div id="voile"><div class="feuille">
   <h3>Reporter la révision</h3>
   <p id="voile-info"></p>
@@ -630,7 +694,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v29 · 6 septembre 2026';
+const VERSION = 'v30 · 6 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -903,6 +967,393 @@ function libelleRecurrence(t){
   return base + (r.finLe ? ' · jusqu\u2019au ' + libelleCourt(r.finLe) : '');
 }
 
+/* ============================================================
+   CABOSSE RPG — le singe compagnon
+
+   Principe directeur : les XP ne sont JAMAIS des compteurs
+   incrémentés au clic. Ils sont recalculés intégralement depuis
+   l'historique réel (cours, révisions, occurrences de tâches,
+   semaines encaissées). Conséquences voulues :
+     — restaurer une sauvegarde redonne le bon niveau ;
+     — un utilisateur d'avant la v30 reçoit son niveau immédiatement ;
+     — deux appareils synchronisés ne divergent pas ;
+     — changer une formule plus tard reste possible sans migration.
+
+   La cagnotte historique (scoreTaches / encaisserSemaines) n'est PAS
+   touchée : le RPG la lit, il ne la remplace pas.
+   ============================================================ */
+
+/* Barème, volontairement regroupé ici pour rester réglable. */
+const XP_CABOSSE = {
+  coursNouveau:        8,   // 🍫 Énergie
+  cagnottePointPositif: 2,  // 🍫 Énergie, par point positif réellement versé
+  revisionFaite:       5,   // 🧠 Intelligence
+  revisionAvecNote:    1,   // 🧠 Intelligence, bonus si note de difficulté
+  revisionDansLesTemps: 6,  // 🧘 Sagesse
+  revisionHorsTolerance: 2, // 🧘 Sagesse
+  revisionReportee:   -2,   // 🧘 Sagesse
+  revisionAnnulee:    -4,   // 🧘 Sagesse
+  tacheAJour:          5,   // 💪 Force
+  tacheApresReport:    3    // 💪 Force
+};
+
+/* Cinq paliers visuels par caractéristique. */
+const SEUILS_PALIERS = [0, 100, 250, 450, 700];
+function palierDepuisXp(xp){
+  let p = 1;
+  for (let i = 0; i < SEUILS_PALIERS.length; i++) if (xp >= SEUILS_PALIERS[i]) p = i + 1;
+  return p;
+}
+
+const CARACTERISTIQUES = [
+  {cle:'energie',      nom:'Énergie',      emoji:'🍫', aide:'Nourris Cabosse avec de nouvelles connaissances.'},
+  {cle:'intelligence', nom:'Intelligence', emoji:'🧠', aide:'Chaque révision muscle le cerveau de Cabosse.'},
+  {cle:'sagesse',      nom:'Sagesse',      emoji:'🧘', aide:'Révise à l\u2019heure prévue : Cabosse gagne en sagesse.'},
+  {cle:'force',        nom:'Force',        emoji:'💪', aide:'Bouge, joue, crée : Cabosse devient plus fort.'}
+];
+
+/* Les 40 rangs. Centralisés pour être retouchés facilement. */
+const RANGS_CABOSSE = [
+  'Bébé singe', 'Singe affamé', 'Singe écolier', 'Singe studieux', 'Apprenti malin',
+  'Petit futé', 'Singe curieux', 'Disciple Cabosse', 'Neurone en folie', 'Singe savant',
+  'Maître du puzzle', 'Ninja des révisions', 'Cerveau musclé', 'Dévoreur de savoir', 'Singe scientifique',
+  'Sorcier du savoir', 'Singe zen', 'Maître Cabosse', 'Professeur Banane', 'Grand cerveau',
+  'Super Cabosse', 'Capitaine Neurone', 'Gardien du savoir', 'Archimage Cabosse', 'Gorille érudit',
+  'Gorille de combat', 'Gorille génial', 'Seigneur Cabosse', 'Roi des singes', 'King Cabosse',
+  'Kong Cabosse', 'Kong survolté', 'Gorille atomique', 'Caboszilla', 'Titan du savoir',
+  'Colosse Cabosse', 'Cerveau cosmique', 'Sage intergalactique', 'Grand Maître Cabosse', 'Maître suprême'
+];
+const NIVEAU_MAX = RANGS_CABOSSE.length; // 40
+
+/* Courbe de progression : douce au début (le niveau 2 tombe après un
+   seul cours encodé), puis de plus en plus exigeante.
+   Seuil(n) = 12 · (n-1) + 4 · (n-1)^1.85, arrondi à la dizaine.
+   Généré une fois au chargement plutôt qu'écrit à la main. */
+const SEUILS_NIVEAUX_CABOSSE = (function(){
+  const s = [];
+  for (let n = 1; n <= NIVEAU_MAX; n++) {
+    const x = n - 1;
+    s.push(Math.round((12 * x + 4 * Math.pow(x, 1.85)) / 10) * 10);
+  }
+  return s;
+})();
+
+function niveauDepuisXp(xpTotal){
+  let n = 1;
+  for (let i = 0; i < SEUILS_NIVEAUX_CABOSSE.length; i++) {
+    if (xpTotal >= SEUILS_NIVEAUX_CABOSSE[i]) n = i + 1;
+  }
+  return Math.min(n, NIVEAU_MAX);
+}
+
+/* Progression vers le niveau suivant, en pourcentage. */
+function progressionNiveau(xpTotal){
+  const n = niveauDepuisXp(xpTotal);
+  if (n >= NIVEAU_MAX) return {niveau: n, pct: 100, actuel: xpTotal, cible: xpTotal};
+  const bas = SEUILS_NIVEAUX_CABOSSE[n - 1];
+  const haut = SEUILS_NIVEAUX_CABOSSE[n];
+  const pct = haut > bas ? Math.round((xpTotal - bas) / (haut - bas) * 100) : 0;
+  return {niveau: n, pct: Math.max(0, Math.min(100, pct)), actuel: xpTotal - bas, cible: haut - bas};
+}
+
+const ARTEFACTS_CABOSSE = [
+  {cle:'cabosseOr',         carac:'energie',      nom:'Cabosse d\u2019or',      emoji:'🏅'},
+  {cle:'couronneNeuronale', carac:'intelligence', nom:'Couronne neuronale',     emoji:'👑'},
+  {cle:'bandeauMaitre',     carac:'sagesse',      nom:'Bandeau du maître',      emoji:'🎽'},
+  {cle:'braceletsGorille',  carac:'force',        nom:'Bracelets du gorille',   emoji:'🦾'}
+];
+
+function gamificationVierge(){
+  return {
+    version: 1,
+    xpTotal: 0, niveauGlobal: 1, rangIndex: 0, rangLabel: RANGS_CABOSSE[0],
+    jauges: {
+      energie:      {xp:0, palier:1},
+      intelligence: {xp:0, palier:1},
+      sagesse:      {xp:0, palier:1},
+      force:        {xp:0, palier:1}
+    },
+    artefacts: {cabosseOr:false, couronneNeuronale:false, bandeauMaitre:false,
+                braceletsGorille:false, formeUltime:false},
+    progression: {
+      dernierNiveauAnnonce: 1,
+      derniersPaliersAnnonces: {energie:1, intelligence:1, sagesse:1, force:1}
+    },
+    preferences: {sons:true, animations:true}
+  };
+}
+
+/* ------------------------------------------------------------
+   Fonction pure : données Cabosse → état RPG calculé.
+   Ne lit rien d'autre que `dl` (+ la tolérance, réglage global) et
+   n'écrit nulle part. C'est elle la source de vérité.
+   ------------------------------------------------------------ */
+function calculerGamification(dl, semainesEncaissees){
+  const jauges = {energie:0, intelligence:0, sagesse:0, force:0};
+
+  /* 🍫 ÉNERGIE — les cours appris, plus les points positifs
+     réellement versés à la cagnotte. Les points négatifs ne retirent
+     rien : l'énergie ne redescend jamais. */
+  jauges.energie += (dl.cours || []).length * XP_CABOSSE.coursNouveau;
+  const encaissees = semainesEncaissees || {};
+  Object.keys(encaissees).forEach(cle => {
+    const pts = encaissees[cle];
+    if (pts > 0) jauges.energie += pts * XP_CABOSSE.cagnottePointPositif;
+  });
+
+  /* 🧠 INTELLIGENCE et 🧘 SAGESSE — le travail de réactivation. */
+  (dl.revisions || []).forEach(r => {
+    if (r.statut === 'faite') {
+      jauges.intelligence += XP_CABOSSE.revisionFaite;
+      const c = (dl.cours || []).find(x => x.id === r.cours);
+      if (c && (c.commentaire || '').trim()) jauges.intelligence += XP_CABOSSE.revisionAvecNote;
+      /* Ponctualité : on réutilise la logique existante dansLesTemps(). */
+      jauges.sagesse += dansLesTemps(r) ? XP_CABOSSE.revisionDansLesTemps
+                                        : XP_CABOSSE.revisionHorsTolerance;
+    } else if (r.statut === 'reportee') {
+      jauges.sagesse += XP_CABOSSE.revisionReportee;
+    } else if (r.statut === 'annulee') {
+      jauges.sagesse += XP_CABOSSE.revisionAnnulee;
+    }
+  });
+
+  /* 💪 FORCE — uniquement les occurrences de tâches bonus. */
+  (dl.occurrences || []).forEach(o => {
+    if (o.statut !== 'faite') return;
+    const t = (dl.taches || []).find(x => x.id === o.tache);
+    if (!t) return;
+    /* Contrôle parental : pas d'XP tant que le parent n'a pas validé. */
+    if (t.controleParent && !o.controleFait) return;
+    jauges.force += (o.date === o.prevue) ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport;
+  });
+
+  /* Plancher absolu à 0 : la sagesse peut être entamée, jamais négative. */
+  const sortie = {jauges:{}};
+  let xpTotal = 0;
+  CARACTERISTIQUES.forEach(c => {
+    const xp = Math.max(0, jauges[c.cle]);
+    sortie.jauges[c.cle] = {xp: xp, palier: palierDepuisXp(xp)};
+    xpTotal += xp;
+  });
+  sortie.xpTotal = xpTotal;
+  sortie.niveauGlobal = niveauDepuisXp(xpTotal);
+  sortie.rangIndex = sortie.niveauGlobal - 1;
+  sortie.rangLabel = RANGS_CABOSSE[sortie.rangIndex];
+  return sortie;
+}
+
+function gamif(){
+  /* En mode suivi, on affiche l'état RPG reçu de l'appareil source
+     (jamais recalculé ni réécrit ici). S'il n'a pas encore été
+     transmis, on retombe sur un état vierge plutôt que d'exposer
+     par erreur la progression du parent. */
+  if (modeLecture()) {
+    const s = suiviActif();
+    return (s && s.reglages && s.reglages.gamification) || gamificationVierge();
+  }
+  if (!DB.reglages.gamification) DB.reglages.gamification = gamificationVierge();
+  return DB.reglages.gamification;
+}
+
+/* Applique le calcul à l'état persisté, détecte les nouveautés à
+   annoncer, et met la file de récompenses à jour.
+   `silencieux` : recalcul de fond (démarrage, import) — on met l'état
+   à niveau sans faire pleuvoir les animations d'un coup. */
+function rafraichirGamification(silencieux){
+  if (modeLecture()) return;                    // jamais sur le miroir d'un autre appareil
+  const g = gamif();
+  const calc = calculerGamification(donneesLecture(), DB.reglages.semainesEncaissees);
+
+  const annonces = [];
+  CARACTERISTIQUES.forEach(c => {
+    const avant = (g.progression.derniersPaliersAnnonces || {})[c.cle] || 1;
+    const apres = calc.jauges[c.cle].palier;
+    if (apres > avant && !silencieux) {
+      annonces.push({type:'palier', texte: c.nom.toUpperCase() + ' ' +
+        ['I','II','III','IV','V'][apres - 1] + ' DÉBLOQUÉE !', emoji: c.emoji});
+    }
+    g.progression.derniersPaliersAnnonces[c.cle] = apres;
+  });
+
+  if (calc.niveauGlobal > (g.progression.dernierNiveauAnnonce || 1) && !silencieux) {
+    annonces.push({type:'niveau',
+      texte: 'NIVEAU ' + calc.niveauGlobal + ' ! ' + calc.rangLabel, emoji:'⭐'});
+  }
+  g.progression.dernierNiveauAnnonce = calc.niveauGlobal;
+
+  /* Artefacts : acquis une fois pour toutes. Une baisse ultérieure de
+     sagesse ne reprend jamais un artefact déjà annoncé à l'enfant. */
+  ARTEFACTS_CABOSSE.forEach(a => {
+    if (calc.jauges[a.carac].palier >= 5 && !g.artefacts[a.cle]) {
+      g.artefacts[a.cle] = true;
+      if (!silencieux) annonces.push({type:'artefact',
+        texte: a.emoji + ' ' + a.nom + ' débloqué !', emoji: a.emoji});
+    }
+  });
+  const tous = ARTEFACTS_CABOSSE.every(a => g.artefacts[a.cle]);
+  if (tous && !g.artefacts.formeUltime) {
+    g.artefacts.formeUltime = true;
+    if (!silencieux) annonces.push({type:'ultime', texte:'CABOSSE SUPRÊME DÉBLOQUÉ !', emoji:'✨'});
+  }
+
+  g.xpTotal = calc.xpTotal;
+  g.niveauGlobal = calc.niveauGlobal;
+  g.rangIndex = calc.rangIndex;
+  g.rangLabel = calc.rangLabel;
+  CARACTERISTIQUES.forEach(c => { g.jauges[c.cle] = calc.jauges[c.cle]; });
+
+  Store.ecrire(DB);
+  if (annonces.length) annonces.forEach(a => filerRecompense(a));
+  return annonces;
+}
+
+/* ============================================================
+   Assets Cabosse — chemins centralisés, jamais en dur ailleurs.
+   Chaque image a un emoji de repli : tant que les PNG ne sont pas
+   produits, l'app reste parfaitement utilisable.
+   ============================================================ */
+const CABOSSE_ASSETS = {
+  base: {src:'assets/cabosse/cabosse-base.png', repli:'🐒'},
+  stats: {
+    energie:      {src:'assets/cabosse/stats/energie.png',      repli:'🍫'},
+    intelligence: {src:'assets/cabosse/stats/intelligence.png', repli:'🧠'},
+    sagesse:      {src:'assets/cabosse/stats/sagesse.png',      repli:'🧘'},
+    force:        {src:'assets/cabosse/stats/force.png',        repli:'💪'}
+  },
+  artefacts: {
+    cabosseOr:         {src:'assets/cabosse/artefacts/cabosse-or.png',         repli:'🏅'},
+    couronneNeuronale: {src:'assets/cabosse/artefacts/couronne-neuronale.png', repli:'👑'},
+    bandeauMaitre:     {src:'assets/cabosse/artefacts/bandeau-maitre.png',     repli:'🎽'},
+    braceletsGorille:  {src:'assets/cabosse/artefacts/bracelets-gorille.png',  repli:'🦾'}
+  },
+  sons: {
+    reward:    'assets/sons/reward-small.wav',
+    powerup:   'assets/sons/power-up.wav',
+    levelup:   'assets/sons/level-up-badge.wav',
+    happy:     'assets/sons/cabosse-happy.wav',
+    reported:  'assets/sons/revision-reported-soft.wav',
+    cancelled: 'assets/sons/revision-cancelled-soft.wav'
+  }
+};
+
+/* Avatar en calques : la base plus un calque par caractéristique.
+   Les calques dont le PNG n'existe pas encore restent invisibles
+   (onerror), ce qui permet de livrer les visuels au fil de l'eau
+   sans retoucher le code. */
+function avatarCabosse(taille){
+  const g = gamif();
+  const cls = taille === 'grand' ? ' grand' : '';
+  let calques = '';
+  CARACTERISTIQUES.forEach(c => {
+    const a = CABOSSE_ASSETS.stats[c.cle];
+    const palier = (g.jauges[c.cle] || {}).palier || 1;
+    calques += '<img class="cabosse-layer ' + c.cle + ' p' + palier + '" alt="" ' +
+      'src="' + a.src + '" onerror="this.style.display=\'none\'">';
+  });
+  return '<div class="cabosse-avatar' + cls + '">' +
+    '<span class="cabosse-repli">' + CABOSSE_ASSETS.base.repli + '</span>' +
+    '<img class="cabosse-base" alt="Cabosse" src="' + CABOSSE_ASSETS.base.src + '" ' +
+      'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+    calques + '</div>';
+}
+
+/* ============================================================
+   Sons — jamais au chargement, jamais bloquants.
+   Safari/iOS interdit toute lecture avant une interaction : on ne
+   prépare les objets Audio qu'au premier geste de l'utilisateur, et
+   toute erreur est avalée en silence.
+   ============================================================ */
+let audioPret = false;
+const audioCache = {};
+
+function preparerAudio(){
+  if (audioPret) return;
+  audioPret = true;
+  try {
+    Object.keys(CABOSSE_ASSETS.sons).forEach(k => {
+      const a = new Audio(CABOSSE_ASSETS.sons[k]);
+      a.preload = 'auto';
+      a.addEventListener('error', () => { delete audioCache[k]; });
+      audioCache[k] = a;
+    });
+  } catch (e) { /* audio indisponible : on continue sans son */ }
+}
+document.addEventListener('pointerdown', preparerAudio, {once:true});
+document.addEventListener('keydown', preparerAudio, {once:true});
+
+function jouerSonCabosse(type){
+  try {
+    if (!prefsCabosse().sons) return;
+    const a = audioCache[type];
+    if (!a) return;
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch (e) { /* toujours silencieux */ }
+}
+
+/* ============================================================
+   File de récompenses — une annonce à la fois, jamais deux grandes
+   animations superposées.
+   ============================================================ */
+const fileRecompenses = [];
+let recompenseEnCours = false;
+
+function animationsActives(){
+  try {
+    if (!prefsCabosse().animations) return false;
+    return !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (e) { return false; }
+}
+
+function filerRecompense(r){
+  fileRecompenses.push(r);
+  defilerRecompenses();
+}
+
+function defilerRecompenses(){
+  if (recompenseEnCours || !fileRecompenses.length) return;
+  const r = fileRecompenses.shift();
+  recompenseEnCours = true;
+
+  const sons = {gain:'reward', palier:'powerup', niveau:'levelup', artefact:'levelup', ultime:'happy'};
+  jouerSonCabosse(sons[r.type] || 'reward');
+
+  const zone = document.getElementById('recompenses');
+  if (!zone) { recompenseEnCours = false; return; }
+  const grande = r.type !== 'gain';
+  const el = document.createElement('div');
+  el.className = 'recompense' + (grande ? ' grande' : '') + (animationsActives() ? ' anim' : '');
+  el.innerHTML = '<span class="rc-emoji">' + (r.emoji || '✨') + '</span>' +
+                 '<span class="rc-texte">' + ech(r.texte) + '</span>';
+  zone.appendChild(el);
+
+  const duree = grande ? 2200 : 1300;
+  setTimeout(() => {
+    el.classList.add('sortie');
+    setTimeout(() => {
+      el.remove();
+      recompenseEnCours = false;
+      defilerRecompenses();
+    }, 260);
+  }, duree);
+}
+
+/* Petit gain immédiat : « +5 🧠 Intelligence ». */
+function gainCabosse(caracCle, montant){
+  const c = CARACTERISTIQUES.find(x => x.cle === caracCle);
+  if (!c || !montant) return;
+  filerRecompense({type:'gain', emoji:c.emoji,
+    texte:(montant > 0 ? '+' : '') + montant + ' ' + c.nom});
+}
+
+/* Préférences sons/animations : TOUJOURS celles de cet appareil,
+   même quand l'écran affiche le singe d'un profil suivi. */
+function prefsCabosse(){
+  if (!DB.reglages.gamification) DB.reglages.gamification = gamificationVierge();
+  return DB.reglages.gamification.preferences;
+}
+
 const MATIERES_DEFAUT = [
   {code:'ANG', nom:'Anglais',                        c:'#3A56D4'},
   {code:'MAT', nom:'Mathématiques',                  c:'#D14343'},
@@ -1026,7 +1477,9 @@ const Store = {
                        deux fois la même semaine. */
                     cagnotte:0, semainesEncaissees:{},
                     /* Proposition hebdomadaire d'envoi de la sauvegarde par mail. */
-                    exportHebdo:true, dernierePropositionExport:''};
+                    exportHebdo:true, dernierePropositionExport:'',
+                    /* Cabosse RPG — voir gamificationVierge() */
+                    gamification: gamificationVierge()};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
                     taches:[], occurrences:[],
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
@@ -1052,6 +1505,25 @@ const Store = {
         suivis = [Object.assign({code: o.reglages.codeSuivi}, o.suivi)];
       }
       if (reglages.affichage === 'suivi' && suivis[0]) reglages.affichage = suivis[0].code;
+
+      /* Migration RPG (v30) : on ajoute `gamification` si elle manque,
+         sans jamais toucher aux cours, révisions, tâches ni cagnotte.
+         Les sous-objets sont fusionnés un par un pour qu'une sauvegarde
+         partielle (structure d'une version intermédiaire) ne laisse pas
+         de trou. L'état sera de toute façon recalculé depuis
+         l'historique au démarrage. */
+      const gVierge = gamificationVierge();
+      const gStocke = reglages.gamification || {};
+      reglages.gamification = Object.assign(gVierge, gStocke, {
+        jauges:      Object.assign(gVierge.jauges,      gStocke.jauges || {}),
+        artefacts:   Object.assign(gVierge.artefacts,   gStocke.artefacts || {}),
+        preferences: Object.assign(gVierge.preferences, gStocke.preferences || {}),
+        progression: Object.assign(gVierge.progression, gStocke.progression || {}, {
+          derniersPaliersAnnonces: Object.assign(
+            gVierge.progression.derniersPaliersAnnonces,
+            (gStocke.progression || {}).derniersPaliersAnnonces || {})
+        })
+      });
 
       return {
         cours: o.cours || [],
@@ -1092,6 +1564,7 @@ function donneesLecture(){
       matieres: (s.matieres && s.matieres.length) ? s.matieres : MATIERES_DEFAUT,
       taches: s.taches || [],
       occurrences: s.occurrences || [],
+      gamification: (s.reglages && s.reglages.gamification) || null,
       afficherAncrage: (s.reglages && typeof s.reglages.afficherAncrage === 'boolean')
         ? s.reglages.afficherAncrage : true,
       prenom: (s.reglages && s.reglages.prenom) || ''
@@ -1145,7 +1618,12 @@ function sauver(){
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
       taches: DB.taches, occurrences: DB.occurrences,
       reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
-                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte}
+                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte,
+                 /* L'état RPG voyage pour que les parents voient le niveau du
+                    singe, mais l'historique reste la source de vérité : un
+                    appareil suivi ne fait que l'afficher, jamais le recalculer
+                    ni le réécrire (rafraichirGamification sort si modeLecture). */
+                 gamification: DB.reglages.gamification}
     }).then(ok => {
       /* Un échec d'envoi était jusque-là totalement silencieux — c'est
          très probablement ce qui a causé le bug de suivi rapporté :
@@ -1263,6 +1741,9 @@ function ajouterCours(code, numero, dateISO, annee){
   if (annee) DB.reglages.derniereAnnee = annee;
   completerRappels();
   sauver();
+  /* 🍫 Nourrir Cabosse : un nouveau cours, c'est de l'énergie. */
+  gainCabosse('energie', XP_CABOSSE.coursNouveau);
+  rafraichirGamification();
   return true;
 }
 
@@ -1358,6 +1839,7 @@ function rendre(){
     else b.removeAttribute('aria-current');
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
+  else if (vueActive === 'cabosse') vue.innerHTML = vueCabosse();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
@@ -1678,6 +2160,112 @@ function sectionJour(titre, revisions, iso, classe, estAujourdhui){
   return {html: html, compte: compte};
 }
 
+/* --- Carte Cabosse compacte, en haut de l'Agenda ------------- */
+function pointsPalier(palier){
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += (i <= palier ? '●' : '<span class="vide">○</span>');
+  return s;
+}
+
+function carteCabosseCompacte(){
+  const g = gamif();
+  const p = progressionNiveau(g.xpTotal);
+  let jauges = '';
+  CARACTERISTIQUES.forEach(c => {
+    jauges += '<span class="cc-jauge">' + c.emoji + ' <span class="cc-pts">' +
+      pointsPalier((g.jauges[c.cle] || {}).palier || 1) + '</span></span>';
+  });
+  return '<button type="button" class="carte-cabosse" data-act="ouvrir-cabosse">' +
+    avatarCabosse() +
+    '<div class="cc-corps">' +
+      '<div class="cc-titre">CABOSSE</div>' +
+      '<div class="cc-niveau">Niveau ' + g.niveauGlobal + ' · ' + ech(g.rangLabel) + '</div>' +
+      '<div class="cc-barre"><i style="width:' + p.pct + '%"></i></div>' +
+      '<div class="cc-jauges">' + jauges + '</div>' +
+    '</div></button>';
+}
+
+/* --- Vue détaillée de progression ---------------------------- */
+function vueCabosse(){
+  const g = gamif();
+  const p = progressionNiveau(g.xpTotal);
+  const romains = ['I','II','III','IV','V'];
+
+  let html = '<div class="cbs-entete">' + avatarCabosse('grand') +
+    '<div class="cbs-rang">' + ech(g.rangLabel) + '</div>' +
+    '<div class="cbs-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
+    '<div class="cbs-xp">' + g.xpTotal + ' XP au total</div>' +
+    '<div class="cc-barre" style="margin-top:10px"><i style="width:' + p.pct + '%"></i></div>' +
+    '<div class="cbs-xp">' + (g.niveauGlobal >= NIVEAU_MAX
+      ? 'Niveau maximum atteint 🎉'
+      : p.actuel + ' / ' + p.cible + ' XP vers le niveau ' + (g.niveauGlobal + 1)) + '</div>' +
+  '</div>';
+
+  html += '<p class="etiquette" style="margin-top:18px">Caractéristiques</p>';
+  CARACTERISTIQUES.forEach(c => {
+    const j = g.jauges[c.cle] || {xp:0, palier:1};
+    const suivant = SEUILS_PALIERS[j.palier]; // undefined au palier 5
+    html += '<div class="cbs-carte">' +
+      '<div class="h">' + c.emoji + ' <b>' + c.nom + '</b>' +
+        '<span class="p">Palier ' + romains[j.palier - 1] + '</span></div>' +
+      '<div class="cc-barre" style="margin-top:7px"><i style="width:' +
+        (suivant ? Math.min(100, Math.round(j.xp / suivant * 100)) : 100) + '%"></i></div>' +
+      '<span class="aide">' + j.xp + ' XP' +
+        (suivant ? ' · ' + (suivant - j.xp) + ' XP avant le palier ' + romains[j.palier] : ' · palier maximum') +
+        '<br>' + c.aide + '</span>' +
+    '</div>';
+  });
+
+  html += '<p class="etiquette" style="margin-top:18px">Artefacts légendaires</p>' +
+    '<div class="cbs-artefacts">';
+  let prochain = null;
+  ARTEFACTS_CABOSSE.forEach(a => {
+    const acquis = !!g.artefacts[a.cle];
+    const carac = CARACTERISTIQUES.find(c => c.cle === a.carac);
+    if (!acquis && !prochain) prochain = {a: a, carac: carac, j: g.jauges[a.carac]};
+    html += '<div class="cbs-art ' + (acquis ? 'acquis' : 'verrouille') + '">' +
+      '<span class="e">' + (acquis ? a.emoji : '🔒') + '</span>' +
+      '<span>' + ech(a.nom) + '</span></div>';
+  });
+  html += '</div>';
+
+  if (g.artefacts.formeUltime) {
+    html += '<div class="cbs-ultime">✨ CABOSSE SUPRÊME DÉBLOQUÉ ! ✨</div>';
+  } else if (prochain) {
+    const manque = SEUILS_PALIERS[4] - prochain.j.xp;
+    html += '<p class="aide-champ" style="margin-top:10px">Prochain artefact : ' +
+      ech(prochain.a.nom) + ' — encore ' + manque + ' XP de ' +
+      prochain.carac.nom.toLowerCase() + '.</p>';
+  }
+
+  /* Derniers gains significatifs : lecture directe de l'historique,
+     pour rester cohérent avec le principe « pas de compteur ». */
+  const dl = donneesLecture();
+  const recents = [];
+  (dl.revisions || []).filter(r => r.statut === 'faite' && r.faitLe)
+    .sort((a, b) => a.faitLe < b.faitLe ? 1 : -1).slice(0, 4)
+    .forEach(r => {
+      const c = (dl.cours || []).find(x => x.id === r.cours);
+      recents.push({date: r.faitLe, txt: '🧠 ' + (c ? refCours(c) : 'Révision') + ' révisé' +
+        (dansLesTemps(r) ? ' · 🧘 dans les temps' : '')});
+    });
+  if (recents.length) {
+    html += '<p class="etiquette" style="margin-top:18px">Derniers gains</p>' +
+      '<div class="carte" style="padding:10px 14px">';
+    recents.forEach(r => {
+      html += '<div style="font-size:12px;color:var(--texte-2);padding:3px 0">' +
+        ech(r.txt) + ' <span style="color:var(--texte-3)">· ' + libelleCourt(r.date) + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
+    'Cabosse grandit avec ta régularité 🐒</p>';
+  return html;
+}
+
+/* --- Carte Cabosse compacte fin ------------------------------ */
+
 function grouperParDate(liste){
   const g = [];
   liste.forEach(r => {
@@ -1693,8 +2281,11 @@ function vueAgenda(){
   const dl = donneesLecture();
   const banniere = modeLecture()
     ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
+  /* La carte Cabosse coiffe l'agenda : c'est la première chose que
+     l'enfant voit en ouvrant l'app. */
+  const carteRpg = carteCabosseCompacte();
   if (!dl.cours.length && !dl.taches.length) {
-    return banniere + '<div class="vide"><div class="gros">📅</div>' +
+    return banniere + carteRpg + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>' + (modeLecture()
         ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
@@ -1720,7 +2311,7 @@ function vueAgenda(){
     o.statut === 'aFaire' || o.statut === 'reportee' || o.date === ajISO);
   const datesAvecTache = quand => occEnAttente.filter(quand).map(o => o.date);
 
-  let html = banniere;
+  let html = banniere + carteRpg;
 
   /* En retard : révisions et tâches non traitées avant aujourd'hui. */
   const datesRetard = uniqueTriees(
@@ -2044,6 +2635,14 @@ function blocReglagesBase(){
       (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
       '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
     '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
+    '<label class="check-ligne" style="margin-top:12px">' +
+      '<input type="checkbox" id="f-sons-cabosse"' +
+      (prefsCabosse().sons !== false ? ' checked' : '') + '>' +
+      '<span>Sons de Cabosse</span></label>' +
+    '<label class="check-ligne">' +
+      '<input type="checkbox" id="f-anim-cabosse"' +
+      (prefsCabosse().animations !== false ? ' checked' : '') + '>' +
+      '<span>Animations de Cabosse</span></label>' +
     '<button class="bouton discret" data-act="maj" style="margin-top:10px">Forcer la mise à jour</button>';
 }
 
@@ -2283,20 +2882,26 @@ function semaineTaches(decalage){
 }
 
 /* Une semaine de tâches est-elle « débloquée » ?
-   Le solde de tâches n'est encaissé que si le programme de révisions
-   de la semaine a bien été mené à son terme : plus aucune révision
-   du lundi au samedi ne reste en attente. C'est le geste de cocher la
-   dernière révision du samedi qui fait basculer la cagnotte — les
-   tâches bonus récompensent une semaine de révisions tenue, pas le
-   simple écoulement du temps.
-   Une semaine sans aucune révision programmée est considérée comme
-   tenue d'office : sinon ses points bonus seraient perdus sans qu'il
-   y ait eu quoi que ce soit à réviser. */
+   Le solde de tâches n'est encaissé que si le programme de la semaine
+   a bien été mené à son terme : plus aucune révision NI aucune tâche
+   du lundi au samedi ne reste en attente. C'est le geste de cocher le
+   dernier élément du samedi qui fait basculer la cagnotte — les
+   tâches bonus récompensent une semaine tenue, pas le simple
+   écoulement du temps.
+   Une semaine sans rien de programmé est considérée comme tenue
+   d'office. */
 function semaineDebloquee(dl, debutISO, finISO){
   const revs = dl.revisions.filter(r => r.date >= debutISO && r.date <= finISO &&
     (dl.afficherAncrage || !r.ancrage));
-  if (!revs.length) return true;
-  return !revs.some(r => r.statut === 'aFaire' || r.statut === 'reportee');
+  if (revs.some(r => r.statut === 'aFaire' || r.statut === 'reportee')) return false;
+  /* Les tâches de la semaine — samedi compris — doivent elles aussi
+     être réglées : sinon un versement déclenché samedi matin figerait
+     le solde avant la tâche prévue l'après-midi, dont le point serait
+     perdu. Une tâche « faite » en attente de contrôle parental ne
+     bloque pas : c'est au parent de valider, pas à l'enfant. */
+  const occ = (dl.occurrences || []).filter(o => o.date >= debutISO && o.date <= finISO);
+  if (occ.some(o => o.statut === 'aFaire' || o.statut === 'reportee')) return false;
+  return true;
 }
 
 /* Encaissement : dès qu'une semaine close a vu son programme de
@@ -3023,8 +3628,11 @@ function planningImpression(){
    feuille d'impression iOS : on repeint l'icône en sablier AVANT,
    via un double requestAnimationFrame qui garantit que le navigateur
    a réellement affiché le changement avant de se figer. */
+/* Le bouton d'en-tête a été retiré : l'impression se déclenche
+   désormais depuis les Réglages de base, qui passent leur propre
+   bouton pour afficher le sablier pendant que window.print() bloque. */
 function imprimerPlanning(bouton){
-  const btn = bouton || document.getElementById('btn-imprimer');
+  const btn = bouton || null;
   document.getElementById('impression').innerHTML = planningImpression();
   const texteOriginal = btn ? btn.textContent : '';
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
@@ -3033,8 +3641,6 @@ function imprimerPlanning(bouton){
     finally { if (btn) { btn.textContent = texteOriginal; btn.disabled = false; } }
   }));
 }
-
-document.getElementById('btn-imprimer').addEventListener('click', () => imprimerPlanning(document.getElementById('btn-imprimer')));
 
 /* --- Synchronisation entre appareils ------------------------- */
 
@@ -3322,14 +3928,27 @@ function importerSauvegarde(fichier){
       revisions: o.revisions,
       matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
       suivis: suivisActuels,
+      /* Tâches bonus et leurs occurrences : absentes des sauvegardes
+         antérieures à la v29, d'où le repli sur un tableau vide. */
+      taches: Array.isArray(o.taches) ? o.taches : [],
+      occurrences: Array.isArray(o.occurrences) ? o.occurrences : [],
       reglages: Object.assign(
-        {afficherAncrage: true, prenom: '', tolerance: 3, derniereAnnee: '', chatVuJusquePar: {}},
+        {afficherAncrage: true, prenom: '', email: '', typeCompte: '', tolerance: 3,
+         derniereAnnee: '', chatVuJusquePar: {}, cagnotte: 0, semainesEncaissees: {},
+         exportHebdo: true, dernierePropositionExport: '', gamification: gamificationVierge()},
         o.reglages || {},
         syncActuelle,          // écrase toute valeur de synchro venue du fichier
         {afficherAncrage: true}
       )
     };
+    /* Une sauvegarde d'avant la v30 n'a pas de bloc gamification :
+       on le crée, puis on recalcule tout depuis l'historique importé
+       pour que le niveau soit juste immédiatement. Silencieux : pas
+       de pluie d'animations au moment d'une restauration. */
+    if (!DB.reglages.gamification) DB.reglages.gamification = gamificationVierge();
     sauver();
+    completerTaches();
+    rafraichirGamification(true);
     demarrerToutesLesEcoutesSuivi();
     demarrerEcouteChat();
     rendre();
@@ -3350,6 +3969,20 @@ function marquer(id, statut){
      dernière révision en attente de la semaine, le solde des tâches
      bonus bascule dans la cagnotte (voir encaisserSemaines). */
   encaisserSemaines();
+  /* Gains RPG immédiats, puis recalcul complet depuis l'historique :
+     les petites bulles sont cosmétiques, le vrai état vient toujours
+     de calculerGamification(). */
+  if (statut === 'faite') {
+    const c = trouverCours(r.cours);
+    gainCabosse('intelligence', XP_CABOSSE.revisionFaite +
+      (c && (c.commentaire || '').trim() ? XP_CABOSSE.revisionAvecNote : 0));
+    gainCabosse('sagesse', dansLesTemps(r) ? XP_CABOSSE.revisionDansLesTemps
+                                           : XP_CABOSSE.revisionHorsTolerance);
+  } else if (statut === 'annulee') {
+    jouerSonCabosse('cancelled');
+    filerRecompense({type:'gain', emoji:'🧘', texte:'Un peu de sagesse en moins. On continue !'});
+  }
+  rafraichirGamification();
   rendre();
   toast(statut === 'faite' ? 'Révision faite.' : 'Révision annulée.');
 }
@@ -3473,7 +4106,14 @@ document.getElementById('voile-ok').addEventListener('click', () => {
     if (o) { o.date = d; o.statut = 'reportee'; sauver(); }
   } else if (reportEnCours) {
     const r = DB.revisions.find(x => x.id === reportEnCours);
-    if (r) { r.date = d; r.statut = 'reportee'; sauver(); }
+    if (r) {
+      r.date = d; r.statut = 'reportee'; sauver();
+      /* Jamais culpabilisant : ton doux, pas de rouge, pas de son
+         d'échec. Cabosse retrouvera son rythme. */
+      jouerSonCabosse('reported');
+      filerRecompense({type:'gain', emoji:'🧘', texte:'Cabosse devra retrouver son rythme.'});
+      rafraichirGamification();
+    }
   } else return;
   fermerReport();
   rendre();
@@ -3603,15 +4243,26 @@ vue.addEventListener('click', e => {
     if (o) {
       o.statut = 'faite';
       arreterMinuteur(false);
-      sauver(); rendre();
+      sauver();
+      /* Les tâches conditionnent elles aussi le déblocage de la
+         semaine : cocher la dernière peut verser la cagnotte. */
+      encaisserSemaines();
+      rendre();
       const t = trouverTache(o.tache);
+      /* 💪 Force : accordée tout de suite, sauf si un parent doit
+         encore valider — dans ce cas le gain viendra à la coche. */
+      if (!(t && t.controleParent)) {
+        gainCabosse('force', o.date === o.prevue ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport);
+        jouerSonCabosse('happy');
+      }
+      rafraichirGamification();
       toast(t && t.controleParent ? 'Fait — en attente du contrôle parent.' : 'Bravo, tâche faite !');
     }
   }
   else if (act === 'tache-timer') lancerMinuteur(id);
   else if (act === 'tache-annuler') {
     const o = DB.occurrences.find(x => x.id === id);
-    if (o) { o.statut = 'annulee'; sauver(); rendre(); toast('Tâche annulée.'); }
+    if (o) { o.statut = 'annulee'; sauver(); encaisserSemaines(); rendre(); toast('Tâche annulée.'); }
   }
   else if (act === 'tache-reactiver') {
     const o = DB.occurrences.find(x => x.id === id);
@@ -3624,6 +4275,7 @@ vue.addEventListener('click', e => {
       supprimerTache(id); rendre(); toast('Tâche supprimée.');
     }
   }
+  else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
   else if (act === 'parametres-deverrouiller') ouvrirMotDePasse(b.dataset.cible);
   else if (act === 'imprimer-planning') imprimerPlanning(b);
   else if (act === 'chat-nom') ouvrirChatNom();
@@ -3734,6 +4386,17 @@ vue.addEventListener('change', e => {
     rendre(); // la visibilité des onglets et du contrôle parental en dépend
     return;
   }
+  if (e.target.id === 'f-sons-cabosse') {
+    prefsCabosse().sons = e.target.checked;
+    sauver();
+    if (e.target.checked) { preparerAudio(); jouerSonCabosse('reward'); }
+    return;
+  }
+  if (e.target.id === 'f-anim-cabosse') {
+    prefsCabosse().animations = e.target.checked;
+    sauver();
+    return;
+  }
   if (e.target.id === 'f-export-hebdo') {
     DB.reglages.exportHebdo = e.target.checked;
     sauver();
@@ -3773,7 +4436,14 @@ vue.addEventListener('change', e => {
     const o = DB.occurrences.find(x => x.id === e.target.dataset.id);
     if (o) {
       o.controleFait = e.target.checked;
-      sauver(); rendre();
+      sauver();
+      encaisserSemaines();
+      if (o.controleFait) {
+        gainCabosse('force', o.date === o.prevue ? XP_CABOSSE.tacheAJour : XP_CABOSSE.tacheApresReport);
+        jouerSonCabosse('happy');
+      }
+      rafraichirGamification();
+      rendre();
       toast(o.controleFait ? 'Contrôle validé — bonus acquis.' : 'Contrôle retiré.');
     }
     return;
@@ -3880,6 +4550,10 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
 completerRappels(); // étend l'horizon des rappels à long terme
 completerTaches();  // matérialise les occurrences de tâches sur l'horizon glissant
 encaisserSemaines(); // bascule dans la cagnotte les semaines de tâches désormais closes
+/* Recalcul RPG complet depuis l'historique, en silencieux : un
+   utilisateur qui arrive de la v29 retrouve son niveau réel dès la
+   première ouverture, sans se prendre 30 animations d'un coup. */
+rafraichirGamification(true);
 rendre();
 verifierRappelJournalier();
 proposerExportHebdo();
@@ -3894,7 +4568,12 @@ window.addEventListener('sabosse-sync-pret', () => {
       cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
       taches: DB.taches, occurrences: DB.occurrences,
       reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
-                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte}
+                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte,
+                 /* L'état RPG voyage pour que les parents voient le niveau du
+                    singe, mais l'historique reste la source de vérité : un
+                    appareil suivi ne fait que l'afficher, jamais le recalculer
+                    ni le réécrire (rafraichirGamification sort si modeLecture). */
+                 gamification: DB.reglages.gamification}
     });
   }
   demarrerEcouteChat();
