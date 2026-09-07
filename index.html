@@ -79,29 +79,29 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
-/* Six onglets sur une seule ligne. Flex plutôt que grille fixe :
+/* Sept onglets sur une seule ligne. Flex plutôt que grille fixe :
    quand un onglet est masqué (le Chat, sur un compte ÉTUDIANT), les
    autres se répartissent la place au lieu de laisser un trou. */
 #barre{flex:0 0 auto;display:flex;background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
 #barre button{position:relative;flex:1 1 0;min-width:0;
-  padding:8px 0 7px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:7px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:23px;line-height:1;filter:grayscale(1) opacity(.55);
+#barre button .ic{font-size:21px;line-height:1;filter:grayscale(1) opacity(.55);
   display:inline-flex;align-items:center;justify-content:center;
-  width:31px;height:31px;border-radius:50%}
-#barre button .lb{font-size:9px;font-weight:600;text-align:center;line-height:1.1;
+  width:28px;height:28px;border-radius:50%}
+#barre button .lb{font-size:8.5px;font-weight:600;text-align:center;line-height:1.1;
   padding:0 1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Écrans très étroits (iPhone SE et similaires) : on resserre encore. */
-@media (max-width:360px){
-  #barre button .ic{font-size:20px;width:27px;height:27px}
-  #barre button .lb{font-size:8.5px}
+/* Écrans étroits (iPhone SE et similaires) : on resserre encore. */
+@media (max-width:400px){
+  #barre button .ic{font-size:18px;width:25px;height:25px}
+  #barre button .lb{font-size:7.8px}
 }
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
 #barre button .ic.ic-rouge{filter:none;background:#FBDCDA}
 #barre button .ic.ic-verte{filter:none;background:#D6F0E1}
-.badge-non-lu{position:absolute;top:4px;left:calc(50% + 12px);width:9px;height:9px;border-radius:50%;
+.badge-non-lu{position:absolute;top:3px;left:calc(50% + 9px);width:9px;height:9px;border-radius:50%;
   background:var(--annulee);display:none}
 .badge-non-lu.on{display:block;animation:clignoter 1.1s ease-in-out infinite}
 @keyframes clignoter{0%,100%{opacity:1}50%{opacity:.2}}
@@ -145,6 +145,8 @@ span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-
 .rev .rang{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--texte-3);
   background:var(--surface-2);border-radius:99px;padding:3px 8px;flex:0 0 auto}
 .rev .rang.ancrage{color:var(--accent);background:var(--accent-doux)}
+.rev .rang.nouveau{color:var(--accent);background:var(--accent-doux)}
+.rev .rang.renfort{color:var(--reportee);background:rgba(242,161,4,.14)}
 .rev .note{font-size:11.5px;color:var(--reportee);font-weight:600;margin-top:6px}
 .rev .cmds{display:flex;gap:6px;margin-top:11px}
 .rev .cmds button{flex:1;padding:9px 4px;border-radius:99px;background:var(--surface-2);
@@ -378,9 +380,13 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .jour-pion.actif{background:var(--bonus);border-color:var(--bonus);color:#fff}
 
 /* Deux colonnes dans l'agenda : révisions 66 %, tâches 33 %. */
-.jour-grille{display:grid;grid-template-columns:2fr 1fr;gap:9px;align-items:start}
-.jour-grille > .col-vide{display:none}
-@media (max-width:430px){.jour-grille{gap:6px}}
+/* Bilan de la semaine (samedi, Agenda) : liste compacte, purement
+   informative, des cours encodés du lundi au vendredi. */
+.bilan-semaine{margin-bottom:14px}
+.bilan-titre{font-size:12.5px;font-weight:800;color:var(--texte-2);margin-bottom:8px}
+.bilan-ligne{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px}
+.bilan-ligne b{font-family:var(--mono);font-weight:700}
+.bilan-ligne span{color:var(--texte-3)}
 .tache{background:var(--surface);border:1px solid var(--filet);border-left:3px solid var(--bonus);
   border-radius:var(--r-m);padding:11px 12px;margin-bottom:9px}
 .tache.faite{opacity:.55}
@@ -489,7 +495,8 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
   <nav id="barre">
-    <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="lb" id="lb-agenda">Agenda</span></button>
+    <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="badge-non-lu" id="badge-agenda"></span><span class="lb" id="lb-agenda">Agenda</span></button>
+    <button data-vue="taches"><span class="ic">✅</span><span class="badge-non-lu" id="badge-taches"></span><span class="lb">Tâches</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
@@ -511,7 +518,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   <h3 id="confirm-titre"></h3>
   <p id="confirm-info"></p>
   <div id="confirm-note-zone" class="champ" style="display:none">
-    <label for="confirm-note">Point de difficulté à noter (optionnel)</label>
+    <label for="confirm-note">Points difficiles à revoir la prochaine fois</label>
     <textarea id="confirm-note" rows="3" placeholder="Ex. confond passé simple et imparfait…"></textarea>
   </div>
   <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
@@ -708,7 +715,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v34 · 7 septembre 2026';
+const VERSION = 'v35 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1479,7 +1486,13 @@ function dimancheDe(d){ return plus(lundiDe(d), 6); }
    ou à sept jours au plus. Au-delà, le bouton « Faite » est verrouillé
    pour éviter une validation par anticipation excessive. */
 function joursAvant(iso){ return Math.round((dDe(iso) - aujourdhui()) / 86400000); }
-function estValidable(iso){ return joursAvant(iso) <= 7; }
+/* Fenêtre de validation : 72 h avant la date prévue, jusqu'à 72 h
+   après. Au-delà, seuls Reporter et Annuler restent possibles — une
+   révision très en retard ne devrait plus se valider comme si de
+   rien n'était, elle doit être reprogrammée. Calculée en jours
+   calendaires, comme le reste de l'app (dansLesTemps, tolérance). */
+const FENETRE_VALIDATION_JOURS = 3;
+function estValidable(iso){ return Math.abs(joursAvant(iso)) <= FENETRE_VALIDATION_JOURS; }
 
 /* Fin de l'année scolaire : le 1er juillet qui suit la date du cours. */
 function finAnnee(d){
@@ -1502,6 +1515,13 @@ function echeancier(dateISO){
   const d = dDe(dateISO);
   const fin = finAnnee(d);
   const sortie = [];
+
+  /* Nouveau : la révision du jour même de l'encodage — l'enfant vient
+     d'apprendre ce cours, il le relit tout de suite. Distincte de
+     l'ancrage du samedi (qui arrive plus tard) : leurs dates ne
+     peuvent jamais coïncider puisque l'ancrage est toujours au moins
+     le lendemain, donc jamais de fusion à gérer ici. */
+  if (d <= fin) sortie.push({rang:'Encodage', ancrage:false, date:isoDe(d)});
 
   let samedi = plus(d, 1);
   while (samedi.getDay() !== 6) samedi = plus(samedi, 1);
@@ -1840,6 +1860,23 @@ function supprimerRevision(id){
   toast('Révision supprimée définitivement.');
 }
 
+/* Renfort mémoire : quand l'enfant indique qu'il n'a pas encore tout
+   retenu, on programme d'office un rappel 7 jours plus tard — sauf si
+   une révision est déjà prévue ce jour-là pour ce cours, auquel cas
+   la rampe normale suffit et on ne double pas la charge. */
+function assurerRenfortJ7(idCours, depuisISO){
+  const cible = isoDe(plus(dDe(depuisISO), 7));
+  const dejaPlanifiee = DB.revisions.some(r => r.cours === idCours && r.date === cible &&
+    (r.statut === 'aFaire' || r.statut === 'reportee'));
+  if (dejaPlanifiee) return false;
+  DB.revisions.push({
+    id: idCours + '#renfort-' + Date.now().toString(36),
+    cours: idCours, rang: 'Renfort', ancrage: false,
+    prevue: cible, date: cible, statut: 'aFaire'
+  });
+  return true;
+}
+
 /* ============================================================
    Rendu
    ============================================================ */
@@ -1915,6 +1952,7 @@ function rendre(){
     else b.removeAttribute('aria-current');
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
+  else if (vueActive === 'taches') vue.innerHTML = vueTaches();
   else if (vueActive === 'cabosse') vue.innerHTML = vueCabosse();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
@@ -1923,6 +1961,8 @@ function rendre(){
   if (vueActive !== 'chat') vue.scrollTop = 0;
   majBascule();
   majIconeAgenda();
+  majBadgeAgenda();
+  majBadgeTaches();
   majBadgeChat();
 }
 
@@ -1952,6 +1992,31 @@ function majIconeAgenda(){
     el.textContent = '👍'; el.classList.add('ic-verte');
     if (lb) lb.textContent = 'Tout est ok';
   }
+}
+
+/* Points rouges sur Agenda et Tâches : même mécanisme que la
+   pastille du Chat (clignotante, allumée/éteinte selon un booléen),
+   plutôt qu'une bulle avec un nombre — juste « il reste quelque
+   chose aujourd'hui », sans ajouter d'info que l'icône Agenda ne
+   donne pas déjà en détail. */
+function majBadgeAgenda(){
+  const badge = document.getElementById('badge-agenda');
+  if (!badge) return;
+  const dl = donneesLecture();
+  const ajISO = isoDe(aujourdhui());
+  const restant = dl.revisions.some(r => r.date === ajISO &&
+    (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
+  badge.classList.toggle('on', restant);
+}
+
+function majBadgeTaches(){
+  const badge = document.getElementById('badge-taches');
+  if (!badge) return;
+  const dl = donneesLecture();
+  const ajISO = isoDe(aujourdhui());
+  const restant = (dl.occurrences || []).some(o => o.date === ajISO &&
+    (o.statut === 'aFaire' || o.statut === 'reportee'));
+  badge.classList.toggle('on', restant);
 }
 
 /* Pastille clignotante sur l'onglet Chat : s'éteint dès qu'on
@@ -2003,14 +2068,19 @@ function numeroReactivation(delta){
   return idx === -1 ? null : idx + 1;
 }
 
-/* L'ancrage du samedi s'affiche sous un nom plus engageant que
-   « Ancrage », y compris quand il coïncide avec une échéance J+x. */
+/* Deux checkpoints ont un nom plus engageant que leur rang brut :
+   la révision du jour d'encodage (« Nouveau ! ») et l'ancrage du
+   samedi, qui agit comme la révision globale de la semaine — elle
+   récupère naturellement tous les cours encodés du lundi au vendredi,
+   puisque chacun y calcule sa propre échéance d'ancrage. */
 function libelleRang(rang){
   const avecReactivations = rang.replace(/J\+(\d+)/g, (tout, n) => {
     const numero = numeroReactivation(parseInt(n, 10));
     return numero ? 'Réactivation n°' + numero : tout;
   });
-  return avecReactivations.replace(/^Ancrage/, 'Nouveau !');
+  return avecReactivations
+    .replace(/^Encodage/, 'Nouveau !')
+    .replace(/^Ancrage/, 'Révision de la semaine');
 }
 
 /* Une carte de révision, réutilisée pour les retards, la semaine
@@ -2034,18 +2104,31 @@ function carteRevision(r, aujourdhuiCarte){
   const zoneNote = commentaire
     ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">📝</span> ' + texteNote + '</button>'
     : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
+  /* Deux styles de pastille en plus de l'ancrage : « Nouveau ! » (le
+     jour d'encodage) et « Renfort » (rappel J+7 ajouté après un
+     « pas encore retenu »). Détectés sur le rang plutôt que stockés
+     en champ séparé — plus simple, sans impact sur les données. */
+  const estNouveau = r.rang.indexOf('Encodage') !== -1;
+  const estRenfort = r.rang.indexOf('Renfort') !== -1;
+  const classeRang = (r.ancrage ? ' ancrage' : '') + (estNouveau ? ' nouveau' : '') + (estRenfort ? ' renfort' : '');
+  let messageFenetre = '';
+  if (!validable && !modeLecture()) {
+    messageFenetre = joursAvant(r.date) > 0
+      ? '<div class="note" style="color:var(--texte-3)">Validable à partir du ' +
+        libelleCourt(isoDe(plus(dDe(r.date), -FENETRE_VALIDATION_JOURS))) + '</div>'
+      : '<div class="note" style="color:var(--texte-3)">Trop tardif pour valider directement — ' +
+        'reporte-la ou annule-la.</div>';
+  }
   return '<article class="rev' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
     '<div class="haut">' +
       '<i class="puce" style="background:' + m.c + '"></i>' +
       '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
       '<span class="matiere">' + ech(m.nom) + '</span>' +
-      '<span class="rang' + (r.ancrage ? ' ancrage' : '') + '">' + ech(libelleRang(r.rang)) + '</span>' +
+      '<span class="rang' + classeRang + '">' + ech(libelleRang(r.rang)) + '</span>' +
     '</div>' +
     (r.statut === 'reportee'
       ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
-    (!validable && !modeLecture()
-      ? '<div class="note" style="color:var(--texte-3)">Validable à partir du ' +
-        libelleCourt(isoDe(plus(dDe(r.date), -7))) + '</div>' : '') +
+    messageFenetre +
     zoneNote + cmds + '</article>';
 }
 
@@ -2062,6 +2145,38 @@ function couleurProgression(pct){
   const arrivee = [11, 107, 63];  // vert foncé
   const c = depart.map((v, i) => Math.round(v + (arrivee[i] - v) * t));
   return 'rgb(' + c.join(',') + ')';
+}
+
+/* ============================================================
+   Bilan de la semaine — mécanisme d'agrégation distinct de
+   l'ancrage individuel de chaque cours (« Révision de la semaine »).
+   Là où l'ancrage crée, pour CHAQUE cours, sa propre échéance
+   cochable le samedi, ce bilan est une carte UNIQUE et purement
+   informative qui liste tout ce qui a été encodé du lundi au
+   vendredi de la semaine — sans créer la moindre révision
+   supplémentaire ni bouton « J'ai révisé ». Aucune redondance
+   possible : elle ne touche jamais DB.revisions, elle se contente
+   de relire DB.cours, comme la gamification relit l'historique. */
+function coursEncodesSemaine(dl, lundiISO, samediISO){
+  return (dl.cours || []).filter(c => c.date >= lundiISO && c.date < samediISO)
+    .sort((a, b) => a.date < b.date ? -1 : 1);
+}
+
+function carteBilanSemaine(samediISO){
+  const dl = donneesLecture();
+  const lundi = isoDe(plus(dDe(samediISO), -5));
+  const liste = coursEncodesSemaine(dl, lundi, samediISO);
+  if (!liste.length) return '';
+  let lignes = '';
+  liste.forEach(c => {
+    const m = matiereDe(c.code);
+    lignes += '<div class="bilan-ligne">' +
+      '<i class="puce" style="background:' + m.c + '"></i>' +
+      '<b>' + ech(refCours(c)) + '</b><span>' + ech(m.nom) + '</span></div>';
+  });
+  return '<div class="carte bilan-semaine">' +
+    '<div class="bilan-titre"><span class="emo">🗓️</span> Cette semaine, tu as appris</div>' +
+    lignes + '</div>';
 }
 
 function carteRepos(dimancheISO){
@@ -2109,41 +2224,47 @@ function carteRepos(dimancheISO){
     carteScore('Année', scoreAn, estRecord(histoAn)) +
   '</div>';
 
-  /* Compteur des tâches bonus : séparé, sous celui des révisions et
-     dans sa propre couleur. La cagnotte cumule les semaines closes. */
-  let bloc = '';
-  if ((dl.taches || []).length) {
-    const sem = semaineTaches(0);
-    const st = scoreTaches(dl, sem.debut, sem.fin);
-    const cagnotte = DB.reglages.cagnotte || 0;
-    const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
-    const dejaVersee = DB.reglages.semainesEncaissees[sem.cle] !== undefined;
-    /* L'enjeu doit être lisible : tant que le programme de révisions
-       de la semaine n'est pas bouclé, les points de tâches restent
-       en suspens. */
-    const etat = dejaVersee
-      ? '<div class="cagnotte-etat versee">✅ Points de la semaine versés</div>'
-      : (debloquee
-        ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — versement samedi</div>'
-        : '<div class="cagnotte-etat">🔒 Termine tes révisions pour débloquer ces points</div>');
-    bloc = '<div class="repos-scores bonus">' +
-        '<div class="repos-score"><span class="repos-score-titre">Tâches · semaine</span>' +
-        '<b>' + (st.score > 0 ? '+' : '') + st.score + '</b></div>' +
-        '<div class="repos-score"><span class="repos-score-titre">Réussies</span>' +
-        '<b>' + st.gagnes + '</b></div>' +
-        '<div class="repos-score"><span class="repos-score-titre">Manquées</span>' +
-        '<b>' + st.perdus + '</b></div>' +
-      '</div>' + etat +
-      '<div class="cagnotte">🐒 Cagnotte Cabosse : ' + cagnotte + ' point' +
-        (Math.abs(cagnotte) > 1 ? 's' : '') + '</div>';
-  }
-
   return '<article class="rev repos' + (succes ? ' succes' : '') + '">' +
     '<div class="repos-corps">' +
       '<span class="repos-ic">' + (succes ? '🏆' : '📚') + '</span>' +
       '<span class="repos-txt">' + (succes ? 'Repos du champion' : 'Encore un peu de boulot') + '</span>' +
       detail + barre +
-    '</div>' + scores + bloc + '</article>';
+    '</div>' + scores + '</article>';
+}
+
+/* Pendant du carteRepos ci-dessus, mais pour les tâches bonus :
+   score de la semaine et état de la cagnotte. Vit désormais dans
+   l'onglet Tâches (et non plus dans l'Agenda, qui n'affiche que des
+   révisions), au même repère temporel — le dimanche de la semaine. */
+function carteReposTaches(dimancheISO){
+  const dl = donneesLecture();
+  if (!(dl.taches || []).length) return '';
+  const sem = semaineTaches(0);
+  const st = scoreTaches(dl, sem.debut, sem.fin);
+  const cagnotte = DB.reglages.cagnotte || 0;
+  const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
+  const dejaVersee = DB.reglages.semainesEncaissees[sem.cle] !== undefined;
+  const etat = dejaVersee
+    ? '<div class="cagnotte-etat versee">✅ Points de la semaine versés</div>'
+    : (debloquee
+      ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — versement samedi</div>'
+      : '<div class="cagnotte-etat">🔒 Termine tes révisions et tes tâches pour débloquer ces points</div>');
+  return '<article class="rev repos">' +
+    '<div class="repos-corps">' +
+      '<span class="repos-ic">💪</span>' +
+      '<span class="repos-txt">Bilan de la semaine</span>' +
+    '</div>' +
+    '<div class="repos-scores bonus">' +
+      '<div class="repos-score"><span class="repos-score-titre">Tâches · semaine</span>' +
+      '<b>' + (st.score > 0 ? '+' : '') + st.score + '</b></div>' +
+      '<div class="repos-score"><span class="repos-score-titre">Réussies</span>' +
+      '<b>' + st.gagnes + '</b></div>' +
+      '<div class="repos-score"><span class="repos-score-titre">Manquées</span>' +
+      '<b>' + st.perdus + '</b></div>' +
+    '</div>' + etat +
+    '<div class="cagnotte">🐒 Cagnotte Cabosse : ' + cagnotte + ' point' +
+      (Math.abs(cagnotte) > 1 ? 's' : '') + '</div>' +
+  '</article>';
 }
 
 /* --- Carte d'une tâche bonus ---------------------------------
@@ -2216,23 +2337,23 @@ function tachesDuJour(iso){
   return donneesLecture().occurrences.filter(o => o.date === iso);
 }
 
-/* Une section de jour : révisions à gauche (66 %), tâches à droite
-   (33 %). La grille disparaît d'elle-même s'il n'y a aucune tâche
-   ce jour-là, pour que les révisions gardent toute la largeur. */
+/* Une section de jour, pour l'Agenda : révisions seules, en pleine
+   largeur. Les tâches ont leur propre onglet (voir sectionJourTaches
+   ci-dessous) — les mélanger ici encombrait la vue générale. */
 function sectionJour(titre, revisions, iso, classe, estAujourdhui){
-  const taches = tachesDuJour(iso);
-  const compte = revisions.length + taches.length;
+  const compte = revisions.length;
   let html = '<section class="jour' + (classe ? ' ' + classe : '') + '"><h2>' + titre +
     (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>';
-  let gauche = '';
-  revisions.forEach(r => gauche += carteRevision(r, estAujourdhui));
-  if (!taches.length) {
-    html += gauche;
-  } else {
-    let droite = '';
-    taches.forEach(o => droite += carteTache(o));
-    html += '<div class="jour-grille"><div>' + gauche + '</div><div>' + droite + '</div></div>';
-  }
+  revisions.forEach(r => html += carteRevision(r, estAujourdhui));
+  return {html: html, compte: compte};
+}
+
+/* Pendant de sectionJour, pour l'onglet Tâches. */
+function sectionJourTaches(titre, taches, classe){
+  const compte = taches.length;
+  let html = '<section class="jour' + (classe ? ' ' + classe : '') + '"><h2>' + titre +
+    (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>';
+  taches.forEach(o => html += carteTache(o));
   return {html: html, compte: compte};
 }
 
@@ -2361,12 +2482,12 @@ function vueAgenda(){
   /* La carte Cabosse coiffe l'agenda : c'est la première chose que
      l'enfant voit en ouvrant l'app. */
   const carteRpg = carteCabosseCompacte();
-  if (!dl.cours.length && !dl.taches.length) {
+  if (!dl.cours.length) {
     return banniere + carteRpg + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>' + (modeLecture()
         ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
-        : 'Ajoute un cours ou une tâche pour lancer son échéancier.') + '</p></div>';
+        : 'Ajoute un cours pour lancer son échéancier.') + '</p></div>';
   }
 
   const auj = aujourdhui();
@@ -2382,49 +2503,40 @@ function vueAgenda(){
   const proches  = enAttente.filter(r => r.date >= ajISO && r.date <= dimSuivant);
   const plusTard = enAttente.filter(r => r.date > dimSuivant);
 
-  /* Les tâches suivent le même découpage temporel que les révisions,
-     pour que chaque jour affiche ses deux colonnes au bon endroit. */
-  const occEnAttente = dl.occurrences.filter(o =>
-    o.statut === 'aFaire' || o.statut === 'reportee' || o.date === ajISO);
-  const datesAvecTache = quand => occEnAttente.filter(quand).map(o => o.date);
+  /* Le bilan de la semaine (agrégation Lundi→Vendredi, purement
+     informatif) s'ajoute sur chaque samedi rendu, quelle que soit
+     la section — il se contente de ne rien afficher si la semaine
+     correspondante n'a rien à montrer. */
+  const bilanDuJour = iso => (dDe(iso).getDay() === 6) ? carteBilanSemaine(iso) : '';
 
   let html = banniere + carteRpg;
 
-  /* En retard : révisions et tâches non traitées avant aujourd'hui. */
-  const datesRetard = uniqueTriees(
-    grouperParDate(retard).map(g => g.date)
-      .concat(datesAvecTache(o => o.date < ajISO &&
-        (o.statut === 'aFaire' || o.statut === 'reportee'))));
-  datesRetard.forEach(iso => {
-    html += sectionJour('En retard · ' + libelleJour(iso),
-      retard.filter(r => r.date === iso), iso, 'retard', false).html + '</section>';
-  });
+  if (retard.length) {
+    grouperParDate(retard).forEach(g => {
+      html += sectionJour('En retard · ' + libelleJour(g.date), g.items, g.date, 'retard', false).html +
+        bilanDuJour(g.date) + '</section>';
+    });
+  }
 
-  const datesProches = uniqueTriees(
-    grouperParDate(proches).map(g => g.date)
-      .concat(datesAvecTache(o => o.date >= ajISO && o.date <= dimSuivant))
-      .concat([dimActuel]));
+  const grProches = grouperParDate(proches);
+  if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
+  grProches.sort((a, b) => a.date < b.date ? -1 : 1);
 
-  datesProches.forEach(iso => {
-    const estAujourdhui = iso === ajISO;
-    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(iso);
-    html += sectionJour(titre, proches.filter(r => r.date === iso), iso, '', estAujourdhui).html;
-    if (iso === dimActuel) html += carteRepos(iso);
+  grProches.forEach(g => {
+    const estAujourdhui = g.date === ajISO;
+    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
+    html += sectionJour(titre, g.items, g.date, '', estAujourdhui).html + bilanDuJour(g.date);
+    if (g.date === dimActuel) html += carteRepos(g.date);
     html += '</section>';
   });
 
-  const datesPlusTard = uniqueTriees(
-    grouperParDate(plusTard).map(g => g.date)
-      .concat(datesAvecTache(o => o.date > dimSuivant)));
-  if (datesPlusTard.length) {
-    const total = plusTard.length +
-      occEnAttente.filter(o => o.date > dimSuivant).length;
+  if (plusTard.length) {
     html += '<details class="pliable" data-cle="semaines"' + ouvert('semaines') + '>' +
-      '<summary>Semaines suivantes<span class="compte">' + total + '</span></summary>' +
+      '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
       '<div class="contenu-pliable">';
-    datesPlusTard.forEach(iso => {
-      html += sectionJour(libelleJour(iso),
-        plusTard.filter(r => r.date === iso), iso, '', false).html + '</section>';
+    grouperParDate(plusTard).forEach(g => {
+      html += sectionJour(libelleJour(g.date), g.items, g.date, '', false).html +
+        bilanDuJour(g.date) + '</section>';
     });
     html += '</div></details>';
   }
@@ -2432,9 +2544,63 @@ function vueAgenda(){
   return html;
 }
 
-/* Dates uniques, triées chronologiquement. */
-function uniqueTriees(liste){
-  return liste.filter((v, i) => liste.indexOf(v) === i).sort();
+/* --- Tâches (onglet) : même découpage temporel que l'Agenda,
+   mais pour les occurrences de tâches bonus. Séparé pour que
+   l'Agenda ne montre plus que les révisions, en pleine largeur. --- */
+function vueTaches(){
+  const dl = donneesLecture();
+  const banniere = modeLecture()
+    ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
+  if (!(dl.taches || []).length) {
+    return banniere + '<div class="vide"><div class="gros">✅</div>' +
+      '<p><b>Aucune tâche planifiée.</b></p>' +
+      '<p>' + (modeLecture()
+        ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
+        : 'Ajoute une corvée ou une activité depuis l\u2019onglet Ajouter.') + '</p></div>';
+  }
+
+  const auj = aujourdhui();
+  const ajISO = isoDe(auj);
+  const dimActuel = isoDe(dimancheDe(auj));
+  const dimSuivant = isoDe(plus(dimancheDe(auj), 7));
+
+  const enAttente = (dl.occurrences || []).filter(o =>
+    o.statut === 'aFaire' || o.statut === 'reportee' || o.date === ajISO);
+
+  const retard   = enAttente.filter(o => o.date < ajISO && (o.statut === 'aFaire' || o.statut === 'reportee'));
+  const proches  = enAttente.filter(o => o.date >= ajISO && o.date <= dimSuivant);
+  const plusTard = enAttente.filter(o => o.date > dimSuivant);
+
+  let html = banniere;
+
+  if (retard.length) {
+    grouperParDate(retard).forEach(g => {
+      html += sectionJourTaches('En retard · ' + libelleJour(g.date), g.items, 'retard').html + '</section>';
+    });
+  }
+
+  const grProches = grouperParDate(proches);
+  if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
+  grProches.sort((a, b) => a.date < b.date ? -1 : 1);
+
+  grProches.forEach(g => {
+    const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
+    html += sectionJourTaches(titre, g.items, '').html;
+    if (g.date === dimActuel) html += carteReposTaches(g.date);
+    html += '</section>';
+  });
+
+  if (plusTard.length) {
+    html += '<details class="pliable" data-cle="semaines-taches"' + ouvert('semaines-taches') + '>' +
+      '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
+      '<div class="contenu-pliable">';
+    grouperParDate(plusTard).forEach(g => {
+      html += sectionJourTaches(libelleJour(g.date), g.items, '').html + '</section>';
+    });
+    html += '</div></details>';
+  }
+
+  return html;
 }
 
 /* --- Ajout ------------------------------------------------- */
@@ -2707,19 +2873,6 @@ function blocReglagesBase(){
       '<div class="champ" style="margin-bottom:0"><label for="f-email">Mon adresse e-mail</label>' +
         '<input type="email" id="f-email" placeholder="prenom@exemple.com" value="' + ech(DB.reglages.email || '') + '"></div>' +
     '</div>' +
-    '<label class="check-ligne" style="margin-top:12px">' +
-      '<input type="checkbox" id="f-export-hebdo"' +
-      (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
-      '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
-    '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
-    '<label class="check-ligne" style="margin-top:12px">' +
-      '<input type="checkbox" id="f-sons-cabosse"' +
-      (prefsCabosse().sons !== false ? ' checked' : '') + '>' +
-      '<span>Sons de Cabosse</span></label>' +
-    '<label class="check-ligne">' +
-      '<input type="checkbox" id="f-anim-cabosse"' +
-      (prefsCabosse().animations !== false ? ' checked' : '') + '>' +
-      '<span>Animations de Cabosse</span></label>' +
     '<button class="bouton discret" data-act="maj" style="margin-top:10px">Forcer la mise à jour</button>';
 }
 
@@ -2761,6 +2914,20 @@ function blocReglagesAvances(){
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">24 h</button>' +
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">7 jours</button>' +
       '</div>' +
+      '<label class="check-ligne" style="margin-top:16px">' +
+        '<input type="checkbox" id="f-export-hebdo"' +
+        (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
+        '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
+      '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
+      '<p class="etiquette" style="margin-top:18px">Cabosse</p>' +
+      '<label class="check-ligne">' +
+        '<input type="checkbox" id="f-sons-cabosse"' +
+        (prefsCabosse().sons !== false ? ' checked' : '') + '>' +
+        '<span>Sons de Cabosse</span></label>' +
+      '<label class="check-ligne">' +
+        '<input type="checkbox" id="f-anim-cabosse"' +
+        (prefsCabosse().animations !== false ? ' checked' : '') + '>' +
+        '<span>Animations de Cabosse</span></label>' +
     '</div></details>';
 }
 
@@ -4240,10 +4407,15 @@ function demanderConfirmation(id, statut){
   const actions = document.getElementById('confirm-actions');
   const zoneNote = document.getElementById('confirm-note-zone');
   if (statut === 'faite') {
-    document.getElementById('confirm-titre').textContent = 'Marquer comme faite ?';
-    zoneNote.style.display = '';
+    /* Premier écran : on demande d'abord comment ça s'est passé,
+       avant toute confirmation. La note et le renfort J+7 n'entrent
+       en jeu que sur « pas encore retenu » (voir le handler de clic). */
+    document.getElementById('confirm-titre').textContent = 'Comment ça s\u2019est passé ?';
+    zoneNote.style.display = 'none';
     document.getElementById('confirm-note').value = (c && c.commentaire) || '';
-    actions.innerHTML = '<button class="bouton principal" data-confirm="faite">Confirmer</button>';
+    actions.innerHTML =
+      '<button class="bouton principal" data-confirm="reussi">J\u2019ai réussi à tout réciter sans regarder <span class="emo">😎</span></button>' +
+      '<button class="bouton discret" data-confirm="a-revoir">Je n\u2019ai pas encore tout retenu <span class="emo">🤔</span></button>';
   } else {
     document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
     zoneNote.style.display = 'none';
@@ -4265,14 +4437,34 @@ confirmVoile.addEventListener('click', e => {
   const b = e.target.closest('button[data-confirm]');
   if (!b || !actionEnCours) return;
   const type = b.dataset.confirm;
-  if (type === 'faite') {
+
+  if (type === 'reussi') {
+    /* Tout retenu du premier coup : on valide directement, sans
+       étape supplémentaire. */
+    marquer(actionEnCours.id, 'faite');
+    fermerConfirmation();
+  }
+  else if (type === 'a-revoir') {
+    /* Second écran, dans la même feuille : on révèle le champ de
+       points difficiles et on remplace les deux choix par un unique
+       bouton de confirmation. Le modal reste ouvert. */
+    document.getElementById('confirm-titre').textContent = 'Note ce qui reste à travailler';
+    document.getElementById('confirm-note-zone').style.display = '';
+    document.getElementById('confirm-actions').innerHTML =
+      '<button class="bouton principal" data-confirm="a-revoir-confirmer">Confirmer</button>';
+  }
+  else if (type === 'a-revoir-confirmer') {
     const r = DB.revisions.find(x => x.id === actionEnCours.id);
     const c = r && trouverCours(r.cours);
     if (c) { c.commentaire = document.getElementById('confirm-note').value.trim(); completerRappels(); }
+    /* La révision a bien eu lieu — elle compte comme faite — mais
+       comme tout n'est pas retenu, un renfort à J+7 est programmé
+       d'office (sauf s'il en existe déjà un ce jour-là). */
+    if (r) assurerRenfortJ7(r.cours, r.date);
     marquer(actionEnCours.id, 'faite');
+    fermerConfirmation();
   }
-  else if (type === 'annulee-une')   marquer(actionEnCours.id, 'annulee');
-  fermerConfirmation();
+  else if (type === 'annulee-une') { marquer(actionEnCours.id, 'annulee'); fermerConfirmation(); }
 });
 
 vue.addEventListener('click', e => {
