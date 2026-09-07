@@ -485,17 +485,21 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 #galerie-voile{position:fixed;inset:0;z-index:50;background:var(--fond);
   display:none;flex-direction:column}
 #galerie-voile.on{display:flex}
-.gal-entete{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
-  padding:calc(var(--safe-t) + 12px) 18px 14px;background:var(--surface);
+.gal-entete{flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  padding:calc(var(--safe-t) + 12px) 14px 14px;background:var(--surface);
   border-bottom:1px solid var(--filet)}
-.gal-titre{font-size:16px;font-weight:800;letter-spacing:-.01em}
-.gal-fermer{width:34px;height:34px;border-radius:50%;background:var(--surface-2);
+.gal-titre{flex:1;text-align:center;font-size:16px;font-weight:800;letter-spacing:-.01em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.gal-fermer,.gal-retour{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--surface-2);
   border:0;font-size:15px;color:var(--texte-2);cursor:pointer}
 .gal-contenu{flex:1;overflow-y:auto;padding:16px 16px calc(var(--safe-b) + 16px)}
 .gal-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .gal-case{position:relative;background:var(--surface);border:1px solid var(--filet);
   border-radius:var(--r-m);padding:8px 6px 10px;text-align:center;min-height:118px;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  font:inherit;width:100%}
+button.gal-case{cursor:pointer}
+button.gal-case:active{transform:scale(.97)}
 .gal-case img{width:100%;aspect-ratio:1/1;object-fit:contain}
 .gal-repli{display:none;font-size:38px}
 .gal-case.sans-image .gal-repli{display:block}
@@ -505,6 +509,17 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   font-weight:700;color:var(--texte-3)}
 .gal-nom{font-size:9.5px;font-weight:700;line-height:1.15;margin-top:4px;
   color:var(--texte-2);overflow-wrap:anywhere}
+
+/* Vue détail plein écran d'une évolution. */
+.gal-detail{display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:24px 8px}
+.gal-detail .cabosse-avatar.grand{width:170px;height:170px}
+.gal-detail-niveau{margin-top:16px;font-size:13px;font-weight:700;color:var(--texte-3);
+  text-transform:uppercase;letter-spacing:.06em}
+.gal-detail-nom{margin-top:4px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.gal-detail-dicton{margin-top:22px;max-width:340px;font-size:15px;line-height:1.5;
+  font-style:italic;color:var(--texte-2);padding:18px 20px;background:var(--surface);
+  border:1px solid var(--filet);border-radius:var(--r-m)}
 @media (prefers-reduced-motion: reduce){.cbs-evolution.pret .cbs-plus{animation:none}}
 
 /* File de récompenses */
@@ -554,7 +569,9 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 <div id="recompenses" aria-live="polite"></div>
 <div id="galerie-voile">
   <div class="gal-entete">
-    <span class="gal-titre">🐒 Évolutions de Cabosse</span>
+    <button type="button" class="gal-retour" id="galerie-btn-retour" data-act="cabosse-galerie-retour"
+      aria-label="Retour à la galerie" style="display:none">←</button>
+    <span class="gal-titre" id="galerie-titre">🐒 Évolutions de Cabosse</span>
     <button type="button" class="gal-fermer" data-act="cabosse-retour" aria-label="Fermer">✕</button>
   </div>
   <div id="galerie-contenu" class="gal-contenu"></div>
@@ -769,7 +786,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v37 · 7 septembre 2026';
+const VERSION = 'v38 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1105,6 +1122,51 @@ const RANGS_CABOSSE = [
   'Colosse Cabosse', 'Cerveau cosmique', 'Sage intergalactique', 'Grand Maître Cabosse', 'Maître suprême'
 ];
 const NIVEAU_MAX = RANGS_CABOSSE.length; // 40
+
+/* Un dicton par niveau, affiché dans la vue détail de la galerie
+   (voir vueDetailRangCabosse). Index 0 = niveau 1. */
+const DICTONS_CABOSSE = [
+  "Un petit peu chaque jour vaut mieux qu'un gros effort une fois.",
+  "Pour retenir longtemps, il faut oublier 7 fois, et réapprendre au moins 7 fois.",
+  "Ce que tu expliques, tu le comprends deux fois.",
+  "Chercher avant de regarder la réponse muscle la mémoire.",
+  "Une leçon comprise se retient mieux qu'une leçon récitée.",
+  "Quand c'est difficile, c'est bon signe, c'est que ton cerveau est en train d'apprendre.",
+  "Une bonne nuit est une alliée de ta mémoire.",
+  "Révise avant d'oublier, pas après avoir tout oublié.",
+  "Ferme ton cahier et essaie de te souvenir.",
+  "Si tu peux l'expliquer simplement, c'est que tu l'as bien compris.",
+  "Une question vaut parfois mieux que dix relectures.",
+  "Travaille un peu, repose-toi un peu, et recommence.",
+  "Les petites révisions font les grandes mémoires.",
+  "Une bonne question ouvre la porte de la mémoire.",
+  "Quand tu hésites, essaie quand même avant de vérifier. Ce n'est pas grave de se tromper",
+  "Écrire de mémoire est plus puissant que recopier.",
+  "Ton cerveau n'est pas une photocopieuse : fais-le réfléchir.",
+  "Relire ça rassure, mais c'est essayer de réciter et d'expliquer à quelqu'un qui fait progresser.",
+  "Les champions paresseux n'existent pas, ils sont courageux et révisent souvent.",
+  "Quand tu n'as pas du tout envie, commence par 2 minutes : souvent, l'heure suivra.",
+  "Une tâche commencée paraît déjà moins grande.",
+  "Coupe les grosses leçons en petites bouchées.",
+  "Même Cabosse mange une banane morceau par morceau.",
+  "Range ton bureau, ton cerveau te dira merci.",
+  "Moins de distractions, plus de place pour réfléchir.",
+  "Travaille avec attention 30mn, plutôt que plusieurs heures qu'avec ton cahier ouvert longtemps.",
+  "Dix minutes concentrées valent mieux qu'une heure dans la lune.",
+  "Un objectif précis est plus facile à atteindre.",
+  "Une fiche n'est inutile : il vaut mieux un cours bariolé et révisé souvent qu'une fiche parfaite qui reste dans un classeur",
+  "Fais parler ta mémoire avant de faire parler ton cahier.",
+  "Pose-toi des questions comme si tu préparais le contrôle et le contrôle sera simple",
+  "Savoir faire un exercice ne veut pas dire savoir faire seulement celui-là mais n'importe quel autre.",
+  "Accroche les nouvelles idées à ce que tu connais déjà.",
+  "Invente des moyens mnémotechniques drôle qui te font sourire.",
+  "Commence toujours par ce que tu sais déjà.",
+  "Les trous de mémoire montrent exactement ce qu'il faut réviser.",
+  "N'abandonne pas après trois secondes : fouille un peu dans ta mémoire.",
+  "Ne cherche pas la perfection : cherche le progrès.",
+  "La mémoire aime la régularité plus que les exploits.",
+  "Le meilleur moment pour apprendre était hier ; le deuxième meilleur, c'est maintenant."
+];
 
 const ARTEFACTS_CABOSSE = [
   {cle:'cabosseOr',         carac:'energie',      nom:'Cabosse d\u2019or',      emoji:'🏅'},
@@ -2519,7 +2581,11 @@ function vueGalerieCabosse(){
     '<div class="gal-grille">';
   for (let n = 1; n <= NIVEAU_MAX; n++) {
     const acquis = n <= g.niveauGlobal;
-    html += '<div class="gal-case' + (acquis ? '' : ' verrouille') + '">' +
+    /* Seules les évolutions débloquées s'ouvrent en détail : rien à
+       montrer en grand pour un niveau pas encore atteint. */
+    const balise = acquis ? 'button' : 'div';
+    html += '<' + balise + (acquis ? ' type="button" data-act="cabosse-rang-detail" data-niveau="' + n + '"' : '') +
+      ' class="gal-case' + (acquis ? '' : ' verrouille') + '">' +
       (acquis
         ? '<img src="' + fichierRang(n) + '" alt="' + ech(RANGS_CABOSSE[n-1]) + '" ' +
           'onerror="this.style.display=\'none\';this.parentNode.classList.add(\'sans-image\')">' +
@@ -2527,29 +2593,79 @@ function vueGalerieCabosse(){
         : '<span class="gal-cadenas">🔒</span>') +
       '<span class="gal-num">' + n + '</span>' +
       '<span class="gal-nom">' + (acquis ? ech(RANGS_CABOSSE[n-1]) : '???') + '</span>' +
-    '</div>';
+    '</' + balise + '>';
   }
   html += '</div>';
   return html;
 }
 
+/* Vue détail plein écran d'une évolution : niveau, nom et dicton
+   associé (un par niveau, voir DICTONS_CABOSSE). */
+function vueDetailRangCabosse(n){
+  const dicton = DICTONS_CABOSSE[n - 1] || '';
+  return '<div class="gal-detail">' +
+    '<div class="cabosse-avatar grand">' +
+      '<span class="cabosse-repli">🐒</span>' +
+      '<img class="cabosse-base" alt="' + ech(RANGS_CABOSSE[n-1]) + '" src="' + fichierRang(n) + '" ' +
+        'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+    '</div>' +
+    '<div class="gal-detail-niveau">Niveau ' + n + ' sur ' + NIVEAU_MAX + '</div>' +
+    '<div class="gal-detail-nom">' + ech(RANGS_CABOSSE[n-1]) + '</div>' +
+    (dicton ? '<p class="gal-detail-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
+  '</div>';
+}
+
 /* Ouverte en overlay plein écran (voir #galerie-voile dans le HTML),
    par-dessus l'en-tête, la bascule de profil et la barre du bas —
-   pour que « pleine page » veuille vraiment dire pleine page. */
+   pour que « pleine page » veuille vraiment dire pleine page.
+   `galerieNiveauDetail` distingue les deux états de l'overlay :
+   null = grille des 40 évolutions, sinon = détail plein écran de ce
+   niveau précis, avec son propre bouton retour vers la grille. */
+let galerieNiveauDetail = null;
+
+function rafraichirGalerie(){
+  const contenu = document.getElementById('galerie-contenu');
+  const titre = document.getElementById('galerie-titre');
+  const btnRetour = document.getElementById('galerie-btn-retour');
+  if (galerieNiveauDetail) {
+    contenu.innerHTML = vueDetailRangCabosse(galerieNiveauDetail);
+    titre.textContent = RANGS_CABOSSE[galerieNiveauDetail - 1];
+    btnRetour.style.display = '';
+  } else {
+    contenu.innerHTML = vueGalerieCabosse();
+    titre.textContent = '🐒 Évolutions de Cabosse';
+    btnRetour.style.display = 'none';
+  }
+}
+
 function ouvrirGalerieCabosse(){
-  document.getElementById('galerie-contenu').innerHTML = vueGalerieCabosse();
+  galerieNiveauDetail = null;
+  rafraichirGalerie();
   document.getElementById('galerie-voile').classList.add('on');
 }
 function fermerGalerieCabosse(){
   document.getElementById('galerie-voile').classList.remove('on');
+  galerieNiveauDetail = null;
+}
+function ouvrirDetailRangCabosse(n){
+  galerieNiveauDetail = n;
+  rafraichirGalerie();
+}
+function retourGrilleGalerie(){
+  galerieNiveauDetail = null;
+  rafraichirGalerie();
 }
 /* Écouteur dédié : #galerie-voile est un frère de #vue dans le DOM,
-   pas un descendant — le clic sur son bouton ✕ n'atteindrait jamais
+   pas un descendant — un clic à l'intérieur n'atteindrait jamais
    le gestionnaire attaché à #vue. */
 document.getElementById('galerie-voile').addEventListener('click', e => {
   if (e.target.id === 'galerie-voile' || e.target.closest('[data-act="cabosse-retour"]')) {
     fermerGalerieCabosse();
+    return;
   }
+  if (e.target.closest('[data-act="cabosse-galerie-retour"]')) { retourGrilleGalerie(); return; }
+  const carte = e.target.closest('[data-act="cabosse-rang-detail"]');
+  if (carte) ouvrirDetailRangCabosse(parseInt(carte.dataset.niveau, 10));
 });
 
 /* --- Carte Cabosse compacte fin ------------------------------ */
