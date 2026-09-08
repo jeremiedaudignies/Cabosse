@@ -470,6 +470,15 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cd-stat span{display:block;font-size:10.5px;font-weight:700;margin-top:2px;
   color:rgba(255,255,255,.92);text-shadow:0 1px 4px rgba(0,0,0,.55)}
 
+/* Calendrier scolaire (Réglages avancés). */
+.cal-paire{display:flex;align-items:center;gap:8px;margin-top:4px}
+.cal-paire input{flex:1;min-width:0}
+.cal-au{flex:0 0 auto;font-size:12px;color:var(--texte-3);font-weight:600}
+.cal-fige{margin-top:14px;padding:9px 12px;border-radius:var(--r-s);text-align:center;
+  font-size:12px;font-weight:700;color:var(--faite);background:rgba(0,160,140,.12)}
+.cal-rappel{margin-bottom:8px;padding:10px 12px;border-radius:var(--r-s);
+  font-size:12px;font-weight:700;color:var(--reportee);background:rgba(242,161,4,.14)}
+
 /* Bloc « faire évoluer » de la vue Cabosse. */
 .cbs-evolution{display:flex;align-items:center;gap:14px;margin-top:14px;padding:14px 16px;
   background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m)}
@@ -793,7 +802,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v40 · 7 septembre 2026';
+const VERSION = 'v41 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1632,6 +1641,99 @@ function finAnnee(d){
 }
 
 /* ============================================================
+   CALENDRIER SCOLAIRE
+
+   Socle du nouveau moteur de planification (mode ÉLÈVE) : il dit
+   quand l'école a lieu et quand ce sont les vacances. Rien ne s'en
+   sert encore à ce stade — c'est la donnée de base sur laquelle
+   s'appuieront le cahier de vacances, la levée de la fenêtre de
+   validation et le report des révisions.
+
+   Une entrée par année scolaire, indexée par son libellé
+   (« 2026-2027 »), pour qu'ajouter l'année suivante n'écrase jamais
+   la précédente. `fige` passe à true une fois les périodes
+   enregistrées : les champs ne sont alors plus modifiables que
+   depuis les Réglages avancés.
+   ============================================================ */
+const VACANCES_LIBELLES = [
+  {cle:'toussaint',  nom:'Vacances de la Toussaint'},
+  {cle:'noel',       nom:'Vacances de Noël'},
+  {cle:'hiver',      nom:'Vacances d\u2019hiver'},
+  {cle:'printemps',  nom:'Vacances de printemps'},
+  {cle:'grandes',    nom:'Grandes vacances'}
+];
+
+/* Zone B (académie de Lille), année 2026-2027. Préencodé pour que
+   l'application soit utilisable immédiatement ; entièrement
+   modifiable dans les Réglages avancés. */
+function calendrierDefaut(){
+  return {
+    '2026-2027': {
+      annee: '2026-2027',
+      rentree: '2026-09-01',
+      finAnnee: '2027-07-02',
+      vacances: {
+        toussaint: {debut:'2026-10-17', fin:'2026-11-02'},
+        noel:      {debut:'2026-12-19', fin:'2027-01-04'},
+        hiver:     {debut:'2027-02-20', fin:'2027-03-08'},
+        printemps: {debut:'2027-04-17', fin:'2027-05-03'},
+        grandes:   {debut:'2027-07-03', fin:'2027-09-02'}
+      },
+      fige: true
+    }
+  };
+}
+
+/* Libellé de l'année scolaire contenant une date : septembre à
+   décembre → « N-N+1 », janvier à août → « N-1-N ». */
+function libelleAnneeScolaire(d){
+  const a = d.getFullYear();
+  return (d.getMonth() >= 8) ? (a + '-' + (a + 1)) : ((a - 1) + '-' + a);
+}
+
+function calendriers(){
+  if (!DB.reglages.calendrier) DB.reglages.calendrier = calendrierDefaut();
+  return DB.reglages.calendrier;
+}
+
+/* Calendrier applicable à une date donnée, ou null si l'année n'a
+   pas encore été renseignée. */
+function calendrierPour(iso){
+  const cals = calendriers();
+  return cals[libelleAnneeScolaire(dDe(iso || isoDe(aujourdhui())))] || null;
+}
+
+/* La période de vacances qui contient cette date, ou null. Les
+   bornes sont inclusives des deux côtés : « du samedi 17 octobre au
+   lundi 2 novembre » comprend bien ces deux jours. */
+function vacancesPour(iso){
+  const cal = calendrierPour(iso);
+  if (!cal) return null;
+  for (let i = 0; i < VACANCES_LIBELLES.length; i++) {
+    const v = VACANCES_LIBELLES[i];
+    const p = (cal.vacances || {})[v.cle];
+    if (p && p.debut && p.fin && iso >= p.debut && iso <= p.fin) {
+      return {cle: v.cle, nom: v.nom, debut: p.debut, fin: p.fin};
+    }
+  }
+  return null;
+}
+
+function estEnVacances(iso){ return vacancesPour(iso) !== null; }
+
+/* Rappel de saisie : à partir du 1er juin, l'année scolaire suivante
+   devrait être renseignée. Renvoie son libellé si elle manque. */
+function anneeScolaireAPreparer(){
+  const auj = aujourdhui();
+  const juin = new Date(auj.getFullYear(), 5, 1, 12, 0, 0, 0);
+  if (auj < juin) return null;
+  const suivante = (auj.getMonth() >= 8)
+    ? (auj.getFullYear() + 1) + '-' + (auj.getFullYear() + 2)
+    : auj.getFullYear() + '-' + (auj.getFullYear() + 1);
+  return calendriers()[suivante] ? null : suivante;
+}
+
+/* ============================================================
    Échéancier
    Un ancrage : le premier samedi qui suit la date du cours.
    Puis une rampe d'intervalles croissants (voir RAMPE_INTERVALLES
@@ -1693,7 +1795,9 @@ const Store = {
                     /* Proposition hebdomadaire d'envoi de la sauvegarde par mail. */
                     exportHebdo:true, dernierePropositionExport:'',
                     /* Cabosse RPG — voir gamificationVierge() */
-                    gamification: gamificationVierge()};
+                    gamification: gamificationVierge(),
+                    /* Calendrier scolaire — voir calendrierDefaut() */
+                    calendrier: calendrierDefaut()};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
                     taches:[], occurrences:[],
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
@@ -1719,6 +1823,12 @@ const Store = {
         suivis = [Object.assign({code: o.reglages.codeSuivi}, o.suivi)];
       }
       if (reglages.affichage === 'suivi' && suivis[0]) reglages.affichage = suivis[0].code;
+
+      /* Migration du calendrier scolaire : absent des sauvegardes
+         antérieures, on installe les valeurs par défaut. Les années
+         déjà renseignées sont conservées telles quelles — jamais
+         écrasées par le défaut. */
+      reglages.calendrier = Object.assign(calendrierDefaut(), reglages.calendrier || {});
 
       /* Migration RPG. La v2 (barème en points unitaires) remplace la
          v1 (XP à 5/6/8 points, paliers, niveau automatique). Les XP
@@ -1816,11 +1926,13 @@ function modeLecture(){ return DB.reglages.affichage !== 'personnel'; }
 /* ============================================================
    Type de compte et visibilité
    Un compte ÉTUDIANT est autonome : pas de chat familial, et rien
-   à faire valider par un parent. Un compte ENFANT garde le chat
+   à faire valider par un parent. Un compte ÉLÈVE garde le chat
    mais ne valide pas lui-même ses tâches contrôlées. Seul PARENT
    voit la coche « Contrôle fait ».
    Tant que le type n'est pas renseigné, tout reste visible : mieux
    vaut un réglage trop permissif qu'un utilisateur enfermé dehors.
+   La clé stockée pour ÉLÈVE reste 'enfant' — historique, jamais
+   renommée pour ne pas casser les profils déjà synchronisés.
    ============================================================ */
 const VISIBILITE = {
   parent:   {chat:true,  controle:true},
@@ -1835,6 +1947,12 @@ function peutVoir(quoi){
 /* La coche « Contrôle fait » n'a de sens que sur son propre appareil
    de parent, ou en suivant l'enfant concerné. */
 function peutControler(){ return peutVoir('controle'); }
+
+/* Mode ÉLÈVE : c'est lui — et lui seul — qui bascule sur le nouveau
+   moteur de planification (calendrier scolaire, emploi du temps des
+   matières, cahier de vacances). Le mode ÉTUDIANT conserve
+   intégralement le fonctionnement historique. */
+function modeEleve(){ return typeCompte() === 'enfant'; }
 
 let derniereSyncEnvoi = null, echecsSyncConsecutifs = 0;
 
@@ -3111,6 +3229,101 @@ function blocReglagesBase(){
 
 /* --- Réglages avancés : mot de passe « carabin » --------------
    Type de compte, matières, tolérance et sauvegardes. */
+/* --- Calendrier scolaire (Réglages avancés) ------------------
+   Une année à la fois, sélectionnée par un menu. Tant que l'année
+   est figée, les champs sont en lecture seule : c'est le « Modifier »
+   qui les rouvre — d'où le fait que ce bloc vive dans les réglages
+   avancés, protégés par mot de passe. */
+let anneeCalendrierEditee = null;
+
+function blocCalendrierScolaire(){
+  const cals = calendriers();
+  const cles = Object.keys(cals).sort();
+  const courante = anneeCalendrierEditee ||
+    libelleAnneeScolaire(aujourdhui());
+  const cal = cals[courante] || {annee: courante, rentree:'', finAnnee:'', vacances:{}, fige:false};
+  const verrouille = !!cal.fige;
+  const ro = verrouille ? ' disabled' : '';
+
+  let options = '';
+  cles.forEach(c => {
+    options += '<option value="' + c + '"' + (c === courante ? ' selected' : '') + '>' + ech(c) + '</option>';
+  });
+  /* L'année en cours peut ne pas encore exister dans le calendrier. */
+  if (cles.indexOf(courante) === -1) {
+    options = '<option value="' + courante + '" selected>' + ech(courante) + ' (à créer)</option>' + options;
+  }
+
+  let champsVacances = '';
+  VACANCES_LIBELLES.forEach(v => {
+    const p = (cal.vacances || {})[v.cle] || {debut:'', fin:''};
+    champsVacances +=
+      '<p class="aide-champ" style="margin-top:10px;font-weight:700">' + ech(v.nom) + '</p>' +
+      '<div class="cal-paire">' +
+        '<input type="date" data-cal="' + v.cle + '-debut" value="' + ech(p.debut || '') + '"' + ro + '>' +
+        '<span class="cal-au">au</span>' +
+        '<input type="date" data-cal="' + v.cle + '-fin" value="' + ech(p.fin || '') + '"' + ro + '>' +
+      '</div>';
+  });
+
+  /* Rappel de préparation de l'année suivante, à partir du 1er juin. */
+  const aPreparer = anneeScolaireAPreparer();
+  const rappel = aPreparer
+    ? '<div class="cal-rappel">📅 L\u2019année scolaire ' + ech(aPreparer) +
+      ' n\u2019est pas encore renseignée. Pense à la préparer.</div>'
+    : '';
+
+  return '<p class="etiquette" style="margin-top:18px">Calendrier scolaire</p>' +
+    rappel +
+    '<div class="carte">' +
+      '<div class="champ"><label for="f-cal-annee">Année scolaire</label>' +
+        '<select id="f-cal-annee">' + options +
+          '<option value="__nouvelle">+ Ajouter une année…</option>' +
+        '</select></div>' +
+      '<div class="champ"><label>Date de la rentrée</label>' +
+        '<input type="date" data-cal="rentree" value="' + ech(cal.rentree || '') + '"' + ro + '></div>' +
+      '<div class="champ"><label>Date de fin d\u2019année</label>' +
+        '<input type="date" data-cal="finAnnee" value="' + ech(cal.finAnnee || '') + '"' + ro + '></div>' +
+      champsVacances +
+      (verrouille
+        ? '<div class="cal-fige">🔒 Périodes enregistrées</div>' +
+          '<button class="bouton discret" data-act="cal-modifier" style="margin-top:8px">Modifier les périodes</button>'
+        : '<button class="bouton principal" data-act="cal-enregistrer" style="margin-top:14px">Enregistrer les périodes</button>') +
+    '</div>';
+}
+
+/* Enregistrement des périodes : tous les champs sont obligatoires,
+   et chaque période doit être cohérente (fin après début). On refuse
+   plutôt que d'enregistrer un calendrier à moitié faux, sur lequel
+   tout le moteur de planification s'appuiera ensuite. */
+function enregistrerCalendrier(){
+  const lire = cle => {
+    const el = document.querySelector('[data-cal="' + cle + '"]');
+    return el ? el.value : '';
+  };
+  const cle = anneeCalendrierEditee || libelleAnneeScolaire(aujourdhui());
+  const rentree = lire('rentree');
+  const fin = lire('finAnnee');
+  if (!rentree || !fin) { toast('Renseigne la rentrée et la fin d\u2019année.'); return; }
+  if (fin <= rentree) { toast('La fin d\u2019année doit suivre la rentrée.'); return; }
+
+  const vacances = {};
+  for (let i = 0; i < VACANCES_LIBELLES.length; i++) {
+    const v = VACANCES_LIBELLES[i];
+    const d = lire(v.cle + '-debut'), f = lire(v.cle + '-fin');
+    if (!d || !f) { toast('Complète les dates : ' + v.nom + '.'); return; }
+    if (f < d) { toast(v.nom + ' : la fin précède le début.'); return; }
+    vacances[v.cle] = {debut: d, fin: f};
+  }
+
+  calendriers()[cle] = {annee: cle, rentree: rentree, finAnnee: fin,
+                        vacances: vacances, fige: true};
+  anneeCalendrierEditee = cle;
+  sauver();
+  rendre();
+  toast('Périodes de ' + cle + ' enregistrées.');
+}
+
 function blocReglagesAvances(){
   if (!deverrouilles.avance) {
     return '<button type="button" class="carte parametres-verrou" data-act="parametres-deverrouiller" ' +
@@ -3120,15 +3333,18 @@ function blocReglagesAvances(){
     '</button>';
   }
   const tc = DB.reglages.typeCompte || '';
+  /* La valeur stockée reste 'enfant' : la renommer casserait tous les
+     profils déjà enregistrés et synchronisés. Seul le libellé change. */
   const optsType = '<option value="">Non renseigné</option>' +
     '<option value="etudiant"' + (tc === 'etudiant' ? ' selected' : '') + '>Étudiant</option>' +
-    '<option value="enfant"' + (tc === 'enfant' ? ' selected' : '') + '>Enfant</option>' +
+    '<option value="enfant"' + (tc === 'enfant' ? ' selected' : '') + '>Élève</option>' +
     '<option value="parent"' + (tc === 'parent' ? ' selected' : '') + '>Parent</option>';
   return '<details class="pliable" data-cle="reglages-avances"' + ouvert('reglages-avances') + ' style="margin-top:20px">' +
     '<summary>Réglages avancés</summary>' +
     '<div class="contenu-pliable">' +
       '<div class="champ" style="margin-top:12px"><label for="f-type-compte">Type de compte</label>' +
         '<select id="f-type-compte">' + optsType + '</select></div>' +
+      blocCalendrierScolaire() +
       '<p class="etiquette" style="margin-top:6px">Intitulé des matières disponibles</p>' +
       carteMatieres() +
       '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
@@ -4778,6 +4994,12 @@ vue.addEventListener('click', e => {
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
   else if (act === 'cabosse-evoluer') monterNiveauCabosse();
   else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
+  else if (act === 'cal-enregistrer') enregistrerCalendrier();
+  else if (act === 'cal-modifier') {
+    const cals = calendriers();
+    const cle = anneeCalendrierEditee || libelleAnneeScolaire(aujourdhui());
+    if (cals[cle]) { cals[cle].fige = false; sauver(); rendre(); toast('Périodes déverrouillées.'); }
+  }
   else if (act === 'parametres-deverrouiller') ouvrirMotDePasse(b.dataset.cible);
   else if (act === 'imprimer-planning') imprimerPlanning(b);
   else if (act === 'chat-nom') ouvrirChatNom();
@@ -4880,6 +5102,26 @@ vue.addEventListener('change', e => {
   if (e.target.id === 'f-email') {
     DB.reglages.email = e.target.value;
     sauver();
+    return;
+  }
+  if (e.target.id === 'f-cal-annee') {
+    if (e.target.value === '__nouvelle') {
+      const saisie = prompt('Année scolaire à ajouter (format AAAA-AAAA) :',
+        (aujourdhui().getFullYear() + 1) + '-' + (aujourdhui().getFullYear() + 2));
+      if (saisie && /^\d{4}-\d{4}$/.test(saisie.trim())) {
+        const cle = saisie.trim();
+        if (!calendriers()[cle]) {
+          calendriers()[cle] = {annee:cle, rentree:'', finAnnee:'', vacances:{}, fige:false};
+          sauver();
+        }
+        anneeCalendrierEditee = cle;
+      } else if (saisie) {
+        toast('Format attendu : AAAA-AAAA (ex. 2027-2028).');
+      }
+    } else {
+      anneeCalendrierEditee = e.target.value;
+    }
+    rendre();
     return;
   }
   if (e.target.id === 'f-type-compte') {
