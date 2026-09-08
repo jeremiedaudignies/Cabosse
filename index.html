@@ -417,28 +417,14 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 :root{--xp:#F2A104; --xp-doux:rgba(242,161,4,.14)}
 .cabosse-avatar{position:relative;flex:0 0 auto;
   display:flex;align-items:center;justify-content:center}
-/* Dans la carte de l'agenda : un tiers de la largeur, carré. */
-.carte-cabosse .cabosse-avatar{flex:0 0 33%;width:33%;aspect-ratio:1/1;height:auto}
 .cabosse-avatar.grand{width:104px;height:104px;margin:0 auto}
 .cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
-.carte-cabosse .cabosse-repli{font-size:min(15vw,64px)}
 .cabosse-avatar.grand .cabosse-repli{font-size:76px}
 .cabosse-avatar.avec-image .cabosse-repli{display:none}
 .cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-.carte-cabosse{display:flex;gap:12px;align-items:center;width:100%;text-align:left;
-  background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
-  padding:12px 14px;margin-bottom:14px;font:inherit;color:inherit;cursor:pointer}
-.cc-corps{flex:1;min-width:0}
-.cc-titre{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--texte-3)}
-.cc-niveau{font-size:14px;font-weight:800;letter-spacing:-.01em;margin-top:1px;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cc-barre{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
 .cc-barre i{display:block;height:100%;background:var(--xp);border-radius:99px;
   transition:width .5s ease}
-.cc-jauges{display:flex;gap:9px;margin-top:7px;flex-wrap:wrap}
-.cc-jauge{font-size:10.5px;color:var(--texte-2);white-space:nowrap}
-.cc-pts{letter-spacing:1px;color:var(--xp)}
-.cc-pts .vide{color:var(--filet)}
 
 .cbs-entete{text-align:center;padding:6px 0 2px}
 .cbs-rang{font-size:17px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
@@ -460,9 +446,29 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cbs-ultime{margin-top:10px;padding:12px;border-radius:var(--r-m);text-align:center;
   font-weight:800;font-size:13px;color:#fff;background:linear-gradient(135deg,#7B3FB8,#F2A104)}
 
-/* Carte agenda : uniquement les points de la semaine. */
-.cc-semaine-val{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--xp);line-height:1}
-.cc-semaine-lb{font-size:12px;color:var(--texte-2);font-weight:600;margin-top:2px}
+/* Carte du dimanche : le singe sur l'un des deux fonds (bibliothèque
+   tant qu'il reste du travail, plage une fois la semaine bouclée),
+   avec les trois chiffres qui comptent à droite. Remplace l'ancienne
+   carte compacte du haut de l'agenda. Fond de repli en dégradé si le
+   JPG n'a pas encore chargé ou est absent — jamais de carte blanche. */
+.cd-carte{position:relative;display:block;width:100%;min-height:176px;
+  border-radius:var(--r-m);overflow:hidden;border:1px solid var(--filet);
+  margin-bottom:14px;padding:0;cursor:pointer;text-align:left;
+  background-color:#e8c98a;background-image:linear-gradient(160deg,#f0d9a6,#dcb877);
+  background-size:cover;background-position:center bottom}
+.cd-voile{position:absolute;inset:0;
+  background:linear-gradient(100deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.42) 100%)}
+.cd-avatar{position:absolute;left:2%;bottom:0;width:44%;max-width:180px;aspect-ratio:1/1}
+.cd-avatar .cabosse-avatar{position:absolute;inset:0;width:100%;height:100%}
+.cd-avatar .cabosse-repli{font-size:min(20vw,84px)}
+.cd-stats{position:relative;margin-left:auto;width:56%;min-height:176px;
+  padding:14px 14px 14px 6px;display:flex;flex-direction:column;
+  justify-content:center;gap:10px;align-items:flex-end}
+.cd-stat{text-align:right}
+.cd-stat b{display:block;font-size:21px;font-weight:800;line-height:1;color:#fff;
+  text-shadow:0 1px 5px rgba(0,0,0,.55)}
+.cd-stat span{display:block;font-size:10.5px;font-weight:700;margin-top:2px;
+  color:rgba(255,255,255,.92);text-shadow:0 1px 4px rgba(0,0,0,.55)}
 
 /* Bloc « faire évoluer » de la vue Cabosse. */
 .cbs-evolution{display:flex;align-items:center;gap:14px;margin-top:14px;padding:14px 16px;
@@ -787,7 +793,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v39 · 7 septembre 2026';
+const VERSION = 'v40 · 7 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1380,6 +1386,13 @@ const CABOSSE_ASSETS = {
     couronneNeuronale: {src:'assets/cabosse/artefacts/couronne-neuronale.png', repli:'👑'},
     bandeauMaitre:     {src:'assets/cabosse/artefacts/bandeau-maitre.png',     repli:'🎽'},
     braceletsGorille:  {src:'assets/cabosse/artefacts/bracelets-gorille.png',  repli:'🦾'}
+  },
+  /* Les deux fonds de la carte du dimanche : bibliothèque tant que
+     la semaine n'est pas bouclée, plage une fois révisions et
+     tâches du lundi au samedi toutes traitées. */
+  fonds: {
+    bibliotheque: 'assets/cabosse/fonds/bibliotheque.jpg',
+    plage:        'assets/cabosse/fonds/plage.jpg'
   },
   sons: {
     reward:    'assets/sons/reward_small.wav',
@@ -2437,21 +2450,6 @@ function pointsPalier(palier){
   return s;
 }
 
-function carteCabosseCompacte(){
-  const g = gamif();
-  /* Volontairement dépouillée : le singe, et le nombre de points
-     gagnés cette semaine. Ni jauges ni pastilles — le détail vit
-     dans l'onglet Cabosse, le répéter ici encombrait l'agenda. */
-  const pts = pointsSemaineCabosse();
-  return '<button type="button" class="carte-cabosse" data-act="ouvrir-cabosse" ' +
-    'aria-label="Cabosse, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
-    avatarCabosse() +
-    '<div class="cc-corps">' +
-      '<div class="cc-semaine-val">' + (pts > 0 ? '+' : '') + pts + '</div>' +
-      '<div class="cc-semaine-lb">point' + (Math.abs(pts) > 1 ? 's' : '') + ' cette semaine</div>' +
-    '</div></button>';
-}
-
 /* Points Cabosse gagnés sur la semaine en cours (lundi → samedi).
    Recalculé depuis l'historique, comme le reste du moteur : on
    applique le même barème, restreint à la fenêtre de la semaine. */
@@ -2482,22 +2480,44 @@ function pointsSemaineCabosse(){
   return pts;
 }
 
+/* Cours dont la révision de la semaine (lundi → samedi) est encore
+   en attente — c'est ce chiffre, à 0, qui correspond au fond
+   « vacances » ci-dessous. */
+function coursRestantsSemaine(){
+  const dl = donneesLecture();
+  const sem = semaineTaches(0);
+  return dl.revisions.filter(r => r.date >= sem.debut && r.date <= sem.fin &&
+    (r.statut === 'aFaire' || r.statut === 'reportee') &&
+    (dl.afficherAncrage || !r.ancrage)).length;
+}
+
 /* Bloc affiché le dimanche, dans l'Agenda comme dans l'onglet
-   Tâches : plus de scores semaine/mois/année (redondants avec le
-   singe), seulement l'enjeu et les points en attente. */
-function blocDimancheCabosse(){
+   Tâches : le singe à son niveau actuel, sur l'un de deux fonds
+   selon que la semaine (révisions + tâches, lundi→samedi) est
+   bouclée ou non — remplace l'ancienne carte compacte du haut de
+   l'agenda, qui n'existe plus. */
+function carteDimancheCabosse(){
+  const g = gamif();
   const dl = donneesLecture();
   const sem = semaineTaches(0);
   const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
   const pts = pointsSemaineCabosse();
-  const message = debloquee
-    ? '<div class="cagnotte-etat versee">🔓 Programme bouclé — points débloqués !</div>'
-    : '<div class="cagnotte-etat">🔒 Termine les révisions et tâches du samedi pour débloquer des points Cabosse !</div>';
-  return '<article class="rev repos">' +
-    message +
-    '<div class="cagnotte">' + (pts > 0 ? '+' : '') + pts + ' point' +
-      (Math.abs(pts) > 1 ? 's' : '') + ' à venir</div>' +
-  '</article>';
+  const dispo = pointsDisponibles(g);
+  const restants = coursRestantsSemaine();
+  const fond = debloquee ? CABOSSE_ASSETS.fonds.plage : CABOSSE_ASSETS.fonds.bibliotheque;
+
+  return '<button type="button" class="cd-carte" data-act="ouvrir-cabosse" ' +
+    'style="background-image:url(\'' + fond + '\')" ' +
+    'aria-label="Cabosse, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
+    '<div class="cd-voile"></div>' +
+    '<div class="cd-avatar">' + avatarCabosse() + '</div>' +
+    '<div class="cd-stats">' +
+      '<div class="cd-stat"><b>' + (pts > 0 ? '+' : '') + pts + '</b><span>point' +
+        (Math.abs(pts) > 1 ? 's' : '') + ' cette semaine</span></div>' +
+      '<div class="cd-stat"><b>' + dispo + '</b><span>point' +
+        (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
+      '<div class="cd-stat"><b>' + restants + '</b><span>cours à réviser</span></div>' +
+    '</div></button>';
 }
 
 /* --- Vue détaillée de progression ---------------------------- */
@@ -2686,11 +2706,8 @@ function vueAgenda(){
   const dl = donneesLecture();
   const banniere = modeLecture()
     ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
-  /* La carte Cabosse coiffe l'agenda : c'est la première chose que
-     l'enfant voit en ouvrant l'app. */
-  const carteRpg = carteCabosseCompacte();
   if (!dl.cours.length) {
-    return banniere + carteRpg + '<div class="vide"><div class="gros">📅</div>' +
+    return banniere + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>' + (modeLecture()
         ? 'Rien n\u2019a encore été encodé sur l\u2019appareil suivi.'
@@ -2721,7 +2738,7 @@ function vueAgenda(){
      correspondante n'a rien à montrer. */
   const bilanDuJour = iso => (dDe(iso).getDay() === 6) ? carteBilanSemaine(iso) : '';
 
-  let html = banniere + carteRpg;
+  let html = banniere;
 
   if (retard.length) {
     grouperParDate(retard).forEach(g => {
@@ -2742,7 +2759,7 @@ function vueAgenda(){
     const estAujourdhui = g.date === ajISO;
     const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
     html += sectionJour(titre, g.items, g.date, '', estAujourdhui).html + bilanDuJour(g.date);
-    if (g.date === dimActuel) html += blocDimancheCabosse();
+    if (g.date === dimActuel) html += carteDimancheCabosse();
     html += '</section>';
   });
 
@@ -2802,7 +2819,7 @@ function vueTaches(){
   grProches.forEach(g => {
     const titre = g.date === ajISO ? "Aujourd'hui" : libelleJour(g.date);
     html += sectionJourTaches(titre, g.items, '').html;
-    if (g.date === dimActuel) html += blocDimancheCabosse();
+    if (g.date === dimActuel) html += carteDimancheCabosse();
     html += '</section>';
   });
 

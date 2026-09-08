@@ -2,7 +2,7 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v39';
+const CACHE = 'sabosse-v40';
 
 /* Deux listes distinctes, volontairement.
    FICHIERS : le strict nécessaire pour que l'app démarre hors ligne.
@@ -22,6 +22,8 @@ const ASSETS_OPTIONNELS = [
   './assets/cabosse/artefacts/couronne-neuronale.png',
   './assets/cabosse/artefacts/bandeau-maitre.png',
   './assets/cabosse/artefacts/bracelets-gorille.png',
+  './assets/cabosse/fonds/bibliotheque.jpg',
+  './assets/cabosse/fonds/plage.jpg',
   './assets/sons/reward-small.wav',
   './assets/sons/power-up.wav',
   './assets/sons/level-up-badge.wav',
