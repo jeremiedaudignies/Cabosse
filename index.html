@@ -137,8 +137,9 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev .haut{display:flex;align-items:center;gap:8px}
 /* Le code du cours passe en gris (référence), la matière en noir
    (l'information qui compte pour l'élève) — inversion demandée. */
-.rev .code{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:-.01em;
+.rev .code{font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:-.01em;
   color:var(--texte-3)}
+.cbs-avatar-btn{background:none;border:0;padding:0;cursor:pointer;display:block;width:100%}
 span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-size:10px;font-weight:700;
   color:var(--texte-2);background:var(--surface-2);border-radius:99px;padding:2px 7px;
   margin-left:0;vertical-align:middle;white-space:nowrap;width:auto}
@@ -509,6 +510,19 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .rev .rang.attente{color:var(--reportee);background:rgba(242,161,4,.14)}
 .rev .cmds button.ok.force{background:#F2A104;box-shadow:0 2px 10px rgba(242,161,4,.35)}
 
+/* Benchmark des matières : deux barres horizontales par ligne. */
+.bench-l{display:flex;align-items:center;gap:10px;padding:6px 0}
+.bench-nom{flex:0 0 34%;display:flex;align-items:center;gap:6px;font-size:11.5px;
+  font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bench-barres{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.bench-b{position:relative;height:13px;background:var(--surface-2);border-radius:99px}
+.bench-b i{display:block;height:100%;border-radius:99px;min-width:2px}
+.bench-b b{position:absolute;right:6px;top:0;line-height:13px;font-size:9.5px;
+  font-family:var(--mono);color:var(--texte-2)}
+.bench-legende{display:flex;gap:14px;justify-content:center;margin-top:10px;
+  font-size:10.5px;color:var(--texte-2);font-weight:600}
+.bench-legende i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px}
+
 /* Statistiques : filtres de période et indicateurs. */
 .stats-filtres{display:flex;gap:7px;margin-bottom:14px}
 .stats-f{flex:1;padding:10px 4px;border-radius:99px;border:1px solid var(--filet);
@@ -598,8 +612,11 @@ button.gal-case:active{transform:scale(.97)}
 
 /* Vue détail plein écran d'une évolution. */
 /* Plein écran : le singe sur son paysage, navigable latéralement. */
-.gal-detail{position:relative;min-height:100%;display:flex;flex-direction:column;
-  align-items:center;text-align:center;padding:24px 8px;
+/* Pas de min-height:100% : combiné au grand avatar, il empêchait le
+   conteneur de défiler jusqu'en bas et coupait les boutons de
+   paysage. La marge basse garantit qu'ils restent atteignables. */
+.gal-detail{position:relative;display:flex;flex-direction:column;
+  align-items:center;text-align:center;padding:24px 8px 32px;
   background-size:cover;background-position:center;border-radius:var(--r-m)}
 .gal-detail-voile{position:absolute;inset:0;border-radius:var(--r-m);
   background:linear-gradient(180deg,rgba(255,255,255,.25) 0%,rgba(255,255,255,.82) 55%)}
@@ -614,7 +631,7 @@ button.gal-case:active{transform:scale(.97)}
 .gal-paysage{padding:9px 16px;border-radius:99px;border:1px solid var(--filet);
   background:var(--surface);font-size:12.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
 .gal-paysage.actif{border-color:var(--accent);background:var(--accent-doux);color:var(--accent)}
-.gal-detail .cabosse-avatar.grand{width:510px;height:510px;max-width:100%}
+.gal-detail .cabosse-avatar.grand{width:min(78vw,340px);height:min(78vw,340px);max-width:100%}
 .gal-detail .cabosse-avatar.grand .cabosse-repli{font-size:min(38vw,228px)}
 .gal-detail-niveau{margin-top:16px;font-size:13px;font-weight:700;color:var(--texte-3);
   text-transform:uppercase;letter-spacing:.06em}
@@ -984,7 +1001,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v52 · 8 septembre 2026';
+const VERSION = 'v53 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3201,13 +3218,13 @@ function carteRevision(r, aujourdhuiCarte){
 /* En-tête commun aux cartes révision, tâche et quizz : la matière
    porte le regard à gauche, les références s'alignent à droite. */
 function enteteCarte(m, c, pastille){
+  /* Matière et code du cours accolés à gauche (« Histoire · HIS-001 »),
+     année et pastille alignées à droite. */
   return '<div class="haut">' +
     '<i class="puce" style="background:' + m.c + '"></i>' +
-    '<span class="matiere">' + ech(m.nom) + '</span>' +
-    '<span class="refs">' +
-      '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
-      (pastille || '') +
-    '</span>' +
+    '<span class="matiere">' + ech(m.nom) +
+      ' <b class="code">· ' + ech(refCours(c)) + '</b></span>' +
+    '<span class="refs">' + pastilleAnnee(c) + (pastille || '') + '</span>' +
   '</div>';
 }
 
@@ -3457,7 +3474,11 @@ function vueCabosse(){
   const peutMonter = !auMax && dispo >= cout && !modeLecture();
   const pctJauge = auMax ? 100 : Math.min(100, Math.round(dispo / cout * 100));
 
-  let html = '<div class="cbs-entete">' + avatarCabosse('grand') +
+  /* Le singe ouvre la galerie, exactement comme le bouton
+     « Voir toutes les évolutions » juste en dessous. */
+  let html = '<div class="cbs-entete">' +
+    '<button type="button" class="cbs-avatar-btn" data-act="cabosse-galerie" ' +
+      'aria-label="Voir toutes les évolutions">' + avatarCabosse('grand') + '</button>' +
     '<div class="cbs-rang">' + ech(g.rangLabel) + '</div>' +
     '<div class="cbs-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
   '</div>';
@@ -4879,6 +4900,35 @@ const LIMITES_PAR_UNITE = {semaine: limitesSemaine, mois: limitesMois, annee: li
 
 /* Petit histogramme SVG autonome, sans bibliothèque : une barre par
    semaine, sa valeur au-dessus, l'étiquette de semaine en dessous. */
+/* Benchmark des matières : deux séries côte à côte, en barres
+   horizontales — les noms de matières ne tiendraient pas sous des
+   barres verticales sur un écran de téléphone. */
+function graphiqueBenchmark(lignes){
+  if (!lignes.length) return '';
+  const maxVal = Math.max(1, Math.max.apply(null,
+    lignes.map(l => Math.max(l.quizz, l.pasCompris))));
+  let html = '<div class="bench">';
+  lignes.forEach(l => {
+    const pq = Math.round(l.quizz / maxVal * 100);
+    const pp = Math.round(l.pasCompris / maxVal * 100);
+    html += '<div class="bench-l">' +
+      '<div class="bench-nom"><i class="puce" style="background:' + l.c + '"></i>' +
+        ech(l.nom) + '</div>' +
+      '<div class="bench-barres">' +
+        '<div class="bench-b"><i style="width:' + pq + '%;background:var(--accent)"></i>' +
+          '<b>' + l.quizz + '</b></div>' +
+        '<div class="bench-b"><i style="width:' + pp + '%;background:var(--reportee)"></i>' +
+          '<b>' + l.pasCompris + '</b></div>' +
+      '</div></div>';
+  });
+  html += '</div>' +
+    '<div class="bench-legende">' +
+      '<span><i style="background:var(--accent)"></i> Quizz réalisés</span>' +
+      '<span><i style="background:var(--reportee)"></i> « Pas tout compris »</span>' +
+    '</div>';
+  return html;
+}
+
 function graphiqueBarres(labels, valeurs, options){
   options = options || {};
   const larg = 640, haut = 132, margeHaut = 22, margeBas = 28;
@@ -5276,6 +5326,25 @@ function vueStats(){
         {couleur: b.couleur, suffixe: b.suffixe.trim(), max: b.max}) +
     '</div>';
   });
+
+  /* --- Benchmark des matières -------------------------------- */
+  const bench = [];
+  dl.matieres.forEach(m => {
+    const ids = dl.cours.filter(c => c.code === m.code).map(c => c.id);
+    if (!ids.length) return;
+    let essais = 0;
+    ids.forEach(id => { essais += quizzEtat(id).essais || 0; });
+    const pasCompris = dl.revisions.filter(r =>
+      ids.indexOf(r.cours) !== -1 && estRenfort(r)).length;
+    if (essais || pasCompris) bench.push({nom: m.nom, c: m.c, quizz: essais, pasCompris: pasCompris});
+  });
+  if (bench.length) {
+    /* Trié par difficulté décroissante : la matière qui pose le plus
+       de problèmes remonte en tête. */
+    bench.sort((a, b) => (b.pasCompris + b.quizz) - (a.pasCompris + a.quizz));
+    html += '<p class="etiquette" style="margin-top:20px">Comparaison des matières</p>' +
+      '<div class="carte graf">' + graphiqueBenchmark(bench) + '</div>';
+  }
 
   /* --- Par matière : bilan complet, quizz compris ------------- */
   html += '<p class="etiquette" style="margin-top:20px">Par matière</p>';
