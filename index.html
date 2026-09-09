@@ -79,7 +79,7 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   font-size:12.5px;font-weight:700;color:var(--texte-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #bascule-profil .seg.actif{background:var(--accent);color:#fff}
 #vue{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 28px}
-/* Sept onglets sur une seule ligne. Flex plutôt que grille fixe :
+/* Huit onglets sur une seule ligne. Flex plutôt que grille fixe :
    quand un onglet est masqué (le Chat, sur un compte ÉTUDIANT), les
    autres se répartissent la place au lieu de laisser un trou. */
 #barre{flex:0 0 auto;display:flex;background:var(--surface);
@@ -87,15 +87,15 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #barre button{position:relative;flex:1 1 0;min-width:0;
   padding:7px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:21px;line-height:1;filter:grayscale(1) opacity(.55);
+#barre button .ic{font-size:19px;line-height:1;filter:grayscale(1) opacity(.55);
   display:inline-flex;align-items:center;justify-content:center;
-  width:28px;height:28px;border-radius:50%}
-#barre button .lb{font-size:8.5px;font-weight:600;text-align:center;line-height:1.1;
+  width:25px;height:25px;border-radius:50%}
+#barre button .lb{font-size:8px;font-weight:600;text-align:center;line-height:1.1;
   padding:0 1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Écrans étroits (iPhone SE et similaires) : on resserre encore. */
 @media (max-width:400px){
-  #barre button .ic{font-size:18px;width:25px;height:25px}
-  #barre button .lb{font-size:7.8px}
+  #barre button .ic{font-size:17px;width:23px;height:23px}
+  #barre button .lb{font-size:7.2px}
 }
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
@@ -479,6 +479,51 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cal-rappel{margin-bottom:8px;padding:10px 12px;border-radius:var(--r-s);
   font-size:12px;font-weight:700;color:var(--reportee);background:rgba(242,161,4,.14)}
 
+/* Emploi du temps d'une matière. */
+.emploi-titre{font-size:13px;font-weight:800;letter-spacing:-.01em}
+.emploi-resume{margin-top:5px;font-size:12.5px;color:var(--accent);font-weight:700}
+.emploi-ligne{display:flex;align-items:center;gap:10px;margin-top:8px}
+.emploi-ligne select{flex:1;min-width:0}
+.emploi-ligne select:disabled{opacity:.45}
+.emploi-saisie{border-color:var(--accent)}
+.mat-emploi{display:block;font-size:10.5px;color:var(--texte-3);font-weight:600;margin-top:1px}
+
+/* Mode vacances : cahier de révisions, sans découpage par jour. */
+.jour.vacances h2{color:var(--reportee)}
+.vac-periode{font-size:12.5px;color:var(--texte-2);font-weight:600;margin:-4px 0 12px}
+.vac-fini{font-size:14px;font-weight:800;text-align:center;color:var(--faite);
+  margin:6px 0 14px}
+
+/* Jauge des points disponibles, dans la vue Cabosse. Se vide
+   visiblement lors d'une dépense (classe .vidage). */
+.jauge-points{position:relative;height:26px;border-radius:99px;margin-top:6px;
+  background:var(--surface-2);overflow:hidden}
+.jauge-points i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--xp),#FFCF5C);
+  transition:width .55s cubic-bezier(.4,0,.2,1)}
+.jauge-points.vidage i{transition:width .55s cubic-bezier(.6,0,.9,.4)}
+.jauge-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--texte-2)}
+@media (prefers-reduced-motion: reduce){.jauge-points i{transition:none}}
+
+/* Quizz : questions issues des points difficiles. */
+.quizz-filtres{display:flex;gap:8px;margin-bottom:12px}
+.quizz-filtres select{flex:1;min-width:0;font-size:12px}
+.quizz-c{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:13px 14px;margin-bottom:9px}
+.quizz-tete{display:flex;align-items:center;gap:8px}
+.quizz-tete b{font-family:var(--mono);font-size:12.5px;font-weight:700}
+.quizz-taux{margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;
+  border-radius:99px;background:var(--surface-2);color:var(--texte-2)}
+.quizz-taux.bon{background:rgba(0,160,140,.13);color:var(--faite)}
+.quizz-taux.neuf{background:var(--accent-doux);color:var(--accent)}
+.quizz-q{margin-top:8px;font-size:15px;font-weight:700;line-height:1.35}
+.quizz-meta{margin-top:5px;font-size:11px;color:var(--texte-3)}
+.quizz-bloque{margin-top:9px;padding:8px 10px;border-radius:var(--r-s);text-align:center;
+  font-size:12px;font-weight:700;color:var(--reportee);background:rgba(242,161,4,.13)}
+.quizz-choix{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.quizz-acquis{margin-top:7px;font-size:11.5px;padding:9px}
+
 /* Bloc « faire évoluer » de la vue Cabosse. */
 .cbs-evolution{display:flex;align-items:center;gap:14px;margin-top:14px;padding:14px 16px;
   background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m)}
@@ -575,6 +620,7 @@ button.gal-case:active{transform:scale(.97)}
   <nav id="barre">
     <button data-vue="agenda"><span class="ic" id="ic-agenda">📅</span><span class="badge-non-lu" id="badge-agenda"></span><span class="lb" id="lb-agenda">Agenda</span></button>
     <button data-vue="taches"><span class="ic">✅</span><span class="badge-non-lu" id="badge-taches"></span><span class="lb">Tâches</span></button>
+    <button data-vue="quizz"><span class="ic">🧩</span><span class="lb">Quizz</span></button>
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
@@ -605,8 +651,9 @@ button.gal-case:active{transform:scale(.97)}
   <h3 id="confirm-titre"></h3>
   <p id="confirm-info"></p>
   <div id="confirm-note-zone" class="champ" style="display:none">
-    <label for="confirm-note">Points difficiles à revoir la prochaine fois</label>
-    <textarea id="confirm-note" rows="3" placeholder="Ex. confond passé simple et imparfait…"></textarea>
+    <label for="confirm-note">Pose-toi une question sur ce point difficile</label>
+    <textarea id="confirm-note" rows="3" placeholder="Ex. Que veut dire « démoniaque » ?"></textarea>
+    <span class="aide-champ">Formule-la comme une vraie question : elle te sera reposée dans le Quizz.</span>
   </div>
   <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
   <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
@@ -703,9 +750,31 @@ function assurerAuth(){
   });
 }
 
+/* Seuils de conception. La limite dure d'un document Firestore est
+   de 1 Mio ; on alerte bien avant pour garder de la marge. Mesurés
+   sur la charge sérialisée réellement envoyée. */
+const SEUIL_ALERTE_OCTETS = 700 * 1024;
+const SEUIL_REFUS_OCTETS  = 900 * 1024;
+
+function tailleOctets(objet){
+  try { return new TextEncoder().encode(JSON.stringify(objet)).length; }
+  catch (e) { return JSON.stringify(objet).length; }
+}
+
 window.SabosseSync = {
   disponible: configure && !!bdd,
-  async envoyer(code, donnees){
+  derniereTaille: 0,
+  derniereAlerteTaille: null,
+
+  /* Envoi éclaté en plusieurs documents :
+       sabosse/{code}                    → état courant, léger
+       sabosse/{code}/annees/{AAAA-AAAA} → cours + révisions de l'année
+       sabosse/{code}/quizz/{id}         → notes de difficulté
+     Les sous-collections ne comptent pas dans la limite de 1 Mio du
+     document parent : c'est ce qui donne la marge sur plusieurs
+     années. `parts` ne contient que les documents réellement
+     modifiés — l'appelant décide de ce qu'il envoie. */
+  async envoyer(code, donnees, parts){
     if (!this.disponible || !code) return false;
     try {
       const u = await assurerAuth();
@@ -714,7 +783,41 @@ window.SabosseSync = {
          ensuite verrouillé par les règles Firestore) ; les tentatives
          suivantes échouent silencieusement, sans conséquence. */
       try { await setDoc(doc(bdd, 'sabosse_writers', code), {uid: u.uid}); } catch (e) { /* déjà pris, sans effet */ }
-      await setDoc(doc(bdd, 'sabosse', code), Object.assign({}, donnees, {misAJour: Date.now()}));
+
+      const racine = Object.assign({}, donnees, {misAJour: Date.now()});
+      const octets = tailleOctets(racine);
+      this.derniereTaille = octets;
+      if (octets > SEUIL_REFUS_OCTETS) {
+        /* Au-delà, on refuse plutôt que de laisser Firestore rejeter
+           l'écriture avec une erreur incompréhensible. */
+        this.dernierMotifEchec = 'document-trop-gros';
+        this.derniereAlerteTaille = octets;
+        console.error('SABOSSE sync : document racine trop volumineux', octets);
+        return false;
+      }
+      if (octets > SEUIL_ALERTE_OCTETS) this.derniereAlerteTaille = octets;
+
+      await setDoc(doc(bdd, 'sabosse', code), racine);
+
+      /* Documents annexes : uniquement ceux qu'on nous passe. */
+      if (parts && parts.annees) {
+        for (const cle of Object.keys(parts.annees)) {
+          const contenu = Object.assign({}, parts.annees[cle], {misAJour: Date.now()});
+          const t = tailleOctets(contenu);
+          if (t > SEUIL_REFUS_OCTETS) {
+            console.error('SABOSSE sync : année', cle, 'trop volumineuse', t);
+            this.dernierMotifEchec = 'annee-trop-grosse';
+            continue;
+          }
+          if (t > SEUIL_ALERTE_OCTETS) this.derniereAlerteTaille = t;
+          await setDoc(doc(bdd, 'sabosse', code, 'annees', cle), contenu);
+        }
+      }
+      if (parts && parts.quizz) {
+        for (const id of Object.keys(parts.quizz)) {
+          await setDoc(doc(bdd, 'sabosse', code, 'quizz', id), parts.quizz[id]);
+        }
+      }
       return true;
     } catch (e) {
       console.error('SABOSSE sync : envoi impossible', e);
@@ -726,14 +829,37 @@ window.SabosseSync = {
       return false;
     }
   },
-  suivre(code, callback){
+
+  /* Suivi : on écoute la racine, plus l'année en cours seulement.
+     Les années passées ne sont pas chargées côté parent — inutiles
+     à l'affichage et coûteuses en lectures Firestore. */
+  suivre(code, callback, anneeCourante){
     if (!this.disponible || !code) return;
-    if (ecoutesSuivi[code]) ecoutesSuivi[code](); // ré-écoute propre du même code, sans dupliquer
-    ecoutesSuivi[code] = onSnapshot(
+    if (ecoutesSuivi[code]) ecoutesSuivi[code]();
+    const etat = {racine: null, annee: null};
+    const pousser = () => {
+      if (!etat.racine) return;
+      const fusion = Object.assign({}, etat.racine);
+      if (etat.annee) {
+        fusion.cours = etat.annee.cours || [];
+        fusion.revisions = etat.annee.revisions || [];
+      }
+      callback(fusion);
+    };
+    const arretRacine = onSnapshot(
       doc(bdd, 'sabosse', code),
-      snap => { if (snap.exists()) callback(snap.data()); },
+      snap => { if (snap.exists()) { etat.racine = snap.data(); pousser(); } },
       err => { console.error('SABOSSE sync : écoute interrompue', err); callback(null, err); }
     );
+    let arretAnnee = () => {};
+    if (anneeCourante) {
+      arretAnnee = onSnapshot(
+        doc(bdd, 'sabosse', code, 'annees', anneeCourante),
+        snap => { etat.annee = snap.exists() ? snap.data() : null; pousser(); },
+        err => { console.error('SABOSSE sync : écoute année interrompue', err); }
+      );
+    }
+    ecoutesSuivi[code] = () => { arretRacine(); arretAnnee(); };
   },
   arreter(code){
     if (code) {
@@ -802,7 +928,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v41 · 8 septembre 2026';
+const VERSION = 'v49 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -846,11 +972,18 @@ function aUneNote(c){ return !!(c.commentaire || '').trim(); }
 
 /* Dates de rappel attendues pour un cours, jusqu'à l'horizon. */
 function rappelsAttendus(c){
+  /* Règle 10 : seuls les cours portant une note de difficulté sont
+     reportés d'année en année, et jusqu'à ce que la note soit
+     effacée. Sans note, aucun rappel — c'était auparavant le cas de
+     TOUS les cours, ce qui représentait 43 % du volume de données
+     pour des échéances sans objet. */
+  if (!aUneNote(c)) return [];
+
   const creation = dDe(c.date);
   const fin = finAnnee(creation);            // 1er juillet : fin du cycle scolaire
   const butoir = plusMois(creation, RAPPEL_ANNEES * 12);
   const horizon = plusMois(aujourdhui(), HORIZON_MOIS);
-  const pas = aUneNote(c) ? 3 : 12;          // mois entre deux rappels
+  const pas = 12;                            // un rappel par an
 
   const sortie = [];
   // Premier anniversaire strictement après la fin de l'année scolaire
@@ -1114,8 +1247,28 @@ const XP_CABOSSE = {
   tachePerdueSagesse: -1   // 🧘 Sagesse
 };
 
-/* Un niveau tous les 5 points dépensés. */
-const POINTS_PAR_NIVEAU = 5;
+/* Courbe de progression des 40 niveaux.
+   Cumul au niveau n : arrondi(6825 × (1,10^(n-1) − 1) / (1,10^39 − 1)).
+   Générée plutôt qu'écrite en dur — la formule est la référence, et
+   le total final tombe exactement sur 6 825 points.
+   La courbe favorise nettement le début : le niveau 20 s'atteint
+   avec ~13 % du total, la moitié des points correspond au niveau 33.
+   Le coût d'une évolution est l'écart entre deux cumuls successifs. */
+const CUMULS_NIVEAUX = (function(){
+  const denom = Math.pow(1.10, 39) - 1;
+  const c = [];
+  for (let n = 1; n <= 40; n++) {
+    c.push(Math.round(6825 * (Math.pow(1.10, n - 1) - 1) / denom));
+  }
+  return c;
+})();
+
+/* Points à dépenser pour passer du niveau n au niveau n+1. */
+function coutNiveauSuivant(niveau){
+  if (niveau >= NIVEAU_MAX) return 0;
+  return CUMULS_NIVEAUX[niveau] - CUMULS_NIVEAUX[niveau - 1];
+}
+
 /* Un accessoire légendaire par caractéristique, à 100 points. */
 const SEUIL_ACCESSOIRE = 100;
 
@@ -1210,6 +1363,8 @@ function gamificationVierge(){
        se recalcule » : ces deux compteurs sont incrémentés au moment
        de la suppression et conservés tels quels. */
     penalites: {coursSupprimes:0, tachesPerdues:0},
+    /* Bonus gagnés au Quizz, par caractéristique. */
+    bonusQuizz: {},
     progression: {dernierNiveauAnnonce: 1},
     preferences: {sons:true, animations:true}
   };
@@ -1220,7 +1375,7 @@ function gamificationVierge(){
    Ne lit rien d'autre que `dl` (+ la tolérance, réglage global) et
    n'écrit nulle part. C'est elle la source de vérité.
    ------------------------------------------------------------ */
-function calculerGamification(dl, penalites){
+function calculerGamification(dl, penalites, bonusQuizz){
   const j = {energie:0, intelligence:0, sagesse:0, force:0};
   const pen = penalites || {coursSupprimes:0, tachesPerdues:0};
 
@@ -1259,6 +1414,11 @@ function calculerGamification(dl, penalites){
   /* Malus de suppression : impossibles à recalculer depuis
      l'historique (l'élément supprimé n'y est plus), d'où ces deux
      compteurs persistés. */
+  /* Bonus de quizz : accordés au coup par coup, ils n'ont aucune
+     trace dans l'historique des cours — d'où leur réinjection ici. */
+  const bq = bonusQuizz || {};
+  CARACTERISTIQUES.forEach(c => { j[c.cle] += (bq[c.cle] || 0); });
+
   j.intelligence += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeIntel;
   j.sagesse      += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeSagesse;
   j.force        += (pen.tachesPerdues || 0) * XP_CABOSSE.tachePerdueForce;
@@ -1283,8 +1443,18 @@ function pointsDisponibles(g){
   return Math.max(0, (g.pointsTotaux || 0) - (g.pointsDepenses || 0));
 }
 function niveauxAchetables(g){
-  return Math.min(Math.floor(pointsDisponibles(g) / POINTS_PAR_NIVEAU),
-                  NIVEAU_MAX - (g.niveauGlobal || 1));
+  /* Le coût augmentant à chaque palier, on déroule tant que le solde
+     couvre l'évolution suivante — un simple quotient ne marcherait
+     plus avec une courbe progressive. */
+  let solde = pointsDisponibles(g);
+  let niveau = g.niveauGlobal || 1;
+  let n = 0;
+  while (niveau < NIVEAU_MAX) {
+    const cout = coutNiveauSuivant(niveau);
+    if (solde < cout) break;
+    solde -= cout; niveau++; n++;
+  }
+  return n;
 }
 
 function gamif(){
@@ -1307,7 +1477,7 @@ function gamif(){
 function rafraichirGamification(silencieux){
   if (modeLecture()) return;                    // jamais sur le miroir d'un autre appareil
   const g = gamif();
-  const calc = calculerGamification(donneesLecture(), g.penalites);
+  const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz);
 
   const annonces = [];
 
@@ -1350,25 +1520,40 @@ function rafraichirGamification(silencieux){
   return annonces;
 }
 
-/* Dépense de 5 points pour gagner un niveau — déclenchée par le
-   « + » de la vue Cabosse, jamais automatiquement. */
+/* Dépense le coût du palier suivant pour gagner un niveau —
+   déclenchée par le « + » de la vue Cabosse, jamais automatiquement. */
 function monterNiveauCabosse(){
   const g = gamif();
   if (modeLecture()) return false;
   if (g.niveauGlobal >= NIVEAU_MAX) { toast('Cabosse est déjà au niveau maximum 🎉'); return false; }
-  if (pointsDisponibles(g) < POINTS_PAR_NIVEAU) {
-    toast('Il faut ' + POINTS_PAR_NIVEAU + ' points pour faire évoluer Cabosse.');
+  const cout = coutNiveauSuivant(g.niveauGlobal);
+  if (pointsDisponibles(g) < cout) {
+    toast('Il faut ' + cout + ' points pour faire évoluer Cabosse.');
     return false;
   }
-  g.pointsDepenses = (g.pointsDepenses || 0) + POINTS_PAR_NIVEAU;
+  g.pointsDepenses = (g.pointsDepenses || 0) + cout;
   g.niveauGlobal += 1;
   g.rangIndex = g.niveauGlobal - 1;
   g.rangLabel = RANGS_CABOSSE[g.rangIndex];
   g.progression.dernierNiveauAnnonce = g.niveauGlobal;
   sauver();
+  /* Bruitage de dépense, puis annonce du nouveau niveau. */
+  jouerSonCabosse('powerup');
   filerRecompense({type:'niveau', emoji:'⭐',
     texte:'NIVEAU ' + g.niveauGlobal + ' ! ' + g.rangLabel});
-  rendre();
+  /* La jauge se vide sous les yeux de l'enfant avant que la vue ne
+     soit reconstruite : sans ce délai, le nouveau solde apparaîtrait
+     instantanément et la dépense passerait inaperçue. Si les
+     animations sont coupées, on rend tout de suite. */
+  const jauge = document.getElementById('jauge-points');
+  if (jauge && animationsActives()) {
+    jauge.classList.add('vidage');
+    const barre = jauge.querySelector('i');
+    if (barre) barre.style.width = '0%';
+    setTimeout(rendre, 620);
+  } else {
+    rendre();
+  }
   return true;
 }
 
@@ -1564,6 +1749,100 @@ function prefsCabosse(){
   return DB.reglages.gamification.preferences;
 }
 
+/* ============================================================
+   EMPLOI DU TEMPS DES MATIÈRES  (mode ÉLÈVE)
+
+   Pour chaque matière, les jours où le cours a lieu, et à quelle
+   fréquence : toutes les semaines, ou une semaine sur deux (A =
+   paire, B = impaire). Un même jour peut donc avoir sa propre
+   alternance, d'où un objet par jour plutôt qu'une simple liste.
+
+   Stocké dans DB.reglages.emploiDuTemps, indexé par code matière :
+     { MAT: {jours: {1:'toutes', 4:'A'}, defini:true} }
+   Les clés de jour suivent getDay() : 1 = lundi … 6 = samedi.
+
+   Renseigné une seule fois, à la création du premier cours d'une
+   matière ; ensuite repris automatiquement pour les cours suivants.
+   ============================================================ */
+const FREQUENCES = [
+  {cle:'toutes', nom:'Toutes les semaines'},
+  {cle:'A',      nom:'Semaine paire (A)'},
+  {cle:'B',      nom:'Semaine impaire (B)'}
+];
+const JOURS_ECOLE = [1, 2, 3, 4, 5, 6]; // lundi → samedi
+
+function emploiDuTemps(){
+  /* En mode suivi, on lit l'emploi du temps reçu de l'appareil
+     source : l'agenda affiché doit refléter SES échéances, pas
+     celles du parent. Repli sur un objet vide tant qu'il n'a pas
+     été transmis (appareil source pas encore mis à jour). */
+  if (modeLecture()) {
+    const s = suiviActif();
+    return (s && s.reglages && s.reglages.emploiDuTemps) || {};
+  }
+  if (!DB.reglages.emploiDuTemps) DB.reglages.emploiDuTemps = {};
+  return DB.reglages.emploiDuTemps;
+}
+function emploiMatiere(code){
+  const e = emploiDuTemps()[code];
+  return (e && e.defini) ? e : null;
+}
+/* Une matière a-t-elle déjà son emploi du temps ? C'est ce qui
+   décide si le bloc est obligatoire à la saisie du cours. */
+function emploiDefini(code){ return emploiMatiere(code) !== null; }
+
+/* Numéro de semaine ISO — sert à trancher entre semaine A et B.
+   Semaine paire = A, impaire = B, convention retenue avec Jérém. */
+function numeroSemaineISO(d){
+  const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
+  const jour = (t.getDay() + 6) % 7;               // lundi = 0
+  t.setDate(t.getDate() - jour + 3);               // jeudi de la semaine
+  const premierJeudi = new Date(t.getFullYear(), 0, 4, 12, 0, 0, 0);
+  const decalage = (premierJeudi.getDay() + 6) % 7;
+  premierJeudi.setDate(premierJeudi.getDate() - decalage + 3);
+  return 1 + Math.round((t - premierJeudi) / (7 * 86400000));
+}
+function typeSemaine(d){ return (numeroSemaineISO(d) % 2 === 0) ? 'A' : 'B'; }
+
+/* La matière a-t-elle cours ce jour-là ? Tient compte du jour de la
+   semaine ET de l'alternance A/B. */
+function matiereALieuLe(code, iso){
+  const e = emploiMatiere(code);
+  if (!e) return false;
+  const d = dDe(iso);
+  const freq = (e.jours || {})[d.getDay()];
+  if (!freq) return false;
+  return freq === 'toutes' || freq === typeSemaine(d);
+}
+
+/* Prochain jour (strictement après `isoDepuis`) où la matière a
+   cours. Renvoie null si rien dans les 120 jours — filet de
+   sécurité contre une boucle infinie sur un emploi du temps vide. */
+function prochainJourMatiere(code, isoDepuis){
+  const e = emploiMatiere(code);
+  if (!e) return null;
+  let d = plus(dDe(isoDepuis), 1);
+  for (let i = 0; i < 120; i++) {
+    if (matiereALieuLe(code, isoDe(d))) return isoDe(d);
+    d = plus(d, 1);
+  }
+  return null;
+}
+
+/* Résumé lisible, pour la liste des matières et les récapitulatifs. */
+function libelleEmploi(code){
+  const e = emploiMatiere(code);
+  if (!e) return '';
+  const parts = [];
+  JOURS_ECOLE.forEach(j => {
+    const f = (e.jours || {})[j];
+    if (!f) return;
+    const nom = JOURS[j].charAt(0).toUpperCase() + JOURS[j].slice(1, 3);
+    parts.push(nom + (f === 'toutes' ? '' : ' (' + f + ')'));
+  });
+  return parts.join(', ');
+}
+
 const MATIERES_DEFAUT = [
   {code:'ANG', nom:'Anglais',                        c:'#3A56D4'},
   {code:'MAT', nom:'Mathématiques',                  c:'#D14343'},
@@ -1632,7 +1911,15 @@ function joursAvant(iso){ return Math.round((dDe(iso) - aujourdhui()) / 86400000
    rien n'était, elle doit être reprogrammée. Calculée en jours
    calendaires, comme le reste de l'app (dansLesTemps, tolérance). */
 const FENETRE_VALIDATION_JOURS = 3;
-function estValidable(iso){ return Math.abs(joursAvant(iso)) <= FENETRE_VALIDATION_JOURS; }
+function estValidable(iso){
+  /* Règle 8 : pendant les vacances, la fenêtre ±72 h est levée.
+     L'élève avance sur son cahier à son rythme, sur toute la
+     période — c'est le principe même du cahier de vacances.
+     Réservé au mode ÉLÈVE : le mode ÉTUDIANT ignore le calendrier
+     scolaire et garde sa fenêtre en toutes circonstances. */
+  if (modeEleve() && estEnVacances(isoDe(aujourdhui()))) return true;
+  return Math.abs(joursAvant(iso)) <= FENETRE_VALIDATION_JOURS;
+}
 
 /* Fin de l'année scolaire : le 1er juillet qui suit la date du cours. */
 function finAnnee(d){
@@ -1692,6 +1979,13 @@ function libelleAnneeScolaire(d){
 }
 
 function calendriers(){
+  /* Même principe que l'emploi du temps : en mode suivi, on affiche
+     le calendrier scolaire de l'appareil source. Il peut différer
+     (académies différentes entre deux enfants, par exemple). */
+  if (modeLecture()) {
+    const s = suiviActif();
+    return (s && s.reglages && s.reglages.calendrier) || calendrierDefaut();
+  }
   if (!DB.reglages.calendrier) DB.reglages.calendrier = calendrierDefaut();
   return DB.reglages.calendrier;
 }
@@ -1779,6 +2073,282 @@ function echeancier(dateISO){
 }
 
 /* ============================================================
+   MOTEUR DE PLANIFICATION — MODE ÉLÈVE
+
+   Rien à voir avec la rampe d'intervalles du mode ÉTUDIANT, qui
+   reste intacte dans echeancier(). Ici la planification suit
+   l'emploi du temps réel de la matière :
+
+     1. une révision le jour de l'encodage ;
+     2. une révision le samedi de la même semaine (ancrage) ;
+     3. les 3 derniers cours d'une matière reviennent la veille du
+        prochain jour où cette matière a lieu — et le SAMEDI qui
+        précède pour une matière donnée le LUNDI.
+
+   La règle 3 ne se calcule pas une fois pour toutes à l'encodage :
+   elle dépend en permanence de quels cours sont « les 3 derniers ».
+   Elle est donc appliquée par replanifierEleve(), rejouée à chaque
+   ajout de cours — d'où l'importance de ne jamais toucher aux
+   révisions déjà traitées.
+   ============================================================ */
+const NB_DERNIERS_COURS = 3;
+
+/* Veille du jour de matière, avec la règle du lundi : un cours
+   donné le lundi se révise le samedi précédent (et non le dimanche,
+   qui reste le jour de repos). */
+function jourRevisionAvant(isoJourMatiere){
+  const d = dDe(isoJourMatiere);
+  if (d.getDay() === 1) return isoDe(plus(d, -2));   // lundi → samedi
+  return isoDe(plus(d, -1));
+}
+
+/* Échéances de base d'un cours en mode élève : jour d'encodage et
+   samedi de la même semaine. Le reste est ajouté par
+   replanifierEleve(). */
+function echeancierEleve(dateISO){
+  const d = dDe(dateISO);
+  const sortie = [{rang:'Encodage', ancrage:false, date:isoDe(d)}];
+  /* Samedi de la MÊME semaine — pas « le prochain samedi » : un
+     cours encodé un samedi n'a pas d'ancrage séparé, il l'est déjà. */
+  const samedi = plus(lundiDe(d), 5);
+  if (isoDe(samedi) !== isoDe(d) && samedi >= d) {
+    sortie.push({rang:'Ancrage', ancrage:true, date:isoDe(samedi)});
+  }
+  return sortie;
+}
+
+/* Ajoute une révision si aucune n'existe déjà pour ce cours à cette
+   date — la règle « une seule révision par cours et par jour »,
+   quelles que soient les règles qui la réclament. */
+function ajouterRevisionSiAbsente(idCours, iso, rang, ancrage){
+  if (!iso) return false;
+  if (DB.revisions.some(r => r.cours === idCours && r.date === iso)) return false;
+  DB.revisions.push({
+    id: idCours + '#' + rang.toLowerCase().replace(/[^a-z0-9]+/g, '') + '-' + iso,
+    cours: idCours, rang: rang, ancrage: !!ancrage,
+    prevue: iso, date: iso, statut: 'aFaire'
+  });
+  return true;
+}
+
+/* Applique la règle des 3 derniers cours pour une matière donnée.
+   Appelée après chaque ajout de cours : un nouveau cours fait sortir
+   le 4e plus ancien du trio, mais on ne retire jamais une révision
+   déjà planifiée — l'élève l'a peut-être déjà vue dans son agenda.
+   On se contente de ne plus en créer de nouvelles pour lui. */
+function planifierDerniersCours(code){
+  const e = emploiMatiere(code);
+  if (!e) return 0;
+  const ajISO = isoDe(aujourdhui());
+  const derniers = DB.cours
+    .filter(c => c.code === code)
+    .sort((a, b) => a.date < b.date ? 1 : -1)
+    .slice(0, NB_DERNIERS_COURS);
+  if (!derniers.length) return 0;
+  const idsDerniers = derniers.map(c => c.id);
+
+  /* Nettoyage strict : un cours sorti du trio ne doit plus avoir
+     d'échéance « Avant cours » à venir. On ne retire QUE celles-là,
+     et uniquement dans le futur et encore intactes — une révision
+     déjà faite, annulée ou reportée reste dans l'historique, sinon
+     on réécrirait le passé de l'élève et on fausserait sa
+     gamification, qui se recalcule depuis ces mêmes données. */
+  const avant = DB.revisions.length;
+  DB.revisions = DB.revisions.filter(r => {
+    if (r.rang !== 'Avant cours') return true;
+    if (r.statut !== 'aFaire') return true;      // déjà traitée : intouchable
+    if (r.date < ajISO) return true;             // passée : on n'y touche pas
+    const c = DB.cours.find(x => x.id === r.cours);
+    if (!c || c.code !== code) return true;      // autre matière
+    return idsDerniers.indexOf(r.cours) !== -1;  // gardée si encore dans le trio
+  });
+  const retires = avant - DB.revisions.length;
+
+  /* Prochaine occurrence de la matière, et celle d'après : deux
+     échéances d'avance suffisent, le reste sera planifié au fil de
+     l'eau à chaque nouvel encodage. */
+  let ajouts = 0;
+  let depuis = ajISO;
+  for (let n = 0; n < 2; n++) {
+    const jourMatiere = prochainJourMatiere(code, depuis);
+    if (!jourMatiere) break;
+    const jourRevision = jourRevisionAvant(jourMatiere);
+    /* Une révision dans le passé n'a aucun intérêt : on saute. */
+    if (jourRevision >= ajISO) {
+      derniers.forEach(c => {
+        if (ajouterRevisionSiAbsente(c.id, jourRevision, 'Avant cours', false)) ajouts++;
+      });
+    }
+    depuis = jourMatiere;
+  }
+  return ajouts - retires;
+}
+
+/* ============================================================
+   VACANCES  (mode ÉLÈVE)
+
+   Trois règles distinctes :
+     6. aucune révision ordinaire n'est planifiée pendant les
+        vacances — les échéances qui y tomberaient sont repoussées
+        au jour de reprise ;
+     7. à la place, un « Cahier de vacances » regroupe tous les
+        cours encodés depuis les vacances précédentes ;
+     8. pendant les vacances, la fenêtre de validation ±72 h est
+        levée : l'élève avance à son rythme sur toute la période.
+
+   Le cahier est matérialisé comme des révisions ordinaires, de rang
+   « Cahier », toutes datées au premier jour des vacances. Elles
+   passent ainsi dans toute la mécanique existante (validation,
+   gamification, statistiques) sans cas particulier à maintenir.
+   ============================================================ */
+
+/* Première date NON en vacances à partir de `iso` (incluse). Sert à
+   repousser une échéance qui tomberait pendant une période. */
+function prochainJourEcole(iso){
+  let d = dDe(iso);
+  for (let i = 0; i < 120; i++) {
+    if (!estEnVacances(isoDe(d))) return isoDe(d);
+    d = plus(d, 1);
+  }
+  return iso;
+}
+
+/* Vacances précédant immédiatement celles-ci, pour délimiter le
+   périmètre du cahier : « les cours encodés depuis les vacances
+   précédentes ». Renvoie la date de FIN des vacances d'avant, ou la
+   rentrée si ce sont les premières de l'année. */
+function debutPerimetreCahier(vac){
+  const cal = calendrierPour(vac.debut);
+  if (!cal) return vac.debut;
+  let borne = cal.rentree || '';
+  VACANCES_LIBELLES.forEach(v => {
+    const p = (cal.vacances || {})[v.cle];
+    if (p && p.fin && p.fin < vac.debut && p.fin > borne) borne = p.fin;
+  });
+  return borne || vac.debut;
+}
+
+/* Les cours qui composent le cahier d'une période de vacances. */
+function coursDuCahier(vac){
+  const depuis = debutPerimetreCahier(vac);
+  return donneesLecture().cours
+    .filter(c => c.date > depuis && c.date < vac.debut)
+    .sort((a, b) => a.date < b.date ? -1 : 1);
+}
+
+/* Matérialise le cahier : une révision par cours concerné, datée au
+   premier jour des vacances. Idempotent — rejouable à chaque
+   ouverture de l'app sans jamais créer de doublon. */
+function genererCahierVacances(vac){
+  if (modeLecture() || !modeEleve()) return 0;
+  let ajouts = 0;
+  coursDuCahier(vac).forEach(c => {
+    const deja = DB.revisions.some(r => r.cours === c.id && r.rang === 'Cahier' &&
+      r.prevue === vac.debut);
+    if (deja) return;
+    DB.revisions.push({
+      id: c.id + '#cahier-' + vac.cle,
+      cours: c.id, rang: 'Cahier', ancrage: false,
+      prevue: vac.debut, date: vac.debut, statut: 'aFaire'
+    });
+    ajouts++;
+  });
+  if (ajouts) sauver();
+  return ajouts;
+}
+
+/* Repousse hors des vacances toute révision ordinaire à venir qui y
+   tomberait (règle 6). Le cahier, lui, n'est jamais déplacé : c'est
+   précisément son rôle d'y être. */
+function repousserRevisionsVacances(){
+  if (modeLecture() || !modeEleve()) return 0;
+  const ajISO = isoDe(aujourdhui());
+  let deplacees = 0;
+  DB.revisions.forEach(r => {
+    if (r.rang === 'Cahier') return;
+    /* La reprise tombe volontairement le dernier samedi des vacances :
+       la déplacer lui ferait perdre tout son sens. */
+    if (r.rang === 'Reprise des cours') return;
+    if (r.statut !== 'aFaire') return;
+    if (r.date < ajISO) return;
+    if (!estEnVacances(r.date)) return;
+    const cible = prochainJourEcole(r.date);
+    if (cible !== r.date) { r.date = cible; deplacees++; }
+  });
+  if (deplacees) sauver();
+  return deplacees;
+}
+
+/* Point d'entrée unique, appelé au démarrage et à chaque rendu de
+   l'agenda : génère le cahier si on est en vacances, et repousse ce
+   qui doit l'être. */
+function appliquerReglesVacances(){
+  if (modeLecture() || !modeEleve()) return;
+  const vac = vacancesPour(isoDe(aujourdhui()));
+  if (vac) genererCahierVacances(vac);
+  repousserRevisionsVacances();
+  planifierReprises();
+}
+
+/* Règle 4 : une révision « Reprise des cours » le samedi qui précède
+   le premier jour de classe — après chaque période de vacances, et à
+   la rentrée de septembre. Elle porte les 3 derniers cours de chaque
+   matière, pour remettre le pied à l'étrier avant de reprendre.
+   Le samedi précédant la reprise tombe pendant les vacances : c'est
+   voulu, c'est le dernier jour utile pour se remettre en route. */
+function planifierReprises(){
+  const cal = calendrierPour(isoDe(aujourdhui()));
+  if (!cal) return 0;
+  const ajISO = isoDe(aujourdhui());
+
+  /* Jours de reprise de l'année : la rentrée, plus le lendemain de
+     chaque période de vacances (hors grandes vacances, qui ferment
+     l'année). */
+  const reprises = [];
+  if (cal.rentree) reprises.push(cal.rentree);
+  VACANCES_LIBELLES.forEach(v => {
+    if (v.cle === 'grandes') return;
+    const p = (cal.vacances || {})[v.cle];
+    if (p && p.fin) reprises.push(isoDe(plus(dDe(p.fin), 1)));
+  });
+
+  let ajouts = 0;
+  reprises.forEach(reprise => {
+    /* Samedi qui précède strictement ce jour de reprise. */
+    let s = plus(dDe(reprise), -1);
+    for (let i = 0; i < 7 && s.getDay() !== 6; i++) s = plus(s, -1);
+    const iso = isoDe(s);
+    if (iso < ajISO) return;                       // reprise déjà passée
+    /* Les 3 derniers cours de chaque matière ayant un emploi du temps. */
+    const codes = {};
+    DB.cours.forEach(c => { codes[c.code] = true; });
+    Object.keys(codes).forEach(code => {
+      if (!emploiMatiere(code)) return;
+      DB.cours.filter(c => c.code === code && c.date < iso)
+        .sort((a, b) => a.date < b.date ? 1 : -1)
+        .slice(0, NB_DERNIERS_COURS)
+        .forEach(c => {
+          if (ajouterRevisionSiAbsente(c.id, iso, 'Reprise des cours', false)) ajouts++;
+        });
+    });
+  });
+  if (ajouts) sauver();
+  return ajouts;
+}
+
+
+function reporterAuProchainCours(idCours, depuisISO){
+  const c = trouverCours(idCours);
+  if (!c) return null;
+  const jour = prochainJourMatiere(c.code, depuisISO);
+  const cible = jour || isoDe(plus(dDe(depuisISO), 7));
+  /* Règle 6 : jamais de révision reportée pendant les vacances —
+     elle glisse au premier jour de reprise. */
+  return prochainJourEcole(cible);
+}
+
+
+/* ============================================================
    Stockage
    ============================================================ */
 const CLE = 'sabosse';
@@ -1797,9 +2367,14 @@ const Store = {
                     /* Cabosse RPG — voir gamificationVierge() */
                     gamification: gamificationVierge(),
                     /* Calendrier scolaire — voir calendrierDefaut() */
-                    calendrier: calendrierDefaut()};
+                    calendrier: calendrierDefaut(),
+                    /* Emploi du temps par matière — voir emploiDuTemps() */
+                    emploiDuTemps: {},
+                    /* Installation neuve : rien à réinitialiser. */
+                    remiseAZeroV2: true,
+                    remiseAZeroProgressionV3: true};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
-                    taches:[], occurrences:[],
+                    taches:[], occurrences:[], quizz:{},
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
     try {
       const brut = localStorage.getItem(CLE);
@@ -1829,6 +2404,11 @@ const Store = {
          déjà renseignées sont conservées telles quelles — jamais
          écrasées par le défaut. */
       reglages.calendrier = Object.assign(calendrierDefaut(), reglages.calendrier || {});
+      /* Emploi du temps : simple repli sur un objet vide. Chaque
+         matière sera renseignée à la création de son premier cours. */
+      if (!reglages.emploiDuTemps || typeof reglages.emploiDuTemps !== 'object') {
+        reglages.emploiDuTemps = {};
+      }
 
       /* Migration RPG. La v2 (barème en points unitaires) remplace la
          v1 (XP à 5/6/8 points, paliers, niveau automatique). Les XP
@@ -1850,27 +2430,66 @@ const Store = {
         rangIndex: niveauAcquis - 1,
         rangLabel: RANGS_CABOSSE[niveauAcquis - 1],
         /* v1 : les niveaux étaient offerts, pas achetés. On considère
-           qu'ils ont été payés, sinon l'enfant se retrouverait avec
-           un solde négatif. */
+           qu'ils ont été payés au tarif de la nouvelle courbe, sinon
+           l'enfant se retrouverait avec un solde négatif. */
         pointsDepenses: ancienneVersion
-          ? (niveauAcquis - 1) * POINTS_PAR_NIVEAU
+          ? CUMULS_NIVEAUX[niveauAcquis - 1]
           : (gStocke.pointsDepenses || 0),
         pointsTotaux: ancienneVersion ? 0 : (gStocke.pointsTotaux || 0),
         jauges:      ancienneVersion ? gVierge.jauges
                                      : Object.assign(gVierge.jauges, gStocke.jauges || {}),
         artefacts:   Object.assign(gVierge.artefacts,   gStocke.artefacts || {}),
         penalites:   Object.assign(gVierge.penalites,   gStocke.penalites || {}),
+        bonusQuizz:  Object.assign({},                  gStocke.bonusQuizz || {}),
         preferences: Object.assign(gVierge.preferences, gStocke.preferences || {}),
         progression: {dernierNiveauAnnonce: niveauAcquis}
       });
 
+      /* ---- Version majeure : remise à zéro des cours ----
+         Le moteur de planification a entièrement changé (échéances
+         calées sur l'emploi du temps réel au lieu d'une rampe fixe).
+         Les révisions générées par l'ancien moteur n'ont plus de
+         sens dans le nouveau, et un mélange des deux donnerait un
+         agenda incohérent. On repart donc d'une base vide, une
+         seule fois, marquée par un drapeau pour ne jamais
+         recommencer. Matières, emploi du temps, calendrier, tâches
+         et identité de synchronisation sont préservés — seuls les
+         cours et leurs révisions partent. */
+      /* Le drapeau doit être lu dans les données STOCKÉES, pas dans
+         `reglages` qui a déjà été fusionné avec REGLAGES_DEFAUT — où
+         il vaut true (installation neuve = rien à réinitialiser). */
+      const remiseAZeroFaite = !!(o.reglages && o.reglages.remiseAZeroV2);
+      reglages.remiseAZeroV2 = true;
+
+      /* Second drapeau, indispensable : les versions v44 à v46 ont
+         déjà consommé remiseAZeroV2. Sans un marqueur distinct, les
+         appareils qui les ont installées garderaient une progression
+         calculée sur l'ancien barème (5 points par niveau), sans
+         rapport avec la courbe progressive du lot 5. Ce drapeau
+         remet donc la progression — et elle seule — à zéro une fois
+         de plus. */
+      const progressionRemiseAZero = !!(o.reglages && o.reglages.remiseAZeroProgressionV3);
+      reglages.remiseAZeroProgressionV3 = true;
+
+      if (!remiseAZeroFaite || !progressionRemiseAZero) {
+        /* La gamification se recalcule depuis les cours et révisions :
+           on repart d'un singe vierge, niveau 1, aucun point dépensé.
+           Les préférences sons/animations sont conservées — ce sont
+           des réglages d'usage, pas de la progression. */
+        const prefs = (reglages.gamification && reglages.gamification.preferences) || null;
+        reglages.gamification = gamificationVierge();
+        if (prefs) reglages.gamification.preferences = prefs;
+      }
+
       return {
-        cours: o.cours || [],
-        revisions: o.revisions || [],
+        cours: remiseAZeroFaite ? (o.cours || []) : [],
+        revisions: remiseAZeroFaite ? (o.revisions || []) : [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
         suivis: suivis,
         taches: Array.isArray(o.taches) ? o.taches : [],
         occurrences: Array.isArray(o.occurrences) ? o.occurrences : [],
+        /* Essais de quizz : absents des sauvegardes antérieures. */
+        quizz: (o.quizz && typeof o.quizz === 'object') ? o.quizz : {},
         reglages: reglages
       };
     } catch (e) { this.dispo = false; return defaut; }
@@ -1955,35 +2574,112 @@ function peutControler(){ return peutVoir('controle'); }
 function modeEleve(){ return typeCompte() === 'enfant'; }
 
 let derniereSyncEnvoi = null, echecsSyncConsecutifs = 0;
+/* Regroupement des envois : une action utilisateur déclenche souvent
+   plusieurs sauver() d'affilée (marquer + encaisser + rafraîchir la
+   gamification). Sans regroupement, c'était autant d'écritures
+   Firestore pour un seul geste. On attend un court instant que la
+   rafale retombe, puis on envoie une fois. */
+let syncEnAttente = null;
+const DELAI_REGROUPEMENT_MS = 700;
+/* Empreintes du dernier envoi réussi, par document : sert à
+   n'envoyer que ce qui a réellement changé. */
+let empreintesSync = {racine: null, annees: {}};
+
+function anneeCouranteCle(){ return libelleAnneeScolaire(aujourdhui()); }
+
+/* Répartit l'état en documents : racine légère (sans cours ni
+   révisions) + un document par année scolaire. */
+function chargesSync(){
+  const racine = {
+    matieres: DB.matieres,
+    taches: DB.taches, occurrences: DB.occurrences,
+    /* Essais de quizz : compteurs légers, jamais le texte des
+       questions — celui-ci vit sur les cours, dans le document de
+       l'année (point 4 de la refonte du stockage). */
+    quizz: DB.quizz,
+    reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
+               typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte,
+               /* Emploi du temps et calendrier scolaire : transmis pour que
+                  l'appareil qui suit puisse afficher les mêmes échéances que
+                  la source. Comme le reste, l'appareil suivi ne fait que les
+                  lire, jamais les recalculer ni les réécrire. */
+               emploiDuTemps: DB.reglages.emploiDuTemps,
+               calendrier: DB.reglages.calendrier,
+               /* L'état RPG voyage pour que les parents voient le niveau du
+                  singe, mais l'historique reste la source de vérité : un
+                  appareil suivi ne fait que l'afficher, jamais le recalculer
+                  ni le réécrire (rafraichirGamification sort si modeLecture). */
+               gamification: DB.reglages.gamification},
+    anneeCourante: anneeCouranteCle()
+  };
+
+  /* Cours et révisions ventilés par année scolaire : c'est ce
+     découpage qui garde chaque document loin de la limite de 1 Mio,
+     même après plusieurs années d'usage. */
+  const annees = {};
+  const cleDe = iso => libelleAnneeScolaire(dDe(iso));
+  DB.cours.forEach(c => {
+    const k = cleDe(c.date);
+    if (!annees[k]) annees[k] = {cours: [], revisions: []};
+    annees[k].cours.push(c);
+  });
+  DB.revisions.forEach(r => {
+    const c = DB.cours.find(x => x.id === r.cours);
+    const k = cleDe(c ? c.date : r.date);
+    if (!annees[k]) annees[k] = {cours: [], revisions: []};
+    annees[k].revisions.push(r);
+  });
+  return {racine: racine, annees: annees};
+}
+
+function envoyerSync(){
+  const charges = chargesSync();
+  /* Seuls les documents dont l'empreinte a changé sont réenvoyés. */
+  const empreinteRacine = JSON.stringify(charges.racine);
+  const aEnvoyer = {annees: {}};
+  let racineChangee = empreinteRacine !== empreintesSync.racine;
+  Object.keys(charges.annees).forEach(k => {
+    const e = JSON.stringify(charges.annees[k]);
+    if (e !== empreintesSync.annees[k]) aEnvoyer.annees[k] = charges.annees[k];
+  });
+  if (!racineChangee && !Object.keys(aEnvoyer.annees).length) return;
+
+  window.SabosseSync.envoyer(DB.reglages.codePartage, charges.racine, aEnvoyer).then(ok => {
+    /* Un échec d'envoi était jusque-là totalement silencieux — c'est
+       très probablement ce qui a causé le bug de suivi rapporté :
+       rien n'avertissait qu'une mise à jour n'était pas partie. */
+    if (ok) {
+      derniereSyncEnvoi = Date.now();
+      echecsSyncConsecutifs = 0;
+      empreintesSync.racine = empreinteRacine;
+      Object.keys(aEnvoyer.annees).forEach(k => {
+        empreintesSync.annees[k] = JSON.stringify(charges.annees[k]);
+      });
+      const alerte = window.SabosseSync.derniereAlerteTaille;
+      if (alerte) {
+        window.SabosseSync.derniereAlerteTaille = null;
+        toast('Données volumineuses (' + Math.round(alerte / 1024) + ' Kio) — pense à archiver.');
+      }
+    }
+    else if (++echecsSyncConsecutifs === 3) {
+      const motif = window.SabosseSync.dernierMotifEchec;
+      toast(motif === 'permission-denied'
+        ? 'Ce code de partage appartient à un autre appareil — régénère-le.'
+        : motif === 'document-trop-gros' || motif === 'annee-trop-grosse'
+          ? 'Données trop volumineuses pour être partagées.'
+          : 'Le partage ne se synchronise plus — vérifie ta connexion.');
+    }
+    if (vueActive === 'reglages') rendre();
+  });
+}
 
 function sauver(){
   Store.ecrire(DB);
   if (!modeLecture()) enregistrerInstantane(); // jamais pour un profil suivi : ce n'est pas nos données
   if (DB.reglages.role === 'source' && DB.reglages.codePartage &&
       window.SabosseSync && window.SabosseSync.disponible) {
-    window.SabosseSync.envoyer(DB.reglages.codePartage, {
-      cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
-      taches: DB.taches, occurrences: DB.occurrences,
-      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
-                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte,
-                 /* L'état RPG voyage pour que les parents voient le niveau du
-                    singe, mais l'historique reste la source de vérité : un
-                    appareil suivi ne fait que l'afficher, jamais le recalculer
-                    ni le réécrire (rafraichirGamification sort si modeLecture). */
-                 gamification: DB.reglages.gamification}
-    }).then(ok => {
-      /* Un échec d'envoi était jusque-là totalement silencieux — c'est
-         très probablement ce qui a causé le bug de suivi rapporté :
-         rien n'avertissait qu'une mise à jour n'était pas partie. */
-      if (ok) { derniereSyncEnvoi = Date.now(); echecsSyncConsecutifs = 0; }
-      else if (++echecsSyncConsecutifs === 3) {
-        const motif = window.SabosseSync.dernierMotifEchec;
-        toast(motif === 'permission-denied'
-          ? 'Ce code de partage appartient à un autre appareil — régénère-le.'
-          : 'Le partage ne se synchronise plus — vérifie ta connexion.');
-      }
-      if (vueActive === 'reglages') rendre();
-    });
+    if (syncEnAttente) clearTimeout(syncEnAttente);
+    syncEnAttente = setTimeout(() => { syncEnAttente = null; envoyerSync(); }, DELAI_REGROUPEMENT_MS);
   }
 }
 
@@ -2087,17 +2783,29 @@ function ajouterCours(code, numero, dateISO, annee){
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
   DB.cours.push({id, code, numero, date: dateISO, annee: annee || '', commentaire: ''});
-  echeancier(dateISO).forEach((e, i) => {
-    DB.revisions.push({
-      id: id + '#' + i,
-      cours: id,
-      rang: e.rang,
-      ancrage: e.ancrage,
-      prevue: e.date,
-      date: e.date,
-      statut: 'aFaire'
+
+  if (modeEleve()) {
+    /* Mode ÉLÈVE : échéances de base, puis la règle des 3 derniers
+       cours de la matière — qui peut aussi ajouter des révisions à
+       des cours plus anciens, d'où l'appel séparé. */
+    echeancierEleve(dateISO).forEach(e =>
+      ajouterRevisionSiAbsente(id, e.date, e.rang, e.ancrage));
+    planifierDerniersCours(code);
+  } else {
+    /* Mode ÉTUDIANT : rampe historique, inchangée. */
+    echeancier(dateISO).forEach((e, i) => {
+      DB.revisions.push({
+        id: id + '#' + i,
+        cours: id,
+        rang: e.rang,
+        ancrage: e.ancrage,
+        prevue: e.date,
+        date: e.date,
+        statut: 'aFaire'
+      });
     });
-  });
+  }
+
   if (annee) DB.reglages.derniereAnnee = annee;
   completerRappels();
   sauver();
@@ -2135,7 +2843,14 @@ function supprimerRevision(id){
    une révision est déjà prévue ce jour-là pour ce cours, auquel cas
    la rampe normale suffit et on ne double pas la charge. */
 function assurerRenfortJ7(idCours, depuisISO){
-  const cible = isoDe(plus(dDe(depuisISO), 7));
+  /* Mode ÉLÈVE : le renfort ne tombe plus à J+7 fixe mais au
+     prochain jour où la matière a effectivement lieu — réviser la
+     veille du cours suivant a bien plus de sens que sept jours plus
+     tard au hasard. Mode ÉTUDIANT : J+7 comme avant. */
+  const cible = modeEleve()
+    ? reporterAuProchainCours(idCours, depuisISO)
+    : isoDe(plus(dDe(depuisISO), 7));
+  if (!cible) return false;
   const dejaPlanifiee = DB.revisions.some(r => r.cours === idCours && r.date === cible &&
     (r.statut === 'aFaire' || r.statut === 'reportee'));
   if (dejaPlanifiee) return false;
@@ -2223,6 +2938,7 @@ function rendre(){
   });
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'taches') vue.innerHTML = vueTaches();
+  else if (vueActive === 'quizz') vue.innerHTML = vueQuizz();
   else if (vueActive === 'cabosse') vue.innerHTML = vueCabosse();
   else if (vueActive === 'ajout') { vue.innerHTML = vueAjout(); majApercu(); }
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
@@ -2619,10 +3335,16 @@ function carteDimancheCabosse(){
   const dl = donneesLecture();
   const sem = semaineTaches(0);
   const debloquee = semaineDebloquee(dl, sem.debut, sem.fin);
+  /* Pendant les vacances, c'est l'état du cahier qui décide du fond,
+     pas la semaine scolaire — qui n'a plus cours. */
+  const vac = modeEleve() ? vacancesPour(isoDe(aujourdhui())) : null;
+  const cahierFini = vac && !dl.revisions.some(r => r.rang === 'Cahier' &&
+    r.prevue === vac.debut && (r.statut === 'aFaire' || r.statut === 'reportee'));
+  const auRepos = vac ? cahierFini : debloquee;
   const pts = pointsSemaineCabosse();
   const dispo = pointsDisponibles(g);
   const restants = coursRestantsSemaine();
-  const fond = debloquee ? CABOSSE_ASSETS.fonds.plage : CABOSSE_ASSETS.fonds.bibliotheque;
+  const fond = auRepos ? CABOSSE_ASSETS.fonds.plage : CABOSSE_ASSETS.fonds.bibliotheque;
 
   return '<button type="button" class="cd-carte" data-act="ouvrir-cabosse" ' +
     'style="background-image:url(\'' + fond + '\')" ' +
@@ -2641,15 +3363,17 @@ function carteDimancheCabosse(){
 /* --- Vue détaillée de progression ---------------------------- */
 /* --- Vue détaillée Cabosse -----------------------------------
    Le niveau ne monte plus tout seul : l'enfant clique sur le « + »
-   pour dépenser 5 points et faire évoluer son singe. C'est lui qui
-   décide du moment, ce qui rend la récompense bien plus concrète. */
+   pour dépenser le coût du palier et faire évoluer son singe. C'est
+   lui qui décide du moment, ce qui rend la récompense plus concrète.
+   La jauge montre le solde disponible rapporté au coût du prochain
+   palier ; elle se vide visiblement à chaque dépense. */
 function vueCabosse(){
   const g = gamif();
   const dispo = pointsDisponibles(g);
-  const peutMonter = dispo >= POINTS_PAR_NIVEAU && g.niveauGlobal < NIVEAU_MAX && !modeLecture();
-  const pctVersNiveau = g.niveauGlobal >= NIVEAU_MAX
-    ? 100
-    : Math.min(100, Math.round((dispo % POINTS_PAR_NIVEAU) / POINTS_PAR_NIVEAU * 100));
+  const cout = coutNiveauSuivant(g.niveauGlobal);
+  const auMax = g.niveauGlobal >= NIVEAU_MAX;
+  const peutMonter = !auMax && dispo >= cout && !modeLecture();
+  const pctJauge = auMax ? 100 : Math.min(100, Math.round(dispo / cout * 100));
 
   let html = '<div class="cbs-entete">' + avatarCabosse('grand') +
     '<div class="cbs-rang">' + ech(g.rangLabel) + '</div>' +
@@ -2659,18 +3383,21 @@ function vueCabosse(){
   /* Bloc « faire évoluer » : le cœur de la vue. */
   html += '<div class="cbs-evolution' + (peutMonter ? ' pret' : '') + '">' +
     '<div class="cbs-solde"><b>' + dispo + '</b><span>point' + (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
-    (g.niveauGlobal >= NIVEAU_MAX
+    (auMax
       ? '<div class="cbs-max">Niveau maximum atteint 🎉</div>'
       : '<button type="button" class="cbs-plus' + (peutMonter ? '' : ' pas-assez') + '" ' +
         'data-act="cabosse-evoluer" aria-label="Faire évoluer Cabosse">+</button>') +
   '</div>' +
-  (g.niveauGlobal >= NIVEAU_MAX ? '' :
-    '<div class="cc-barre" style="margin-top:4px"><i style="width:' + pctVersNiveau + '%"></i></div>' +
+  (auMax ? '' :
+    '<div class="jauge-points" id="jauge-points">' +
+      '<i style="width:' + pctJauge + '%"></i>' +
+      '<span class="jauge-txt">' + dispo + ' / ' + cout + '</span>' +
+    '</div>' +
     '<p class="aide-champ" style="text-align:center;margin-top:6px">' +
       (peutMonter
-        ? 'Appuie sur le + pour dépenser ' + POINTS_PAR_NIVEAU + ' points et faire évoluer Cabosse.'
-        : 'Encore ' + (POINTS_PAR_NIVEAU - (dispo % POINTS_PAR_NIVEAU)) +
-          ' point(s) avant la prochaine évolution.') + '</p>');
+        ? 'Appuie sur le + pour dépenser ' + cout + ' points et faire évoluer Cabosse.'
+        : 'Encore ' + (cout - dispo) + ' point' + ((cout - dispo) > 1 ? 's' : '') +
+          ' pour le niveau ' + (g.niveauGlobal + 1) + '.') + '</p>');
 
   html += '<button class="bouton discret" data-act="cabosse-galerie" style="margin-top:12px">' +
     '🖼️ Voir toutes les évolutions débloquées</button>';
@@ -2846,6 +3573,53 @@ function vueAgenda(){
     (r.statut === 'aFaire' || r.statut === 'reportee') &&
     (dl.afficherAncrage || !r.ancrage));
 
+  /* --- Mode vacances (règle 7) ---------------------------------
+     Pendant une période déclarée, l'agenda ordinaire s'efface au
+     profit du cahier : un seul bloc, titré par la période, qui
+     regroupe tous les cours encodés depuis les vacances
+     précédentes. Le découpage jour par jour n'a plus de sens quand
+     l'élève peut tout valider quand il veut. */
+  const vac = modeEleve() ? vacancesPour(ajISO) : null;
+  if (vac) {
+    const cahier = enAttente.filter(r => r.rang === 'Cahier' && r.prevue === vac.debut)
+      .sort((a, b) => {
+        const ca = dl.cours.find(x => x.id === a.cours), cb = dl.cours.find(x => x.id === b.cours);
+        return (ca ? ca.date : '') < (cb ? cb.date : '') ? -1 : 1;
+      });
+    const total = dl.revisions.filter(r => r.rang === 'Cahier' && r.prevue === vac.debut).length;
+    const restants = cahier.length;
+
+    let h = banniere +
+      '<section class="jour vacances"><h2>📚 ' + ech(vac.nom) +
+        '<span class="compte">' + restants + '</span></h2>' +
+      '<p class="vac-periode">Révision des vacances du ' + libelleCourt(vac.debut) +
+        ' au ' + libelleCourt(vac.fin) + '</p>';
+
+    if (!total) {
+      h += '<div class="vide"><div class="gros">🌴</div>' +
+        '<p><b>Rien à réviser ces vacances.</b></p>' +
+        '<p>Profite bien !</p></div>';
+    } else if (!restants) {
+      /* Cahier terminé : le singe part en vacances (règle 8). */
+      h += '<p class="vac-fini">🎉 Cahier de vacances terminé !</p>' +
+        carteDimancheCabosse();
+    } else {
+      cahier.forEach(r => h += carteRevision(r, true));
+    }
+    /* La « Reprise des cours » tombe le dernier samedi des vacances :
+       affichée dans tous les cas, y compris cahier bouclé — sinon
+       elle resterait invisible jusqu'au jour même. */
+    const reprises = enAttente.filter(r => r.rang === 'Reprise des cours' &&
+      r.date >= vac.debut && r.date <= vac.fin);
+    if (reprises.length) {
+      h += '<h2 style="margin-top:18px">🎒 Reprise des cours' +
+        '<span class="compte">' + reprises.length + '</span></h2>';
+      reprises.forEach(r => h += carteRevision(r, false));
+    }
+    h += '</section>';
+    return h;
+  }
+
   const retard   = enAttente.filter(r => r.date < ajISO);
   const proches  = enAttente.filter(r => r.date >= ajISO && r.date <= dimSuivant);
   const plusTard = enAttente.filter(r => r.date > dimSuivant);
@@ -2954,8 +3728,251 @@ function vueTaches(){
   return html;
 }
 
+/* ============================================================
+   QUIZZ — essais sur les points difficiles
+
+   La question elle-même vit sur le cours (champ `commentaire`),
+   écrite une seule fois. Ici on ne stocke que l'historique des
+   essais, indexé par identifiant de cours — jamais le texte.
+
+     DB.quizz = { <idCours>: {essais, reussites, dernierEssai,
+                              bloqueJusqu} }
+
+   `bloqueJusqu` porte la règle 3 : après un « je dois encore
+   m'améliorer », la question n'est plus jouable avant le lendemain.
+   ============================================================ */
+function quizzEtats(){
+  if (!DB.quizz) DB.quizz = {};
+  return DB.quizz;
+}
+function quizzEtat(idCours){
+  const src = modeLecture() ? ((suiviActif() || {}).quizz || {}) : quizzEtats();
+  return src[idCours] || {essais: 0, reussites: 0, dernierEssai: '', bloqueJusqu: ''};
+}
+/* Taux de réussite en pourcentage. -1 si jamais tenté : permet de
+   distinguer « pas encore essayé » de « 0 % de réussite ». */
+function quizzTaux(idCours){
+  const e = quizzEtat(idCours);
+  return e.essais ? Math.round(e.reussites / e.essais * 100) : -1;
+}
+/* Une question ratée n'est pas rejouable avant le lendemain. */
+function quizzJouable(idCours){
+  const e = quizzEtat(idCours);
+  return !e.bloqueJusqu || e.bloqueJusqu <= isoDe(aujourdhui());
+}
+
+function enregistrerEssaiQuizz(idCours, reussi){
+  if (modeLecture()) return;
+  const etats = quizzEtats();
+  const e = etats[idCours] || {essais: 0, reussites: 0, dernierEssai: '', bloqueJusqu: ''};
+  e.essais += 1;
+  if (reussi) { e.reussites += 1; e.bloqueJusqu = ''; }
+  else { e.bloqueJusqu = isoDe(plus(aujourdhui(), 1)); }  // règle 3
+  e.dernierEssai = isoDe(aujourdhui());
+  etats[idCours] = e;
+  sauver();
+}
+
+/* --- Quizz : historique des notes de difficulté ---------------
+   Les notes vivent sur le cours (champ `commentaire`), écrites une
+   seule fois. Cette vue ne les recopie pas : elle les regroupe par
+   matière en référençant l'identifiant du cours. C'est aussi ce qui
+   permet aux rappels annuels de ne porter qu'une référence, jamais
+   le texte — point 4 de la refonte du stockage.
+   Un bonus spécifique par quizz réalisé viendra se greffer ici. */
+function coursAvecDifficulte(){
+  const dl = donneesLecture();
+  return dl.cours.filter(c => (c.commentaire || '').trim());
+}
+
+/* Filtres de la vue Quizz — état d'écran, jamais persisté. */
+let quizzFiltreMatiere = '';
+let quizzTri = 'essai-asc';
+const QUIZZ_TRIS = [
+  {cle:'essai-asc',  nom:'Dernier essai : le plus ancien'},
+  {cle:'essai-desc', nom:'Dernier essai : le plus récent'},
+  {cle:'taux-asc',   nom:'Réussite : la plus faible'},
+  {cle:'taux-desc',  nom:'Réussite : la plus forte'}
+];
+
+function trierQuizz(liste){
+  const cle = quizzTri;
+  return liste.slice().sort((a, b) => {
+    if (cle.indexOf('taux') === 0) {
+      /* Jamais tenté (-1) remonte en tête du tri croissant : c'est
+         bien ce qu'il reste de plus urgent à travailler. */
+      const ta = quizzTaux(a.id), tb = quizzTaux(b.id);
+      return cle === 'taux-asc' ? ta - tb : tb - ta;
+    }
+    /* Jamais tenté = chaîne vide, donc le plus « ancien ». */
+    const da = quizzEtat(a.id).dernierEssai || '', db = quizzEtat(b.id).dernierEssai || '';
+    if (da === db) return a.date < b.date ? 1 : -1;
+    return cle === 'essai-asc' ? (da < db ? -1 : 1) : (da < db ? 1 : -1);
+  });
+}
+
+function vueQuizz(){
+  const dl = donneesLecture();
+  const toutes = coursAvecDifficulte();
+  if (!toutes.length) {
+    return '<div class="vide"><div class="gros">🧩</div>' +
+      '<p><b>Aucune question pour l\u2019instant.</b></p>' +
+      '<p>Quand tu coches « Pas encore tout compris ou retenu », ' +
+      'la question que tu poses arrive ici.</p></div>';
+  }
+
+  /* Barre de filtres : matière et tri. */
+  const codes = [];
+  toutes.forEach(c => { if (codes.indexOf(c.code) === -1) codes.push(c.code); });
+  codes.sort();
+  let optsMat = '<option value="">Toutes les matières</option>';
+  codes.forEach(code => {
+    optsMat += '<option value="' + ech(code) + '"' +
+      (quizzFiltreMatiere === code ? ' selected' : '') + '>' +
+      ech(matiereDe(code).nom) + '</option>';
+  });
+  let optsTri = '';
+  QUIZZ_TRIS.forEach(t => {
+    optsTri += '<option value="' + t.cle + '"' + (quizzTri === t.cle ? ' selected' : '') + '>' +
+      ech(t.nom) + '</option>';
+  });
+
+  const filtrees = quizzFiltreMatiere
+    ? toutes.filter(c => c.code === quizzFiltreMatiere) : toutes;
+  const liste = trierQuizz(filtrees);
+
+  let html = '<div class="quizz-filtres">' +
+      '<select id="quizz-matiere">' + optsMat + '</select>' +
+      '<select id="quizz-tri">' + optsTri + '</select>' +
+    '</div>' +
+    '<p class="etiquette">' + liste.length + ' question' + (liste.length > 1 ? 's' : '') + '</p>';
+
+  liste.forEach(c => {
+    const m = matiereDe(c.code);
+    const e = quizzEtat(c.id);
+    const taux = quizzTaux(c.id);
+    const jouable = quizzJouable(c.id) && !modeLecture();
+    const ouverte = quizzOuverte === c.id;
+
+    html += '<div class="quizz-c">' +
+      '<div class="quizz-tete">' +
+        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<b>' + ech(refCours(c)) + '</b>' +
+        '<span class="quizz-taux' + (taux < 0 ? ' neuf' : (taux >= 70 ? ' bon' : '')) + '">' +
+          (taux < 0 ? 'jamais tenté' : taux + ' %') + '</span>' +
+      '</div>' +
+      '<div class="quizz-q">' + ech(c.commentaire) + '</div>' +
+      '<div class="quizz-meta">' +
+        (e.essais ? e.reussites + ' / ' + e.essais + ' réussi' + (e.reussites > 1 ? 's' : '') +
+          ' · dernier essai le ' + libelleCourt(e.dernierEssai) : 'Pas encore essayé') +
+      '</div>';
+
+    if (!jouable && e.bloqueJusqu && e.bloqueJusqu > isoDe(aujourdhui())) {
+      html += '<div class="quizz-bloque">⏳ À retenter demain</div>';
+    } else if (!modeLecture()) {
+      if (!ouverte) {
+        html += '<button class="bouton discret" data-act="quizz-repondre" data-id="' + ech(c.id) + '" ' +
+          'style="margin-top:9px">Répondre à la question</button>';
+      } else {
+        /* Deux issues : réussite (bonus au choix) ou à retravailler. */
+        html += '<div class="quizz-choix">' +
+          '<button class="bouton principal" data-act="quizz-reussi" data-id="' + ech(c.id) + '">' +
+            'J\u2019ai réussi à répondre sans faute 😎</button>' +
+          '<button class="bouton discret" data-act="quizz-rate" data-id="' + ech(c.id) + '">' +
+            'Je dois encore m\u2019améliorer 🤔</button>' +
+        '</div>';
+      }
+      html += '<button class="bouton discret quizz-acquis" data-act="quizz-resolu" data-id="' + ech(c.id) + '">' +
+        'C\u2019est acquis — retirer la question</button>';
+    }
+    html += '</div>';
+  });
+
+  html += '<p class="aide-champ" style="margin-top:14px;text-align:center">' +
+    'Tant qu\u2019une question reste, le cours revient chaque année. ' +
+    'Retire-la quand le point est acquis.</p>';
+  return html;
+}
+
+/* Question actuellement dépliée (choix réussite / à retravailler). */
+let quizzOuverte = null;
+
+/* Choix de la caractéristique à créditer après une réussite. */
+function ouvrirBonusQuizz(idCours){
+  const actions = document.getElementById('confirm-actions');
+  document.getElementById('confirm-titre').textContent = 'Bravo ! Choisis ta récompense';
+  document.getElementById('confirm-info').textContent =
+    'Un point de la caractéristique de ton choix pour Cabosse.';
+  document.getElementById('confirm-note-zone').style.display = 'none';
+  let boutons = '';
+  CARACTERISTIQUES.forEach(c => {
+    boutons += '<button class="bouton discret" data-confirm="quizz-bonus" ' +
+      'data-carac="' + c.cle + '" data-id="' + ech(idCours) + '">' +
+      c.emoji + ' ' + c.nom + '</button>';
+  });
+  actions.innerHTML = boutons;
+  confirmVoile.classList.add('on');
+}
+
 /* --- Ajout ------------------------------------------------- */
 let matiereEnEdition = null;
+
+/* --- Emploi du temps d'une matière (formulaire Nouveau cours) ---
+   Replié par défaut. Il ne concerne que le mode ÉLÈVE : en mode
+   ÉTUDIANT, le fonctionnement historique est conservé et ce bloc
+   n'apparaît pas du tout.
+   Le contenu est régénéré à chaque changement de matière (voir le
+   handler de #f-mat) : c'est là qu'on sait si l'emploi du temps est
+   déjà connu — auquel cas il est simplement rappelé — ou s'il doit
+   être saisi, auquel cas il devient obligatoire. */
+function blocEmploiMatiere(code){
+  if (!modeEleve()) return '';
+  return '<div id="f-emploi">' + contenuEmploiMatiere(code) + '</div>';
+}
+
+function contenuEmploiMatiere(code){
+  if (!code) {
+    return '<p class="aide-champ" style="margin-top:12px">' +
+      'Choisis une matière pour définir ou vérifier son emploi du temps.</p>';
+  }
+  const m = matiereDe(code);
+  const e = emploiMatiere(code);
+
+  if (e) {
+    /* Déjà connu : on le rappelle, modifiable d'un bouton. Le
+       report automatique sur les cours suivants, c'est simplement
+       le fait de ne rien redemander ici. */
+    return '<div class="carte emploi-connu" style="margin-top:12px">' +
+      '<div class="emploi-titre">📅 ' + ech(m.nom) + ' a lieu :</div>' +
+      '<div class="emploi-resume">' + ech(libelleEmploi(code)) + '</div>' +
+      '<button class="bouton discret" data-act="emploi-modifier" data-code="' + ech(code) + '" ' +
+        'style="margin-top:8px">Modifier l\u2019emploi du temps</button>' +
+    '</div>';
+  }
+
+  /* Première saisie pour cette matière : bloc obligatoire. */
+  let jours = '';
+  JOURS_ECOLE.forEach(j => {
+    const nom = JOURS[j].charAt(0).toUpperCase() + JOURS[j].slice(1, 3);
+    let opts = '';
+    FREQUENCES.forEach(f => {
+      opts += '<option value="' + f.cle + '">' + ech(f.nom) + '</option>';
+    });
+    jours += '<div class="emploi-ligne">' +
+      '<label class="check-ligne" style="padding:0;flex:0 0 auto">' +
+        '<input type="checkbox" data-emploi-jour="' + j + '">' +
+        '<span style="min-width:34px">' + nom + '</span></label>' +
+      '<select data-emploi-freq="' + j + '" disabled>' + opts + '</select>' +
+    '</div>';
+  });
+
+  return '<div class="carte emploi-saisie" style="margin-top:12px">' +
+    '<div class="emploi-titre">📅 ' + ech(m.nom) + ' a lieu tous les :</div>' +
+    '<p class="aide-champ">À renseigner une seule fois par matière. ' +
+      'Ce choix sera repris pour tous les prochains cours de ' + ech(m.nom) + '.</p>' +
+    jours +
+  '</div>';
+}
 
 function vueAjout(){
   if (modeLecture()) {
@@ -2987,6 +4004,7 @@ function vueAjout(){
       '<div class="champ" style="margin-bottom:0"><label for="f-date">Date du cours</label>' +
         '<input type="date" id="f-date" value="' + isoDe(aujourdhui()) + '"></div>' +
     '</div>' +
+    blocEmploiMatiere() +
     '<button class="bouton principal" id="f-ok" style="margin-top:14px">Enregistrer le cours</button>' +
     '<details class="pliable" data-cle="echeancier"' + ouvert('echeancier') + ' style="margin-top:16px">' +
       '<summary>Échéancier prévisionnel<span class="compte" id="apercu-compte"></span></summary>' +
@@ -3141,9 +4159,13 @@ function carteMatieres(){
         '<button class="mini" data-act="matiere-annuler-edition">\u2715</button>' +
       '</div>';
     } else {
+      /* En mode ÉLÈVE, on rappelle l'emploi du temps sous la matière :
+         c'est l'endroit naturel pour vérifier ce qui a été saisi. */
+      const emploi = modeEleve() ? libelleEmploi(m.code) : '';
       html += '<div class="mat-l">' +
         '<i class="puce" style="background:' + m.c + '"></i>' +
-        '<span class="mat-nom"><b>' + ech(m.code) + '</b> · ' + ech(m.nom) + '</span>' +
+        '<span class="mat-nom"><b>' + ech(m.code) + '</b> · ' + ech(m.nom) +
+          (emploi ? '<span class="mat-emploi">' + ech(emploi) + '</span>' : '') + '</span>' +
         '<button class="mini" data-act="matiere-editer" data-id="' + m.code + '">\u270E</button>' +
         '<button class="mini sup" data-act="matiere-suppr" data-id="' + m.code + '">\u2715</button>' +
       '</div>';
@@ -3297,6 +4319,9 @@ function blocCalendrierScolaire(){
    plutôt que d'enregistrer un calendrier à moitié faux, sur lequel
    tout le moteur de planification s'appuiera ensuite. */
 function enregistrerCalendrier(){
+  /* calendriers() renvoie le calendrier de l'appareil suivi en mode
+     lecture : y écrire ne serait ni persisté ni légitime. */
+  if (modeLecture()) { toast('Lecture seule : modifie depuis l\u2019appareil suivi.'); return; }
   const lire = cle => {
     const el = document.querySelector('[data-cal="' + cle + '"]');
     return el ? el.value : '';
@@ -4395,6 +5420,9 @@ function ajouterSuivi(code){
 
 function demarrerEcouteSuivi(code){
   if (!window.SabosseSync || !window.SabosseSync.disponible || !code) return;
+  /* On n'écoute que l'année scolaire en cours : les années passées
+     n'apportent rien à l'affichage du parent et coûteraient des
+     lectures Firestore à chaque ouverture. */
   window.SabosseSync.suivre(code, (donnees, erreur) => {
     if (erreur) { toast('Connexion au suivi interrompue.'); return; }
     if (!donnees) return;
@@ -4407,11 +5435,12 @@ function demarrerEcouteSuivi(code){
     s.cours = donnees.cours || [];
     s.revisions = donnees.revisions || [];
     s.matieres = (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice();
+    s.quizz = donnees.quizz || {};
     s.reglages = donnees.reglages || {};
     s.recuLe = Date.now(); // horodatage visible, pour repérer un suivi qui ne bouge plus
     Store.ecrire(DB); // mise en cache locale pour la lecture hors-ligne, sans repousser vers Firestore
     rendre();
-  });
+  }, anneeCouranteCle());
 }
 
 /* Relance toutes les écoutes suivi enregistrées — au démarrage de
@@ -4625,6 +5654,7 @@ function importerSauvegarde(fichier){
          antérieures à la v29, d'où le repli sur un tableau vide. */
       taches: Array.isArray(o.taches) ? o.taches : [],
       occurrences: Array.isArray(o.occurrences) ? o.occurrences : [],
+      quizz: (o.quizz && typeof o.quizz === 'object') ? o.quizz : {},
       reglages: Object.assign(
         {afficherAncrage: true, prenom: '', email: '', typeCompte: '', tolerance: 3,
          derniereAnnee: '', chatVuJusquePar: {}, cagnotte: 0, semainesEncaissees: {},
@@ -4861,7 +5891,7 @@ function demanderConfirmation(id, statut){
     document.getElementById('confirm-note').value = (c && c.commentaire) || '';
     actions.innerHTML =
       '<button class="bouton principal" data-confirm="reussi">J\u2019ai réussi à tout réciter sans regarder <span class="emo">😎</span></button>' +
-      '<button class="bouton discret" data-confirm="a-revoir">Je n\u2019ai pas encore tout retenu <span class="emo">🤔</span></button>';
+      '<button class="bouton discret" data-confirm="a-revoir">Pas encore tout compris ou retenu <span class="emo">🤔</span></button>';
   } else {
     document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
     zoneNote.style.display = 'none';
@@ -4881,7 +5911,29 @@ document.getElementById('confirm-non').addEventListener('click', fermerConfirmat
 confirmVoile.addEventListener('click', e => {
   if (e.target === confirmVoile) { fermerConfirmation(); return; }
   const b = e.target.closest('button[data-confirm]');
-  if (!b || !actionEnCours) return;
+  if (!b) return;
+  /* Le bonus de quizz n'est pas rattaché à une révision : il doit
+     être traité avant le garde sur actionEnCours, qui est null ici. */
+  if (b.dataset.confirm === 'quizz-bonus') {
+    const carac = CARACTERISTIQUES.find(c => c.cle === b.dataset.carac);
+    if (carac) {
+      const g = gamif();
+      /* Les bonus de quizz ne se déduisent d'aucun historique de
+         cours ou de tâche : ils sont comptabilisés à part, et
+         réinjectés par calculerGamification() — sinon le prochain
+         recalcul les effacerait. */
+      if (!g.bonusQuizz) g.bonusQuizz = {};
+      g.bonusQuizz[carac.cle] = (g.bonusQuizz[carac.cle] || 0) + 1;
+      sauver();
+      gainCabosse(carac.cle, 1);
+      jouerSonCabosse('reward');
+      rafraichirGamification();
+    }
+    fermerConfirmation();
+    rendre();
+    return;
+  }
+  if (!actionEnCours) return;
   const type = b.dataset.confirm;
 
   if (type === 'reussi') {
@@ -4894,7 +5946,7 @@ confirmVoile.addEventListener('click', e => {
     /* Second écran, dans la même feuille : on révèle le champ de
        points difficiles et on remplace les deux choix par un unique
        bouton de confirmation. Le modal reste ouvert. */
-    document.getElementById('confirm-titre').textContent = 'Note ce qui reste à travailler';
+    document.getElementById('confirm-titre').textContent = 'Pose ta question';
     document.getElementById('confirm-note-zone').style.display = '';
     document.getElementById('confirm-actions').innerHTML =
       '<button class="bouton principal" data-confirm="a-revoir-confirmer">Confirmer</button>';
@@ -4994,8 +6046,48 @@ vue.addEventListener('click', e => {
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
   else if (act === 'cabosse-evoluer') monterNiveauCabosse();
   else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
+  else if (act === 'emploi-modifier') {
+    /* On efface la définition : le bloc de saisie réapparaît aussitôt,
+       avec la matière toujours sélectionnée. */
+    const code = b.dataset.code;
+    if (code && emploiDuTemps()[code]) {
+      delete emploiDuTemps()[code];
+      sauver();
+      const zone = document.getElementById('f-emploi');
+      if (zone) zone.innerHTML = contenuEmploiMatiere(code);
+      toast('Redéfinis l\u2019emploi du temps de cette matière.');
+    }
+  }
+  else if (act === 'quizz-repondre') { quizzOuverte = b.dataset.id; rendre(); }
+  else if (act === 'quizz-reussi') {
+    /* Règle 3 : réussite → un point de caractéristique au choix.
+       On enregistre l'essai d'abord, le bonus sera crédité au choix. */
+    enregistrerEssaiQuizz(b.dataset.id, true);
+    quizzOuverte = null;
+    ouvrirBonusQuizz(b.dataset.id);
+  }
+  else if (act === 'quizz-rate') {
+    enregistrerEssaiQuizz(b.dataset.id, false);
+    quizzOuverte = null;
+    rendre();
+    toast('Pas grave — tu pourras réessayer demain.');
+  }
+  else if (act === 'quizz-resolu') {
+    /* Effacer la note met fin aux rappels annuels de ce cours :
+       completerRappels() retire aussitôt les échéances à venir,
+       puisque rappelsAttendus() ne renvoie plus rien sans note. */
+    const c = DB.cours.find(x => x.id === b.dataset.id);
+    if (c) {
+      c.commentaire = '';
+      completerRappels();
+      sauver();
+      rendre();
+      toast('Point acquis — plus de rappel pour ce cours.');
+    }
+  }
   else if (act === 'cal-enregistrer') enregistrerCalendrier();
   else if (act === 'cal-modifier') {
+    if (modeLecture()) { toast('Lecture seule : modifie depuis l\u2019appareil suivi.'); return; }
     const cals = calendriers();
     const cle = anneeCalendrierEditee || libelleAnneeScolaire(aujourdhui());
     if (cals[cle]) { cals[cle].fige = false; sauver(); rendre(); toast('Périodes déverrouillées.'); }
@@ -5104,6 +6196,8 @@ vue.addEventListener('change', e => {
     sauver();
     return;
   }
+  if (e.target.id === 'quizz-matiere') { quizzFiltreMatiere = e.target.value; rendre(); return; }
+  if (e.target.id === 'quizz-tri') { quizzTri = e.target.value; rendre(); return; }
   if (e.target.id === 'f-cal-annee') {
     if (e.target.value === '__nouvelle') {
       const saisie = prompt('Année scolaire à ajouter (format AAAA-AAAA) :',
@@ -5156,6 +6250,17 @@ vue.addEventListener('change', e => {
   if (e.target.id === 'f-mat') {
     const champNum = document.getElementById('f-num');
     if (champNum) champNum.value = e.target.value ? prochainNumero(e.target.value) : '';
+    /* Le bloc emploi du temps dépend de la matière : on le régénère
+       plutôt que de rerendre toute la vue, pour ne pas perdre la
+       saisie en cours (année, numéro, date). */
+    const zone = document.getElementById('f-emploi');
+    if (zone) zone.innerHTML = contenuEmploiMatiere(e.target.value);
+    return;
+  }
+  /* Cocher un jour active son sélecteur de fréquence. */
+  if (e.target.dataset && e.target.dataset.emploiJour) {
+    const sel = document.querySelector('[data-emploi-freq="' + e.target.dataset.emploiJour + '"]');
+    if (sel) sel.disabled = !e.target.checked;
     return;
   }
   /* Formulaire de tâche : on n'affiche que les options utiles au
@@ -5266,6 +6371,27 @@ vue.addEventListener('click', e => {
   if (!num)  { toast('Indique le numéro du cours.'); return; }
   if (!date) { toast('Indique la date du cours.'); return; }
   num = num.padStart(3, '0');
+
+  /* Mode ÉLÈVE : l'emploi du temps de la matière est obligatoire.
+     S'il n'est pas encore défini, il doit être saisi ici même —
+     c'est la seule occasion, ensuite il est repris tout seul. */
+  if (modeEleve() && !emploiDefini(code)) {
+    const jours = {};
+    JOURS_ECOLE.forEach(j => {
+      const coche = document.querySelector('[data-emploi-jour="' + j + '"]');
+      if (coche && coche.checked) {
+        const sel = document.querySelector('[data-emploi-freq="' + j + '"]');
+        jours[j] = (sel && sel.value) || 'toutes';
+      }
+    });
+    if (!Object.keys(jours).length) {
+      toast('Indique les jours où cette matière a lieu.');
+      return;
+    }
+    emploiDuTemps()[code] = {jours: jours, defini: true};
+    sauver();
+  }
+
   if (!ajouterCours(code, num, date, annee)) { toast('Ce cours est déjà enregistré.'); return; }
   vueActive = 'agenda';
   rendre();
@@ -5295,6 +6421,7 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
 completerRappels(); // étend l'horizon des rappels à long terme
 completerTaches();  // matérialise les occurrences de tâches sur l'horizon glissant
 encaisserSemaines(); // bascule dans la cagnotte les semaines de tâches désormais closes
+appliquerReglesVacances(); // cahier de vacances + report des révisions hors périodes
 /* Recalcul RPG complet depuis l'historique, en silencieux : un
    utilisateur qui arrive de la v29 retrouve son niveau réel dès la
    première ouverture, sans se prendre 30 animations d'un coup. */
@@ -5309,17 +6436,9 @@ proposerExportHebdo();
 window.addEventListener('sabosse-sync-pret', () => {
   if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
   else if (DB.reglages.role === 'source' && DB.reglages.codePartage) {
-    window.SabosseSync.envoyer(DB.reglages.codePartage, {
-      cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
-      taches: DB.taches, occurrences: DB.occurrences,
-      reglages: {afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom,
-                 typeCompte: DB.reglages.typeCompte, cagnotte: DB.reglages.cagnotte,
-                 /* L'état RPG voyage pour que les parents voient le niveau du
-                    singe, mais l'historique reste la source de vérité : un
-                    appareil suivi ne fait que l'afficher, jamais le recalculer
-                    ni le réécrire (rafraichirGamification sort si modeLecture). */
-                 gamification: DB.reglages.gamification}
-    });
+    /* Même chemin que les envois courants : documents séparés,
+       mesure de taille et envoi des seuls documents modifiés. */
+    envoyerSync();
   }
   demarrerEcouteChat();
   traiterLienSuivi(); // un QR scanné par l'appareil photo natif arrive ici via location.hash
