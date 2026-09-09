@@ -134,13 +134,18 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:13px 15px;
   margin-bottom:8px;box-shadow:var(--ombre)}
 .rev.rev-jour{background:rgba(179,58,30,.3);border-color:rgba(179,58,30,.35)}
-.rev .haut{display:flex;align-items:center;gap:10px}
-.rev .code{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.rev .haut{display:flex;align-items:center;gap:8px}
+/* Le code du cours passe en gris (référence), la matière en noir
+   (l'information qui compte pour l'élève) — inversion demandée. */
+.rev .code{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:-.01em;
+  color:var(--texte-3)}
 span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-size:10px;font-weight:700;
   color:var(--texte-2);background:var(--surface-2);border-radius:99px;padding:2px 7px;
-  margin-left:5px;vertical-align:middle;white-space:nowrap;width:auto}
-.rev .matiere{font-size:12.5px;color:var(--texte-2);flex:1;min-width:0;
+  margin-left:0;vertical-align:middle;white-space:nowrap;width:auto}
+.rev .matiere{font-size:14.5px;font-weight:700;color:var(--texte);flex:1;min-width:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Bloc des références, poussé à droite. */
+.rev .refs{flex:0 0 auto;display:flex;align-items:center;gap:5px;margin-left:auto}
 .puce{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
 .rev .rang{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--texte-3);
   background:var(--surface-2);border-radius:99px;padding:3px 8px;flex:0 0 auto}
@@ -387,21 +392,10 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .bilan-ligne{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px}
 .bilan-ligne b{font-family:var(--mono);font-weight:700}
 .bilan-ligne span{color:var(--texte-3)}
-.tache{background:var(--surface);border:1px solid var(--filet);border-left:3px solid var(--bonus);
-  border-radius:var(--r-m);padding:11px 12px;margin-bottom:9px}
-.tache.faite{opacity:.55}
-.t-tete{display:block;width:100%;text-align:left;background:none;border:0;padding:0;
-  font:inherit;color:inherit;cursor:pointer}
-.tache .t-titre{font-size:13px;font-weight:700;letter-spacing:-.01em;display:block;
-  overflow-wrap:anywhere}
-.tache .t-meta{font-size:11px;color:var(--texte-3);margin-top:3px;display:block}
-.tache .t-etat{font-size:10.5px;font-weight:700;margin-top:5px;display:inline-block;
-  padding:2px 7px;border-radius:99px;background:var(--bonus-doux);color:var(--bonus)}
-.tache .t-etat.attente{background:var(--accent-doux);color:var(--accent)}
-.tache .cmds{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
-.tache .cmds button{flex:1 1 46%;padding:8px 4px;border-radius:99px;background:var(--surface-2);
-  border:1px solid var(--filet);font-size:11.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
-.tache .cmds button.ok{background:var(--bonus);border-color:var(--bonus);color:#fff}
+/* Carte tâche : identique à une carte révision, avec un liseré
+   violet pour la distinguer d'un coup d'œil. */
+.tache-carte{border-left:3px solid var(--bonus)}
+.tache-carte.faite{opacity:.6}
 .minuteur{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;
   margin:9px 0 2px;letter-spacing:-.02em}
 .minuteur.fini{color:var(--faite)}
@@ -507,16 +501,18 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 @media (prefers-reduced-motion: reduce){.jauge-points i{transition:none}}
 
 /* Quizz : questions issues des points difficiles. */
+/* Cartes tâches : mêmes proportions que les révisions, bouton
+   principal en jaune Force. */
+.rev .rang.tache{color:var(--bonus);background:var(--bonus-doux)}
+.rev .rang.faite{color:var(--faite);background:rgba(0,160,140,.13)}
+.rev .rang.attente{color:var(--reportee);background:rgba(242,161,4,.14)}
+.rev .cmds button.ok.force{background:#F2A104;box-shadow:0 2px 10px rgba(242,161,4,.35)}
+
 .quizz-filtres{display:flex;gap:8px;margin-bottom:12px}
 .quizz-filtres select{flex:1;min-width:0;font-size:12px}
-.quizz-c{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
-  padding:13px 14px;margin-bottom:9px}
-.quizz-tete{display:flex;align-items:center;gap:8px}
-.quizz-tete b{font-family:var(--mono);font-size:12.5px;font-weight:700}
-.quizz-taux{margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;
-  border-radius:99px;background:var(--surface-2);color:var(--texte-2)}
-.quizz-taux.bon{background:rgba(0,160,140,.13);color:var(--faite)}
-.quizz-taux.neuf{background:var(--accent-doux);color:var(--accent)}
+.quizz-c{margin-bottom:9px}
+.quizz-c.archivee{opacity:.7}
+.rev .rang.bon{background:rgba(0,160,140,.13);color:var(--faite)}
 .quizz-q{margin-top:8px;font-size:15px;font-weight:700;line-height:1.35}
 .quizz-meta{margin-top:5px;font-size:11px;color:var(--texte-3)}
 .quizz-bloque{margin-top:9px;padding:8px 10px;border-radius:var(--r-s);text-align:center;
@@ -659,10 +655,10 @@ button.gal-case:active{transform:scale(.97)}
   <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
 </div></div>
 <div id="note-voile"><div class="feuille">
-  <h3>Note de difficulté</h3>
+  <h3>Ajouter un Quizz ?</h3>
   <p id="note-info"></p>
   <div class="champ" style="margin-bottom:0">
-    <textarea id="note-texte" rows="4" placeholder="Points de difficulté, questions à retravailler…"></textarea>
+    <textarea id="note-texte" rows="4" placeholder="Si tu as du mal à retenir quelque chose : pose-toi une ou des question(s) ici pour t’en souvenir !"></textarea>
   </div>
   <div style="display:flex;gap:9px;margin-top:14px">
     <button class="bouton discret" id="note-annuler" style="flex:1">Fermer</button>
@@ -928,7 +924,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v49 · 8 septembre 2026';
+const VERSION = 'v50 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -978,6 +974,8 @@ function rappelsAttendus(c){
      TOUS les cours, ce qui représentait 43 % du volume de données
      pour des échéances sans objet. */
   if (!aUneNote(c)) return [];
+  /* Une question archivée sort du suivi annuel. */
+  if (quizzEtat(c.id).archive) return [];
 
   const creation = dDe(c.date);
   const fin = finAnnee(creation);            // 1er juillet : fin du cycle scolaire
@@ -3105,7 +3103,7 @@ function carteRevision(r, aujourdhuiCarte){
   const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + c.id + '"');
   const zoneNote = commentaire
     ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">📝</span> ' + texteNote + '</button>'
-    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">+ Ajouter une note</button>');
+    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">Ajouter un Quizz ?</button>');
   /* Deux styles de pastille seulement : « Nouveau ! » (jour
      d'encodage) et « Renfort » (rappel ajouté après un « pas encore
      retenu »). L'ancrage du samedi n'a plus de style propre : il
@@ -3121,17 +3119,28 @@ function carteRevision(r, aujourdhuiCarte){
       : '<div class="note" style="color:var(--texte-3)">Trop tardif pour valider directement — ' +
         'reporte-la ou annule-la.</div>';
   }
+  /* En-tête : matière à gauche (en noir, c'est l'information qui
+     compte pour l'élève), code du cours, année et pastille à droite
+     (en gris, ce sont des références). */
   return '<article class="rev' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
-    '<div class="haut">' +
-      '<i class="puce" style="background:' + m.c + '"></i>' +
-      '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
-      '<span class="matiere">' + ech(m.nom) + '</span>' +
-      '<span class="rang' + classeRang + '">' + ech(libelleRevision(r)) + '</span>' +
-    '</div>' +
+    enteteCarte(m, c, '<span class="rang' + classeRang + '">' + ech(libelleRevision(r)) + '</span>') +
     (r.statut === 'reportee'
       ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
     messageFenetre +
     zoneNote + cmds + '</article>';
+}
+
+/* En-tête commun aux cartes révision, tâche et quizz : la matière
+   porte le regard à gauche, les références s'alignent à droite. */
+function enteteCarte(m, c, pastille){
+  return '<div class="haut">' +
+    '<i class="puce" style="background:' + m.c + '"></i>' +
+    '<span class="matiere">' + ech(m.nom) + '</span>' +
+    '<span class="refs">' +
+      '<b class="code">' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
+      (pastille || '') +
+    '</span>' +
+  '</div>';
 }
 
 /* La carte du dimanche : un bilan de la semaine écoulée (lundi à
@@ -3190,44 +3199,36 @@ function carteBilanSemaine(samediISO){
 /* --- Carte d'une tâche bonus ---------------------------------
    Repliée par défaut : un clic déplie le détail et ses commandes,
    comme pour une révision. */
-let tacheDepliee = null;
 
 function carteTache(o){
   const t = trouverTache(o.tache);
   if (!t) return '';
-  const dl = donneesLecture();
-  const depliee = tacheDepliee === o.id;
   const ajISO = isoDe(aujourdhui());
 
   let etat = '';
   if (o.statut === 'faite') {
     etat = o.controleFait || !t.controleParent
-      ? '<span class="t-etat">✅ Fait</span>'
-      : '<span class="t-etat attente">⏳ Attente contrôle</span>';
-  } else if (o.statut === 'annulee') etat = '<span class="t-etat">🫣 Annulée</span>';
-  else if (o.statut === 'reportee') etat = '<span class="t-etat">😳 Reportée</span>';
+      ? '<span class="rang faite">✅ Fait</span>'
+      : '<span class="rang attente">⏳ À valider</span>';
+  } else if (o.statut === 'annulee') etat = '<span class="rang">🫣 Annulée</span>';
+  else if (o.statut === 'reportee') etat = '<span class="rang renfort">😳 Reportée</span>';
+  else etat = '<span class="rang tache">' + t.duree + ' min</span>';
 
+  /* Mêmes commandes que sur une carte révision : trois boutons sur
+     une ligne, même taille, même typographie, avec les emojis
+     correspondants. Le fond jaune rappelle la Force. */
   let cmds = '';
-  if (depliee && !modeLecture()) {
+  if (!modeLecture()) {
     if (o.statut === 'aFaire' || o.statut === 'reportee') {
       cmds = '<div class="cmds">' +
-        '<button class="ok" data-act="tache-faite" data-id="' + o.id + '">Débuter la tâche</button>' +
-        '<button data-act="tache-timer" data-id="' + o.id + '">⏱ Lancer le timer</button>' +
-        '<button data-act="tache-reporter" data-id="' + o.id + '">Reporter</button>' +
-        '<button data-act="tache-annuler" data-id="' + o.id + '">Annuler</button>' +
+        '<button class="ok force" data-act="tache-faite" data-id="' + o.id + '">J\u2019ai fait ! <span class="emo">💪</span></button>' +
+        '<button data-act="tache-reporter" data-id="' + o.id + '">Reporter <span class="emo">😳</span></button>' +
+        '<button data-act="tache-annuler" data-id="' + o.id + '">Annuler <span class="emo">🫣</span></button>' +
       '</div>';
     } else {
       cmds = '<div class="cmds">' +
         '<button data-act="tache-reactiver" data-id="' + o.id + '">Remettre en attente</button>' +
       '</div>';
-    }
-    /* Coche « Contrôle fait » : réservée aux comptes PARENT, et
-       seulement pour une tâche déclarée faite qui l'exige. */
-    if (t.controleParent && o.statut === 'faite' && peutControler()) {
-      cmds += '<label class="check-ligne" style="padding:8px 0 0">' +
-        '<input type="checkbox" data-act="tache-controle" data-id="' + o.id + '"' +
-        (o.controleFait ? ' checked' : '') + '>' +
-        '<span>Contrôle fait</span></label>';
     }
   }
 
@@ -3236,20 +3237,25 @@ function carteTache(o){
       formatChrono(minuteurActif.restant) + '</div>' : '';
 
   const retard = o.date < ajISO && (o.statut === 'aFaire' || o.statut === 'reportee');
+  const chrono = (!modeLecture() && (o.statut === 'aFaire' || o.statut === 'reportee'))
+    ? '<button class="note-ajouter" data-act="tache-timer" data-id="' + o.id + '">⏱ Lancer le minuteur</button>'
+    : '';
 
-  /* Carte en <div> et non en <button> : elle contient elle-même des
-     boutons et une case à cocher, qu'un bouton parent rendrait
-     inopérants (imbrication interdite en HTML). Seul l'en-tête est
-     cliquable pour déplier. */
-  return '<div class="tache' + (o.statut === 'faite' ? ' faite' : '') + '">' +
-    '<button type="button" class="t-tete" data-act="tache-ouvrir" data-id="' + o.id + '">' +
-      '<span class="t-titre">' + ech(t.intitule) + '</span>' +
-      '<span class="t-meta">' + t.duree + ' min' +
-        (t.heure ? ' · ' + ech(t.heure) : '') +
-        (retard ? ' · en retard' : '') + '</span>' +
-      etat +
-    '</button>' + minuteur + cmds +
-  '</div>';
+  return '<article class="rev tache-carte' + (o.statut === 'faite' ? ' faite' : '') + '">' +
+    '<div class="haut">' +
+      '<i class="puce" style="background:var(--bonus)"></i>' +
+      '<span class="matiere">' + ech(t.intitule) + '</span>' +
+      '<span class="refs">' +
+        (t.heure ? '<b class="code">' + ech(t.heure) + '</b>' : '') +
+        etat +
+      '</span>' +
+    '</div>' +
+    (retard ? '<div class="note">En retard depuis le ' + libelleCourt(o.date) + '</div>' : '') +
+    (o.statut === 'reportee' ? '<div class="note">Reportée du ' + libelleCourt(o.prevue) + '</div>' : '') +
+    (t.controleParent && o.statut === 'faite' && !o.controleFait
+      ? '<div class="note">Fais valider par un parent pour gagner les points.</div>' : '') +
+    minuteur + chrono + cmds +
+  '</article>';
 }
 
 /* Occurrences de tâches visibles pour une date donnée. */
@@ -3780,9 +3786,10 @@ function enregistrerEssaiQuizz(idCours, reussi){
    permet aux rappels annuels de ne porter qu'une référence, jamais
    le texte — point 4 de la refonte du stockage.
    Un bonus spécifique par quizz réalisé viendra se greffer ici. */
-function coursAvecDifficulte(){
+function coursAvecDifficulte(archivees){
   const dl = donneesLecture();
-  return dl.cours.filter(c => (c.commentaire || '').trim());
+  return dl.cours.filter(c => (c.commentaire || '').trim() &&
+    !!quizzEtat(c.id).archive === !!archivees);
 }
 
 /* Filtres de la vue Quizz — état d'écran, jamais persisté. */
@@ -3813,8 +3820,8 @@ function trierQuizz(liste){
 
 function vueQuizz(){
   const dl = donneesLecture();
-  const toutes = coursAvecDifficulte();
-  if (!toutes.length) {
+  const toutes = coursAvecDifficulte(false);
+  if (!toutes.length && !coursAvecDifficulte(true).length) {
     return '<div class="vide"><div class="gros">🧩</div>' +
       '<p><b>Aucune question pour l\u2019instant.</b></p>' +
       '<p>Quand tu coches « Pas encore tout compris ou retenu », ' +
@@ -3845,7 +3852,9 @@ function vueQuizz(){
       '<select id="quizz-matiere">' + optsMat + '</select>' +
       '<select id="quizz-tri">' + optsTri + '</select>' +
     '</div>' +
-    '<p class="etiquette">' + liste.length + ' question' + (liste.length > 1 ? 's' : '') + '</p>';
+    '<p class="etiquette">' + liste.length + ' question' + (liste.length > 1 ? 's' : '') + '</p>' +
+    (liste.length ? '' : '<p class="aide-champ" style="text-align:center;margin-bottom:12px">' +
+      'Tout est acquis pour l\u2019instant 🎉</p>');
 
   liste.forEach(c => {
     const m = matiereDe(c.code);
@@ -3854,13 +3863,12 @@ function vueQuizz(){
     const jouable = quizzJouable(c.id) && !modeLecture();
     const ouverte = quizzOuverte === c.id;
 
-    html += '<div class="quizz-c">' +
-      '<div class="quizz-tete">' +
-        '<i class="puce" style="background:' + m.c + '"></i>' +
-        '<b>' + ech(refCours(c)) + '</b>' +
-        '<span class="quizz-taux' + (taux < 0 ? ' neuf' : (taux >= 70 ? ' bon' : '')) + '">' +
-          (taux < 0 ? 'jamais tenté' : taux + ' %') + '</span>' +
-      '</div>' +
+    /* Même en-tête que les cartes révision : matière à gauche,
+       références et pastille de réussite à droite. */
+    html += '<div class="quizz-c rev">' +
+      enteteCarte(m, c,
+        '<span class="rang' + (taux < 0 ? ' nouveau' : (taux >= 70 ? ' bon' : '')) + '">' +
+        (taux < 0 ? 'Jamais tenté' : taux + ' %') + '</span>') +
       '<div class="quizz-q">' + ech(c.commentaire) + '</div>' +
       '<div class="quizz-meta">' +
         (e.essais ? e.reussites + ' / ' + e.essais + ' réussi' + (e.reussites > 1 ? 's' : '') +
@@ -3888,9 +3896,31 @@ function vueQuizz(){
     html += '</div>';
   });
 
+  /* Historique replié : les questions acquises restent consultables,
+     et peuvent être remises dans le suivi d'un bouton. */
+  const archivees = coursAvecDifficulte(true);
+  if (archivees.length) {
+    html += '<details class="pliable" data-cle="quizz-histo"' + ouvert('quizz-histo') +
+        ' style="margin-top:16px">' +
+      '<summary>Historique<span class="compte">' + archivees.length + '</span></summary>' +
+      '<div class="contenu-pliable">';
+    archivees.forEach(c => {
+      const m = matiereDe(c.code);
+      const taux = quizzTaux(c.id);
+      html += '<div class="quizz-c rev archivee">' +
+        enteteCarte(m, c, '<span class="rang">' +
+          (taux < 0 ? 'Jamais tenté' : taux + ' %') + '</span>') +
+        '<div class="quizz-q">' + ech(c.commentaire) + '</div>' +
+        (modeLecture() ? '' :
+          '<button class="bouton discret quizz-acquis" data-act="quizz-reprendre" ' +
+            'data-id="' + ech(c.id) + '">Remettre dans le suivi</button>') +
+      '</div>';
+    });
+    html += '</div></details>';
+  }
+
   html += '<p class="aide-champ" style="margin-top:14px;text-align:center">' +
-    'Tant qu\u2019une question reste, le cours revient chaque année. ' +
-    'Retire-la quand le point est acquis.</p>';
+    'Tant qu\u2019une question reste dans le suivi, le cours revient chaque année.</p>';
   return html;
 }
 
@@ -5850,7 +5880,10 @@ function ouvrirNote(coursId){
   const c = trouverCours(coursId);
   if (!c) return;
   noteEnCours = coursId;
-  document.getElementById('note-info').textContent = refCours(c) + libelleAnnee(c) + ' · ' + matiereDe(c.code).nom;
+  /* Sous-titre lisible : « Géographie – GEO-001 – 6ème », la
+     matière d'abord, comme sur les cartes. */
+  document.getElementById('note-info').textContent =
+    matiereDe(c.code).nom + ' – ' + refCours(c) + (c.annee ? ' – ' + c.annee : '');
   document.getElementById('note-texte').value = c.commentaire || '';
   noteVoile.classList.add('on');
 }
@@ -6001,10 +6034,6 @@ vue.addEventListener('click', e => {
     b.classList.toggle('actif');
     return;
   }
-  else if (act === 'tache-ouvrir') {
-    tacheDepliee = (tacheDepliee === id) ? null : id;
-    rendre();
-  }
   else if (act === 'tache-faite') {
     const o = DB.occurrences.find(x => x.id === id);
     if (o) {
@@ -6073,17 +6102,26 @@ vue.addEventListener('click', e => {
     toast('Pas grave — tu pourras réessayer demain.');
   }
   else if (act === 'quizz-resolu') {
-    /* Effacer la note met fin aux rappels annuels de ce cours :
-       completerRappels() retire aussitôt les échéances à venir,
-       puisque rappelsAttendus() ne renvoie plus rien sans note. */
-    const c = DB.cours.find(x => x.id === b.dataset.id);
-    if (c) {
-      c.commentaire = '';
-      completerRappels();
-      sauver();
-      rendre();
-      toast('Point acquis — plus de rappel pour ce cours.');
-    }
+    /* La question n'est PAS effacée : elle est archivée. Elle sort
+       du suivi (plus de rappel annuel, plus proposée) mais reste
+       consultable dans l'historique replié — on ne perd jamais ce
+       que l'élève a écrit. */
+    const etats = quizzEtats();
+    const id = b.dataset.id;
+    etats[id] = Object.assign(quizzEtat(id), {archive: true});
+    completerRappels();
+    sauver();
+    rendre();
+    toast('Question acquise — rangée dans l\u2019historique.');
+  }
+  else if (act === 'quizz-reprendre') {
+    const etats = quizzEtats();
+    const id = b.dataset.id;
+    etats[id] = Object.assign(quizzEtat(id), {archive: false});
+    completerRappels();
+    sauver();
+    rendre();
+    toast('Question remise dans le suivi.');
   }
   else if (act === 'cal-enregistrer') enregistrerCalendrier();
   else if (act === 'cal-modifier') {
