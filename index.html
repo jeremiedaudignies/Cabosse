@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56 — v55 + deux demandes :
+B1 Cartes de révision : le code du cours passe sur une ligne sous l'intitulé de la matière.
+B2 Réglages avancés › « Maintenance des données » : remise à zéro des statistiques,
+   réglage manuel des points de Cabosse, suppression de toutes les révisions,
+   de toutes les tâches, de tous les quizz. Chaque action demande confirmation et
+   conserve d'abord une copie brute récupérable.
+
 Cabosse v55 — v54 + correctifs du contrôle qualité indépendant (A1 à A12, voir ci-dessous).
 
 A1  Sans Web Locks : plus de copie de session par ouverture (saturation du quota).
@@ -199,16 +206,20 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);padding:13px 15px;
   margin-bottom:8px;box-shadow:var(--ombre)}
 .rev.rev-jour{background:rgba(179,58,30,.3);border-color:rgba(179,58,30,.35)}
-.rev .haut{display:flex;align-items:center;gap:8px}
+.rev .haut{display:flex;align-items:flex-start;gap:8px}
+.rev .haut .puce{margin-top:4px}
+/* Matière sur la première ligne, code du cours en dessous : accolés,
+   le code devenait illisible sur les écrans étroits. */
+.rev .titre-cours{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 /* Le code du cours passe en gris (référence), la matière en noir
    (l'information qui compte pour l'élève) — inversion demandée. */
-.rev .code{font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:-.01em;
-  color:var(--texte-3)}
+.rev .code{display:block;font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:-.01em;
+  color:var(--texte-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbs-avatar-btn{background:none;border:0;padding:0;cursor:pointer;display:block;width:100%}
 span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-size:10px;font-weight:700;
   color:var(--texte-2);background:var(--surface-2);border-radius:99px;padding:2px 7px;
   margin-left:0;vertical-align:middle;white-space:nowrap;width:auto}
-.rev .matiere{font-size:14.5px;font-weight:700;color:var(--texte);flex:1;min-width:0;
+.rev .matiere{font-size:14.5px;font-weight:700;color:var(--texte);min-width:0;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Bloc des références, poussé à droite. */
 .rev .refs{flex:0 0 auto;display:flex;align-items:center;gap:5px;margin-left:auto}
@@ -1134,7 +1145,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v55 · correctifs de fiabilité';
+const VERSION = 'v56 · lisibilité et maintenance';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1571,6 +1582,8 @@ function gamificationVierge(){
        se recalcule » : ces deux compteurs sont incrémentés au moment
        de la suppression et conservés tels quels. */
     penalites: {coursSupprimes:0, tachesPerdues:0},
+    /* Ajustement manuel des points, par caractéristique (Réglages avancés). */
+    ajustements: {},
     /* Bonus gagnés au Quizz, par caractéristique. */
     bonusQuizz: {},
     progression: {dernierNiveauAnnonce: 1},
@@ -1583,7 +1596,7 @@ function gamificationVierge(){
    Ne lit rien d'autre que `dl` (+ la tolérance, réglage global) et
    n'écrit nulle part. C'est elle la source de vérité.
    ------------------------------------------------------------ */
-function calculerGamification(dl, penalites, bonusQuizz){
+function calculerGamification(dl, penalites, bonusQuizz, ajustements){
   const j = {energie:0, intelligence:0, sagesse:0, force:0};
   const pen = penalites || {coursSupprimes:0, tachesPerdues:0};
 
@@ -1626,6 +1639,13 @@ function calculerGamification(dl, penalites, bonusQuizz){
      trace dans l'historique des cours — d'où leur réinjection ici. */
   const bq = bonusQuizz || {};
   CARACTERISTIQUES.forEach(c => { j[c.cle] += (bq[c.cle] || 0); });
+
+  /* Ajustement manuel (Réglages avancés). Comme les bonus de quizz, il
+     n'a aucune trace dans l'historique : il s'ajoute au calcul, donc les
+     points gagnés ensuite continuent de s'empiler normalement. Peut être
+     négatif ; le plancher à 0 s'applique plus bas comme pour le reste. */
+  const aj = ajustements || {};
+  CARACTERISTIQUES.forEach(c => { j[c.cle] += (aj[c.cle] || 0); });
 
   j.intelligence += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeIntel;
   j.sagesse      += (pen.coursSupprimes || 0) * XP_CABOSSE.coursSupprimeSagesse;
@@ -1685,7 +1705,7 @@ function gamif(){
 function rafraichirGamification(silencieux){
   if (modeLecture()) return;                    // jamais sur le miroir d'un autre appareil
   const g = gamif();
-  const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz);
+  const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz, g.ajustements);
 
   const annonces = [];
 
@@ -2947,9 +2967,13 @@ function validerBase(o){
   for (const cle of ['niveauGlobal','pointsTotaux','pointsDepenses','rangIndex']) {
     if (g[cle] !== undefined && (!Number.isFinite(g[cle]) || g[cle] < 0)) { rapport.push('progression ' + cle); delete g[cle]; }
   }
-  for (const cle of ['jauges','penalites','bonusQuizz','artefacts','preferences']) if (g[cle] !== undefined && !objet(g[cle])) { rapport.push('progression ' + cle); delete g[cle]; }
+  for (const cle of ['jauges','penalites','bonusQuizz','artefacts','preferences','ajustements']) if (g[cle] !== undefined && !objet(g[cle])) { rapport.push('progression ' + cle); delete g[cle]; }
   for (const bloc of [g.penalites, g.bonusQuizz]) for (const [k, n] of Object.entries(bloc || {})) {
     if (!Number.isFinite(n) || n < 0) { rapport.push('points ' + k); delete bloc[k]; }
+  }
+  /* Les ajustements manuels peuvent être négatifs, contrairement aux bonus. */
+  for (const [k, v] of Object.entries(g.ajustements || {})) {
+    if (!Number.isFinite(v) || Math.abs(v) > 1e6) { rapport.push('ajustement ' + k); delete g.ajustements[k]; }
   }
   for (const [k, jauge] of Object.entries(g.jauges || {})) if (!objet(jauge) || (jauge.points !== undefined && (!Number.isFinite(jauge.points) || jauge.points < 0))) { rapport.push('jauge ' + k); delete g.jauges[k]; }
   if (o.suivis) o.suivis = garder(o.suivis, s => {
@@ -3208,7 +3232,7 @@ async function envoyerSync(){
 function sauver(){
   if (!modeLecture() && DB.reglages.gamification) {
     const g = DB.reglages.gamification;
-    const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz);
+    const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz, g.ajustements);
     g.pointsTotaux = calc.pointsTotaux; g.jauges = calc.jauges;
   }
   if (!Store.ecrire(DB)) return false;
@@ -3694,12 +3718,13 @@ function carteRevision(r, aujourdhuiCarte){
 /* En-tête commun aux cartes révision, tâche et quizz : la matière
    porte le regard à gauche, les références s'alignent à droite. */
 function enteteCarte(m, c, pastille){
-  /* Matière et code du cours accolés à gauche (« Histoire · HIS-001 »),
+  /* Matière sur la première ligne, code du cours juste en dessous ;
      année et pastille alignées à droite. */
   return '<div class="haut">' +
     '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
-    '<span class="matiere">' + ech(m.nom) +
-      ' <b class="code">· ' + ech(refCours(c)) + '</b></span>' +
+    '<span class="titre-cours">' +
+      '<span class="matiere">' + ech(m.nom) + '</span>' +
+      '<b class="code">' + ech(refCours(c)) + '</b></span>' +
     '<span class="refs">' + pastilleAnnee(c) + (pastille || '') + '</span>' +
   '</div>';
 }
@@ -5094,6 +5119,25 @@ function blocReglagesAvances(){
         (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
         '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
       '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
+      '<p class="etiquette" style="margin-top:18px">Maintenance des données</p>' +
+      '<p class="aide-champ">Chaque action demande confirmation et conserve d’abord une copie brute, ' +
+        'récupérable via « Exporter les copies de récupération » ci-dessus.</p>' +
+      '<button class="bouton discret" data-act="maint-stats" style="margin-top:8px">Remettre les statistiques à zéro</button>' +
+      '<p class="aide-champ">Les échéances traitées repassent « à faire ». Dates de révision, cours, tâches et quizz conservés.</p>' +
+      '<p class="etiquette" style="margin-top:14px">Points de Cabosse</p>' +
+      '<div class="emploi-ligne" style="flex-wrap:wrap;gap:6px">' +
+        CARACTERISTIQUES.map(c => '<label class="champ" style="flex:1 1 44%;margin:0">' +
+          '<span class="aide-champ">' + c.emoji + ' ' + ech(c.nom) + '</span>' +
+          '<input type="number" min="0" max="100000" inputmode="numeric" id="f-pts-' + c.cle + '" ' +
+            'value="' + ((gamif().jauges[c.cle] || {}).points || 0) + '">' +
+        '</label>').join('') +
+      '</div>' +
+      '<button class="bouton discret" data-act="maint-points" style="margin-top:8px">Appliquer ces points</button>' +
+      '<p class="aide-champ">Les points continuent ensuite d’évoluer normalement à partir de ces valeurs. ' +
+        'Niveaux déjà achetés (' + (gamif().pointsDepenses || 0) + ' point(s) dépensé(s)) et accessoires débloqués restent acquis.</p>' +
+      '<button class="bouton discret" data-act="maint-revisions" style="margin-top:14px">Supprimer toutes les séries de révisions</button>' +
+      '<button class="bouton discret" data-act="maint-taches" style="margin-top:8px">Supprimer toutes les tâches</button>' +
+      '<button class="bouton discret" data-act="maint-quizz" style="margin-top:8px">Supprimer tous les quizz</button>' +
       '<p class="etiquette" style="margin-top:18px">Cabosse</p>' +
       '<label class="check-ligne">' +
         '<input type="checkbox" id="f-sons-cabosse"' +
@@ -6546,6 +6590,149 @@ function annulerSerie(id){
   toast(n + ' révision' + (n > 1 ? 's' : '') + ' annulée' + (n > 1 ? 's' : '') + '.');
 }
 
+/* ============================================================
+   Maintenance des données (Réglages avancés)
+   Cinq actions destructives, volontairement regroupées et toutes
+   soumises au même protocole : refus en lecture seule ou si le
+   stockage est bloqué, copie brute conservée AVANT modification
+   (récupérable via « Exporter les copies de récupération »), puis
+   confirmation explicite décrivant ce qui va disparaître.
+   ============================================================ */
+function maintenanceAutorisee(raison){
+  if (modeLecture()) { toast('Lecture seule : impossible depuis un profil suivi.'); return false; }
+  if (Store.bloque || !Store.dispo) { toast(Store.erreur || 'Stockage indisponible.'); return false; }
+  if (!Store.sauvegarderOriginal(localStorage.getItem(CLE), raison)) { toast(Store.erreur); return false; }
+  return true;
+}
+
+/* (a) Remise à zéro des statistiques.
+   Les statistiques ne sont stockées nulle part : elles se déduisent
+   de l'état des révisions et des occurrences. Les remettre à zéro,
+   c'est donc remettre les échéances déjà traitées en attente — sans
+   toucher aux dates : la planification reste intacte. */
+function reinitialiserStatistiques(){
+  const traitees = DB.revisions.filter(r => r.statut !== 'aFaire').length +
+                   DB.occurrences.filter(o => o.statut !== 'aFaire').length;
+  if (!confirm('Remettre les statistiques à zéro ?\n\n' +
+      traitees + ' échéance(s) déjà traitée(s) (faites, reportées, annulées) repassent « à faire ».\n' +
+      'Les dates de révision, les cours, les tâches et les quizz sont conservés.\n' +
+      'La cagnotte et les semaines encaissées sont remises à zéro.\n' +
+      'Les points de Cabosse sont recalculés ; les niveaux déjà atteints et les accessoires débloqués restent acquis.')) return;
+  if (!maintenanceAutorisee('Avant remise à zéro des statistiques')) return;
+  DB.revisions.forEach(r => {
+    r.statut = 'aFaire'; r.date = r.prevue || r.date;
+    delete r.faitLe; delete r.comprehension;
+  });
+  DB.occurrences.forEach(o => {
+    o.statut = 'aFaire'; o.date = o.prevue || o.date;
+    o.controleFait = false; o.secondes = 0; delete o.faitLe;
+  });
+  DB.reglages.cagnotte = 0;
+  DB.reglages.semainesEncaissees = {};
+  const g = gamif();
+  g.penalites = {coursSupprimes:0, tachesPerdues:0};
+  g.bonusQuizz = {};
+  g.ajustements = {};
+  entretenirPlanning(true);
+  sauver(); rafraichirGamification(true); rendre();
+  toast('Statistiques remises à zéro. Planification conservée.');
+}
+
+/* (b) Réglage manuel des points de Cabosse.
+   Les points se recalculent en permanence depuis l'historique : on ne
+   peut donc pas écrire pointsTotaux directement (la prochaine
+   sauvegarde l'écraserait). On mémorise un écart par caractéristique,
+   réinjecté à chaque calcul — même mécanique que les bonus de quizz.
+   Les points gagnés ensuite continuent de s'ajouter normalement. */
+function definirPointsCabosse(){
+  if (modeLecture()) { toast('Lecture seule : impossible depuis un profil suivi.'); return; }
+  const g = gamif();
+  const cibles = {};
+  for (const c of CARACTERISTIQUES) {
+    const champ = document.getElementById('f-pts-' + c.cle);
+    if (!champ) return;
+    const v = Number(champ.value);
+    if (!Number.isInteger(v) || v < 0 || v > 100000) { toast(c.nom + ' : entier entre 0 et 100000.'); return; }
+    cibles[c.cle] = v;
+  }
+  /* Valeur naturelle (sans ajustement) : l'écart mémorisé est la
+     différence, pour que la cible soit atteinte exactement. */
+  const naturel = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz, {});
+  const total = CARACTERISTIQUES.reduce((s, c) => s + cibles[c.cle], 0);
+  const artefactsNouveaux = ARTEFACTS_CABOSSE.filter(a => !g.artefacts[a.cle] && cibles[a.carac] >= SEUIL_ACCESSOIRE);
+  if (!confirm('Fixer les points de Cabosse à ' + total + ' au total ?\n\n' +
+      CARACTERISTIQUES.map(c => c.nom + ' : ' + cibles[c.cle]).join('\n') + '\n\n' +
+      (artefactsNouveaux.length ? artefactsNouveaux.length + ' accessoire(s) vont être débloqués définitivement (un accessoire n’est jamais repris ensuite).\n' : '') +
+      'Points déjà dépensés en niveaux : ' + (g.pointsDepenses || 0) + ' — ils restent déduits, et les niveaux atteints sont conservés.\n' +
+      'Les révisions, tâches et quizz ne sont pas modifiés.')) return;
+  if (!maintenanceAutorisee('Avant réglage manuel des points')) return;
+  g.ajustements = {};
+  CARACTERISTIQUES.forEach(c => {
+    const ecart = cibles[c.cle] - (naturel.jauges[c.cle].points || 0);
+    if (ecart) g.ajustements[c.cle] = ecart;
+  });
+  sauver(); rafraichirGamification(true); rendre();
+  toast('Points de Cabosse fixés à ' + total + '.');
+}
+
+/* (c) Suppression de toutes les révisions.
+   En mode élève, l'entretien quotidien régénère l'échéancier de base
+   des cours encore enregistrés : la question des cours est donc posée
+   dans la foulée, sinon la suppression paraîtrait sans effet. */
+function supprimerToutesRevisions(){
+  const nb = DB.revisions.length;
+  if (!nb) { toast('Aucune révision enregistrée.'); return; }
+  if (!confirm('Supprimer les ' + nb + ' révision(s) enregistrée(s) ?\n\n' +
+      'Tout l’historique de révision (faites, reportées, annulées) disparaît.\n' +
+      'Cette action est irréversible hors copie de récupération.')) return;
+  const aussiCours = DB.cours.length > 0 && confirm('Supprimer aussi les ' + DB.cours.length + ' cours enregistrés ?\n\n' +
+      'OK : cours et révisions disparaissent.\n' +
+      'Annuler : les cours sont conservés — un nouvel échéancier sera regénéré pour eux dès aujourd’hui.');
+  if (!maintenanceAutorisee('Avant suppression des révisions')) return;
+  DB.revisions = [];
+  if (aussiCours) { DB.cours = []; DB.quizz = {}; }
+  entretenirPlanning(true);
+  sauver(); rafraichirGamification(true); rendre();
+  toast(nb + ' révision(s) supprimée(s)' + (aussiCours ? ' et cours effacés.' : ' ; échéancier regénéré pour les cours conservés.'));
+}
+
+/* (d) Suppression de toutes les tâches.
+   Contrairement à la suppression unitaire, aucun malus n'est compté :
+   un effacement de maintenance ne doit pas ruiner la Force. */
+function supprimerToutesTaches(){
+  const nb = DB.taches.length;
+  if (!nb) { toast('Aucune tâche enregistrée.'); return; }
+  if (!confirm('Supprimer les ' + nb + ' tâche(s) et leurs ' + DB.occurrences.length + ' occurrence(s) ?\n\n' +
+      'Aucun malus de points n’est appliqué (contrairement à la suppression d’une tâche isolée).\n' +
+      'La cagnotte déjà encaissée reste figée.')) return;
+  if (!maintenanceAutorisee('Avant suppression des tâches')) return;
+  DB.taches = []; DB.occurrences = [];
+  arreterMinuteur(false);
+  sauver(); rafraichirGamification(true); rendre();
+  toast(nb + ' tâche(s) supprimée(s).');
+}
+
+/* (e) Suppression de tous les quizz : les questions vivent dans le
+   commentaire du cours, les compteurs dans DB.quizz. Les deux partent
+   ensemble, sinon les quizz réapparaîtraient aussitôt. Les points de
+   caractéristique déjà gagnés au quizz sont conservés. */
+function supprimerTousQuizz(){
+  const avecQuestion = DB.cours.filter(c => (c.commentaire || '').trim()).length;
+  const nbEtats = Object.keys(DB.quizz || {}).length;
+  if (!avecQuestion && !nbEtats) { toast('Aucun quizz enregistré.'); return; }
+  if (!confirm('Supprimer tous les quizz ?\n\n' +
+      avecQuestion + ' question(s) et ' + nbEtats + ' historique(s) d’essais disparaissent.\n' +
+      'Les cours et leurs révisions sont conservés.\n' +
+      'Les points déjà gagnés au quizz restent acquis.')) return;
+  if (!maintenanceAutorisee('Avant suppression des quizz')) return;
+  DB.quizz = {};
+  DB.cours.forEach(c => { c.commentaire = ''; });
+  quizzOuverte = null; bonusQuizzActif = null;
+  completerRappels();
+  sauver(); rafraichirGamification(true); rendre();
+  toast('Quizz supprimés.');
+}
+
 /* Gestion des matières : le code identifie les cours existants et
    n'est donc modifiable qu'à la création, jamais en édition. */
 function ajouterMatiere(code, nom, couleur){
@@ -6910,6 +7097,11 @@ vue.addEventListener('click', e => {
     rendre();
     toast('Question remise dans le suivi.');
   }
+  else if (act === 'maint-stats') reinitialiserStatistiques();
+  else if (act === 'maint-points') definirPointsCabosse();
+  else if (act === 'maint-revisions') supprimerToutesRevisions();
+  else if (act === 'maint-taches') supprimerToutesTaches();
+  else if (act === 'maint-quizz') supprimerTousQuizz();
   else if (act === 'cal-corriger-defaut') corrigerCalendrierHistorique();
   else if (act === 'cal-enregistrer') enregistrerCalendrier();
   else if (act === 'cal-modifier') {
