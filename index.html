@@ -320,13 +320,13 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .note-ligne span{color:var(--texte-2);line-height:1.4}
 
 /* --- report, confirmation et note --- */
-#voile,#confirm-voile,#note-voile,#motdepasse-voile,#chatnom-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
+#voile,#confirm-voile,#note-voile,#motdepasse-voile,#chatnom-voile,#pin-voile{position:fixed;inset:0;background:rgba(20,23,28,.45);display:none;
   align-items:flex-end;z-index:20}
-#voile.on,#confirm-voile.on,#note-voile.on,#motdepasse-voile.on,#chatnom-voile.on{display:flex}
-#voile .feuille,#confirm-voile .feuille,#note-voile .feuille,#motdepasse-voile .feuille,#chatnom-voile .feuille{width:100%;background:var(--surface);
+#voile.on,#confirm-voile.on,#note-voile.on,#motdepasse-voile.on,#chatnom-voile.on,#pin-voile.on{display:flex}
+#voile .feuille,#confirm-voile .feuille,#note-voile .feuille,#motdepasse-voile .feuille,#chatnom-voile .feuille,#pin-voile .feuille{width:100%;background:var(--surface);
   border-radius:var(--r-l) var(--r-l) 0 0;padding:20px 16px calc(20px + var(--safe-b))}
-#voile h3,#confirm-voile h3,#note-voile h3,#motdepasse-voile h3,#chatnom-voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
-#voile p,#confirm-voile p,#note-voile p,#motdepasse-voile p,#chatnom-voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
+#voile h3,#confirm-voile h3,#note-voile h3,#motdepasse-voile h3,#chatnom-voile h3,#pin-voile h3{margin:0 0 4px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+#voile p,#confirm-voile p,#note-voile p,#motdepasse-voile p,#chatnom-voile p,#pin-voile p{margin:0 0 14px;font-size:13px;color:var(--texte-2)}
 .note-apercu{margin-top:6px;font-size:12px;color:var(--texte-2);background:var(--surface-2);
   border-radius:var(--r-s);padding:7px 9px;line-height:1.35}
 .note-ajouter{margin-top:6px;font-size:11.5px;font-weight:600;color:var(--accent)}
@@ -508,6 +508,19 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .rev .rang.attente{color:var(--reportee);background:rgba(242,161,4,.14)}
 .rev .cmds button.ok.force{background:#F2A104;box-shadow:0 2px 10px rgba(242,161,4,.35)}
 
+/* Contrôle parental par code PIN. */
+.pin-appel{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:12px 14px;margin-bottom:12px;border-radius:var(--r-m);
+  background:var(--xp-doux);border:1px solid var(--xp);cursor:pointer;font:inherit}
+.pin-appel-ic{font-size:24px;flex:0 0 auto}
+.pin-appel-txt b{display:block;font-size:13.5px;font-weight:800}
+.pin-appel-txt span{display:block;font-size:11.5px;color:var(--texte-2);margin-top:1px}
+#pin-liste{max-height:38vh;overflow-y:auto;margin-top:4px}
+.pin-l span{display:flex;flex-direction:column;gap:1px}
+.pin-l span b{font-size:13px;font-weight:700;color:var(--texte)}
+.pin-l span em{font-size:11px;color:var(--texte-3);font-style:normal}
+.pin-saisie{font-family:var(--mono);font-size:22px;letter-spacing:.4em;text-align:center}
+
 .quizz-filtres{display:flex;gap:8px;margin-bottom:12px}
 .quizz-filtres select{flex:1;min-width:0;font-size:12px}
 .quizz-c{margin-bottom:9px}
@@ -663,6 +676,21 @@ button.gal-case:active{transform:scale(.97)}
   <div style="display:flex;gap:9px;margin-top:14px">
     <button class="bouton discret" id="note-annuler" style="flex:1">Fermer</button>
     <button class="bouton principal" id="note-ok" style="flex:1;padding:13px;font-size:14.5px">Enregistrer</button>
+  </div>
+</div></div>
+<div id="pin-voile"><div class="feuille">
+  <h3>Validation par un parent</h3>
+  <p>Montre tes tâches faites à un parent : il saisit le code pour te débloquer les points.</p>
+  <div id="pin-liste"></div>
+  <p id="pin-compte" class="aide-champ" style="margin:8px 0 0"></p>
+  <div class="champ" style="margin-top:12px;margin-bottom:0">
+    <label for="pin-champ">Code parental</label>
+    <input type="password" id="pin-champ" inputmode="numeric" maxlength="4"
+      placeholder="••••" autocomplete="off" class="pin-saisie">
+  </div>
+  <div style="display:flex;gap:9px;margin-top:14px">
+    <button class="bouton discret" id="pin-annuler" style="flex:1">Fermer</button>
+    <button class="bouton principal" id="pin-ok" style="flex:1;padding:13px;font-size:14.5px">Valider</button>
   </div>
 </div></div>
 <div id="motdepasse-voile"><div class="feuille">
@@ -924,7 +952,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v50 · 8 septembre 2026';
+const VERSION = 'v51 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2370,7 +2398,10 @@ const Store = {
                     emploiDuTemps: {},
                     /* Installation neuve : rien à réinitialiser. */
                     remiseAZeroV2: true,
-                    remiseAZeroProgressionV3: true};
+                    remiseAZeroProgressionV3: true,
+                    /* Code PIN du contrôle parental — voir codePinParental().
+                       Saisi par le parent sur le téléphone de l'élève. */
+                    codePin: '0000'};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
                     taches:[], occurrences:[], quizz:{},
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
@@ -2402,6 +2433,9 @@ const Store = {
          déjà renseignées sont conservées telles quelles — jamais
          écrasées par le défaut. */
       reglages.calendrier = Object.assign(calendrierDefaut(), reglages.calendrier || {});
+      /* Code PIN : 4 chiffres, valeur par défaut à changer dès la
+         première utilisation (rappel affiché dans les réglages). */
+      if (!/^\d{4}$/.test(reglages.codePin || '')) reglages.codePin = '0000';
       /* Emploi du temps : simple repli sur un objet vide. Chaque
          matière sera renseignée à la création de son premier cours. */
       if (!reglages.emploiDuTemps || typeof reglages.emploiDuTemps !== 'object') {
@@ -3702,7 +3736,18 @@ function vueTaches(){
   const proches  = enAttente.filter(o => o.date >= ajISO && o.date <= dimSuivant);
   const plusTard = enAttente.filter(o => o.date > dimSuivant);
 
-  let html = banniere;
+  /* Bandeau d'appel au parent : visible dès qu'une tâche attend une
+     validation. C'est le seul point d'entrée du contrôle parental,
+     désormais local (code PIN) au lieu de passer par Firestore. */
+  const enAttenteValidation = tachesAValider();
+  let html = banniere +
+    (enAttenteValidation.length && !modeLecture()
+      ? '<button type="button" class="pin-appel" data-act="valider-pin">' +
+        '<span class="pin-appel-ic">🔐</span>' +
+        '<span class="pin-appel-txt"><b>' + enAttenteValidation.length + ' tâche' +
+          (enAttenteValidation.length > 1 ? 's' : '') + ' à faire valider</b>' +
+          '<span>Demande à un parent de saisir le code</span></span></button>'
+      : '');
 
   if (retard.length) {
     grouperParDate(retard).forEach(g => {
@@ -4399,6 +4444,12 @@ function blocReglagesAvances(){
     '<div class="contenu-pliable">' +
       '<div class="champ" style="margin-top:12px"><label for="f-type-compte">Type de compte</label>' +
         '<select id="f-type-compte">' + optsType + '</select></div>' +
+      '<div class="champ"><label for="f-code-pin">Code parental (4 chiffres)</label>' +
+        '<input type="text" id="f-code-pin" inputmode="numeric" maxlength="4" ' +
+          'value="' + ech(codePinParental()) + '">' +
+        '<span class="aide-champ">Saisi par un parent sur ce téléphone pour valider ' +
+        'les tâches à contrôler.' +
+        (codePinParental() === '0000' ? ' <b>Pense à le changer.</b>' : '') + '</span></div>' +
       blocCalendrierScolaire() +
       '<p class="etiquette" style="margin-top:6px">Intitulé des matières disponibles</p>' +
       carteMatieres() +
@@ -5291,8 +5342,115 @@ function vueStats(){
 }
 
 /* ============================================================
-   Actions
+   CONTRÔLE PARENTAL PAR CODE PIN
+
+   Remplace l'ancien mécanisme, qui exigeait que le parent coche la
+   tâche depuis SON téléphone, via la synchronisation Firestore —
+   fragile (il fallait attendre l'aller-retour réseau) et lourd.
+
+   Désormais tout se passe sur le téléphone de l'élève : il montre
+   ses tâches faites à un parent, qui saisit un code à 4 chiffres.
+   Une seule saisie peut valider plusieurs tâches d'un coup.
+   Le code se règle dans les Réglages avancés, déjà protégés.
    ============================================================ */
+function codePinParental(){
+  const p = DB.reglages.codePin;
+  return /^\d{4}$/.test(p || '') ? p : '0000';
+}
+
+/* Occurrences faites, en attente d'une validation parentale. */
+function tachesAValider(){
+  const dl = donneesLecture();
+  return (dl.occurrences || []).filter(o => {
+    if (o.statut !== 'faite' || o.controleFait) return false;
+    const t = (dl.taches || []).find(x => x.id === o.tache);
+    return t && t.controleParent;
+  }).sort((a, b) => a.date < b.date ? -1 : 1);
+}
+
+let pinSelection = {};
+
+function ouvrirValidationPin(){
+  const liste = tachesAValider();
+  if (!liste.length) { toast('Aucune tâche en attente de validation.'); return; }
+  /* Tout est coché par défaut : le cas courant est de tout valider,
+     et décocher reste possible pour n'en valider qu'une partie. */
+  pinSelection = {};
+  liste.forEach(o => { pinSelection[o.id] = true; });
+  document.getElementById('pin-champ').value = '';
+  majListeValidationPin();
+  document.getElementById('pin-voile').classList.add('on');
+  setTimeout(() => document.getElementById('pin-champ').focus(), 60);
+}
+
+function majListeValidationPin(){
+  const liste = tachesAValider();
+  let html = '';
+  liste.forEach(o => {
+    const t = trouverTache(o.tache);
+    if (!t) return;
+    html += '<label class="check-ligne pin-l">' +
+      '<input type="checkbox" data-pin-tache="' + o.id + '"' +
+        (pinSelection[o.id] ? ' checked' : '') + '>' +
+      '<span><b>' + ech(t.intitule) + '</b>' +
+        '<em>' + libelleCourt(o.date) + '</em></span></label>';
+  });
+  document.getElementById('pin-liste').innerHTML = html;
+  const n = Object.keys(pinSelection).filter(k => pinSelection[k]).length;
+  document.getElementById('pin-compte').textContent =
+    n + ' tâche' + (n > 1 ? 's' : '') + ' sélectionnée' + (n > 1 ? 's' : '');
+}
+
+function fermerValidationPin(){
+  document.getElementById('pin-voile').classList.remove('on');
+  pinSelection = {};
+}
+
+function validerAvecPin(){
+  const saisi = (document.getElementById('pin-champ').value || '').trim();
+  if (saisi !== codePinParental()) {
+    toast('Code incorrect.');
+    document.getElementById('pin-champ').value = '';
+    return;
+  }
+  const ids = Object.keys(pinSelection).filter(k => pinSelection[k]);
+  if (!ids.length) { toast('Sélectionne au moins une tâche.'); return; }
+  let valides = 0;
+  ids.forEach(id => {
+    const o = DB.occurrences.find(x => x.id === id);
+    if (o && !o.controleFait) {
+      o.controleFait = true;
+      valides++;
+      gainCabosse('force', XP_CABOSSE.tacheValidee);
+      gainCabosse('sagesse', XP_CABOSSE.tacheValideeSagesse);
+    }
+  });
+  sauver();
+  encaisserSemaines();
+  rafraichirGamification();
+  fermerValidationPin();
+  rendre();
+  jouerSonCabosse('happy');
+  toast(valides + ' tâche' + (valides > 1 ? 's' : '') + ' validée' + (valides > 1 ? 's' : '') + ' 💪');
+}
+
+
+/* --- Validation parentale par code PIN ----------------------- */
+const pinVoile = document.getElementById('pin-voile');
+document.getElementById('pin-annuler').addEventListener('click', fermerValidationPin);
+document.getElementById('pin-ok').addEventListener('click', validerAvecPin);
+pinVoile.addEventListener('click', e => { if (e.target === pinVoile) fermerValidationPin(); });
+pinVoile.addEventListener('change', e => {
+  if (e.target.dataset && e.target.dataset.pinTache) {
+    pinSelection[e.target.dataset.pinTache] = e.target.checked;
+    majListeValidationPin();
+  }
+});
+/* Entrée valide, comme sur les autres feuilles de saisie. */
+document.getElementById('pin-champ').addEventListener('keydown', e => {
+  if (e.key === 'Enter') validerAvecPin();
+});
+
 let minuteurToast;
 function toast(txt){
   const t = document.getElementById('toast');
@@ -6087,6 +6245,7 @@ vue.addEventListener('click', e => {
       toast('Redéfinis l\u2019emploi du temps de cette matière.');
     }
   }
+  else if (act === 'valider-pin') ouvrirValidationPin();
   else if (act === 'quizz-repondre') { quizzOuverte = b.dataset.id; rendre(); }
   else if (act === 'quizz-reussi') {
     /* Règle 3 : réussite → un point de caractéristique au choix.
@@ -6236,6 +6395,14 @@ vue.addEventListener('change', e => {
   }
   if (e.target.id === 'quizz-matiere') { quizzFiltreMatiere = e.target.value; rendre(); return; }
   if (e.target.id === 'quizz-tri') { quizzTri = e.target.value; rendre(); return; }
+  if (e.target.id === 'f-code-pin') {
+    const v = (e.target.value || '').replace(/\D/g, '').slice(0, 4);
+    if (v.length !== 4) { toast('Le code doit faire 4 chiffres.'); e.target.value = codePinParental(); return; }
+    DB.reglages.codePin = v;
+    sauver();
+    toast('Code parental enregistré.');
+    return;
+  }
   if (e.target.id === 'f-cal-annee') {
     if (e.target.value === '__nouvelle') {
       const saisie = prompt('Année scolaire à ajouter (format AAAA-AAAA) :',
@@ -6318,24 +6485,9 @@ vue.addEventListener('change', e => {
     if (bp) bp.style.display = (e.target.value === 'position') ? '' : 'none';
     return;
   }
-  /* Coche « Contrôle fait » d'une occurrence, réservée aux parents. */
-  if (e.target.dataset && e.target.dataset.act === 'tache-controle') {
-    const o = DB.occurrences.find(x => x.id === e.target.dataset.id);
-    if (o) {
-      o.controleFait = e.target.checked;
-      sauver();
-      encaisserSemaines();
-      if (o.controleFait) {
-        gainCabosse('force', XP_CABOSSE.tacheValidee);
-        gainCabosse('sagesse', XP_CABOSSE.tacheValideeSagesse);
-        jouerSonCabosse('happy');
-      }
-      rafraichirGamification();
-      rendre();
-      toast(o.controleFait ? 'Contrôle validé — bonus acquis.' : 'Contrôle retiré.');
-    }
-    return;
-  }
+  /* L'ancienne coche « Contrôle fait », qui exigeait le téléphone du
+     parent et un aller-retour Firestore, est remplacée par la saisie
+     d'un code PIN sur l'appareil de l'élève (voir validerAvecPin). */
   if (e.target.dataset && e.target.dataset.act === 'cours-annee') {
     const c = DB.cours.find(x => x.id === e.target.dataset.id);
     if (c) {
