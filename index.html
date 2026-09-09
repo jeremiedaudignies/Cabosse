@@ -1,8 +1,73 @@
 <!DOCTYPE html>
+<!--
+Cabosse v55 — v54 + correctifs du contrôle qualité indépendant (A1 à A12, voir ci-dessous).
+
+A1  Sans Web Locks : plus de copie de session par ouverture (saturation du quota).
+A2  Copies de récupération : dédoublonnées, plafonnées à 5, jamais répétées par un onglet passif.
+A3  Synchronisation : racine acceptée jusqu'à 900 Kio (alerte à 700 Kio) au lieu de 256 Kio.
+A4  Fusions : seules les vraies doublures (même cours, même date prévue) sont fusionnées ;
+    une révision active n'est jamais absorbée par une annulée ; deux échéances distinctes
+    tombant le même jour coexistent.
+A5  Verrou : repris après pageshow / retour au premier plan ; un onglet passif redevient
+    actif si l'autre se ferme, après relecture du stockage.
+A6  Chargement tolérant : les éléments invalides sont écartés un par un (copie brute
+    conservée, compte affiché) ; seul un fichier structurellement illisible bloque.
+A7  Retour au premier plan : pas de re-rendu si rien n'a changé (saisie conservée).
+A8  Une seule copie brute à la première ouverture (double lecture supprimée).
+A9  Règle des trois derniers cours rétablie comme en v53 (cours futurs inclus).
+A10 toast() n'écrase plus les messages ; beforeunload seulement si travail non enregistré.
+A11 Couleur du benchmark sécurisée ; écriture de session hors quota supprimée.
+A12 Démarrage : aucune fausse alerte pendant l'acquisition du verrou.
+
+Cabosse v54 — livraison des correctifs approuvés C01 à C24.
+Fichiers : index.html (C01–C24), sw.js (C20).
+Référence : index(5).html / sw(4).js v53, conservés sans modification.
+
+REMPLACEMENT : exporter les données avant installation ; conserver les deux
+anciens fichiers. Remplacer index.html et sw.js ensemble, sans supprimer les
+assets, le manifeste ni le stockage du navigateur. Mettre à jour les appareils
+sources et suivis ensemble. Aucun déploiement n'a été effectué par cet audit.
+
+DONNÉES : aucune remise à zéro automatique. Copie brute avant normalisation,
+import et restauration. Les fusions conservent les traces dans le champ fusions.
+Les identités de partage restent locales lors d'une restauration/importation.
+Les anciens instantanés incomplets ne sont pas restaurés automatiquement.
+Le bouton de récupération exporte les données brutes conservées.
+
+SYNCHRONISATION : index schemaSync=2 et fragments de 200 éléments au plus,
+256 Kio JSON au plus, dans sabosse/{code}/annees/{année}__v54_{numéro}.
+Publication atomique : maximum 400 fragments / 8 Mio de JSON par lot ; au-delà,
+refus explicite et conservation locale. Les anciens documents annuels sont
+conservés sauf tombstone explicite d'une année supprimée. Le lecteur accepte
+l'ancien format. Les anciens lecteurs v53 doivent être mis à jour.
+Vérifier les règles Firestore réelles : lecture des fragments, collection des
+anciennes années, écriture atomique et isolation des utilisateurs. Aucun test
+ni migration n'a été exécuté sur Firebase réel.
+
+CONVENTIONS CONSERVÉES : renfort élève au prochain JOUR de matière (base jamais
+antérieure au jour du clic), congés personnalisés inchangés, cagnotte historique
+figée après encaissement. Les quatre fins de vacances de l'ancien défaut sont
+corrigeables avec confirmation dans Réglages avancés. Pas de compréhension ni
+de date de réalisation inventée pour l'historique antérieur.
+
+VÉRIFICATIONS : syntaxe des scripts ; 66 régressions sous Node VM ; 24 contrôles
+supplémentaires simulés et 1 revue statique d'accessibilité ; 7 tests simulés de
+service worker ; 575 assertions de dates dans 5 fuseaux. Deux années fictives
+de 787 cours : 8 033 révisions étudiant / 4 352 élève, aucune collision cours/jour
+ni identifiant dupliqué dans les listes actives ; restitution des fragments testée.
+Le navigateur distant refuse la copie locale : visuel/mobile, clavier réel,
+caméra, notifications, installation PWA et Firebase réel restent non exécutés.
+
+RETOUR ARRIÈRE : exporter d'abord les données v54, conserver les copies brutes,
+puis remettre ensemble les fichiers v53 et, si nécessaire, la sauvegarde faite
+avant installation. Ne pas vider localStorage pour changer de version. La v53
+ne sait pas interpréter les nouveaux champs de résultats ni les fragments v54.
+Les tests détaillés sont conservés dans verification-v54 dans l'espace de travail.
+-->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#094639">
@@ -90,12 +155,12 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #barre button .ic{font-size:19px;line-height:1;filter:grayscale(1) opacity(.55);
   display:inline-flex;align-items:center;justify-content:center;
   width:25px;height:25px;border-radius:50%}
-#barre button .lb{font-size:8px;font-weight:600;text-align:center;line-height:1.1;
-  padding:0 1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#barre button .lb{font-size:10px;font-weight:600;text-align:center;line-height:1.2;
+  padding:0 1px;max-width:100%;overflow-wrap:anywhere;white-space:normal}
 /* Écrans étroits (iPhone SE et similaires) : on resserre encore. */
 @media (max-width:400px){
   #barre button .ic{font-size:17px;width:23px;height:23px}
-  #barre button .lb{font-size:7.2px}
+  #barre button .lb{font-size:10px;white-space:normal;line-height:1.2}
 }
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
@@ -666,6 +731,11 @@ button.gal-case:active{transform:scale(.97)}
 <body>
 <div id="ecran-demarrage"><img src="icone-512.png" alt="Cabosse"></div>
 <div id="app">
+<div id="stockage-alerte" role="alert" hidden style="flex-shrink:0;max-height:35vh;overflow:auto;padding:12px;background:#fff0ce;color:#402b00">
+  <span></span>
+  <button type="button" id="stockage-export">Exporter le travail en mémoire</button>
+  <button type="button" id="stockage-recuperer">Récupérer les données conservées</button>
+</div>
   <header id="entete">
     <img class="glyphe" src="icone-180.png" alt="Cabosse">
     <div class="titres">
@@ -687,7 +757,7 @@ button.gal-case:active{transform:scale(.97)}
   </nav>
 </div>
 <div id="recompenses" aria-live="polite"></div>
-<div id="galerie-voile">
+<div id="galerie-voile" role="dialog" aria-modal="true" aria-label="Galerie" tabindex="-1">
   <div class="gal-entete">
     <button type="button" class="gal-retour" id="galerie-btn-retour" data-act="cabosse-galerie-retour"
       aria-label="Retour à la galerie" style="display:none">←</button>
@@ -696,7 +766,7 @@ button.gal-case:active{transform:scale(.97)}
   </div>
   <div id="galerie-contenu" class="gal-contenu"></div>
 </div>
-<div id="voile"><div class="feuille">
+<div id="voile" role="dialog" aria-modal="true" aria-label="Reporter" tabindex="-1"><div class="feuille">
   <h3>Reporter la révision</h3>
   <p id="voile-info"></p>
   <input type="date" id="voile-date">
@@ -705,7 +775,7 @@ button.gal-case:active{transform:scale(.97)}
     <button class="bouton principal" id="voile-ok" style="flex:1;padding:13px;font-size:14.5px">Reporter</button>
   </div>
 </div></div>
-<div id="confirm-voile"><div class="feuille">
+<div id="confirm-voile" role="dialog" aria-modal="true" aria-label="Confirmation" tabindex="-1"><div class="feuille">
   <h3 id="confirm-titre"></h3>
   <p id="confirm-info"></p>
   <div id="confirm-note-zone" class="champ" style="display:none">
@@ -716,7 +786,7 @@ button.gal-case:active{transform:scale(.97)}
   <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
   <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
 </div></div>
-<div id="note-voile"><div class="feuille">
+<div id="note-voile" role="dialog" aria-modal="true" aria-label="Question" tabindex="-1"><div class="feuille">
   <h3>Ajouter un Quizz ?</h3>
   <p id="note-info"></p>
   <div class="champ" style="margin-bottom:0">
@@ -727,7 +797,7 @@ button.gal-case:active{transform:scale(.97)}
     <button class="bouton principal" id="note-ok" style="flex:1;padding:13px;font-size:14.5px">Enregistrer</button>
   </div>
 </div></div>
-<div id="pin-voile"><div class="feuille">
+<div id="pin-voile" role="dialog" aria-modal="true" aria-label="Validation parentale" tabindex="-1"><div class="feuille">
   <h3>Validation par un parent</h3>
   <p>Montre tes tâches faites à un parent : il saisit le code pour te débloquer les points.</p>
   <div id="pin-liste"></div>
@@ -742,7 +812,7 @@ button.gal-case:active{transform:scale(.97)}
     <button class="bouton principal" id="pin-ok" style="flex:1;padding:13px;font-size:14.5px">Valider</button>
   </div>
 </div></div>
-<div id="motdepasse-voile"><div class="feuille">
+<div id="motdepasse-voile" role="dialog" aria-modal="true" aria-label="Déverrouillage" tabindex="-1"><div class="feuille">
   <h3 id="motdepasse-titre">Réglages avancés</h3>
   <p>Mot de passe requis pour y accéder.</p>
   <input type="password" id="motdepasse-champ" placeholder="Mot de passe" autocomplete="off">
@@ -751,7 +821,7 @@ button.gal-case:active{transform:scale(.97)}
     <button class="bouton principal" id="motdepasse-ok" style="flex:1;padding:13px;font-size:14.5px">Déverrouiller</button>
   </div>
 </div></div>
-<div id="chatnom-voile"><div class="feuille">
+<div id="chatnom-voile" role="dialog" aria-modal="true" aria-label="Prénom" tabindex="-1"><div class="feuille">
   <h3>Ton nom dans le chat</h3>
   <p>Affiché à côté de tes messages.</p>
   <input type="text" id="chatnom-champ" placeholder="Prénom" maxlength="20">
@@ -760,13 +830,13 @@ button.gal-case:active{transform:scale(.97)}
     <button class="bouton principal" id="chatnom-ok" style="flex:1;padding:13px;font-size:14.5px">Valider</button>
   </div>
 </div></div>
-<div id="scan-voile"><div class="scan-corps">
+<div id="scan-voile" role="dialog" aria-modal="true" aria-label="Scanner" tabindex="-1"><div class="scan-corps">
   <div class="scan-entete"><span>Scanner un code de suivi</span>
     <button id="scan-fermer" aria-label="Fermer">✕</button></div>
   <video id="scan-video" playsinline muted autoplay></video>
   <p id="scan-statut">Vise le QR code affiché sur l\u2019autre téléphone.</p>
 </div></div>
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="impression"></div>
 
 <!-- ============================================================
@@ -787,7 +857,7 @@ button.gal-case:active{transform:scale(.97)}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limitToLast, deleteDoc }
+import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limitToLast, deleteDoc, writeBatch }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const FIREBASE_CONFIG = {
@@ -801,8 +871,8 @@ const FIREBASE_CONFIG = {
 
 const configure = Object.values(FIREBASE_CONFIG).every(v => typeof v === 'string' && !v.startsWith('COLLE_'));
 let bdd = null, auth = null;
-const ecoutesChat = {}; // une désinscription par canal de chat, plusieurs à la fois possibles
-const ecoutesSuivi = {}; // une désinscription par code suivi, plusieurs enfants possibles à la fois
+const ecoutesChat = Object.create(null); // une désinscription par canal de chat
+const ecoutesSuivi = Object.create(null); // une désinscription par code suivi
 if (configure) {
   try {
     const app = initializeApp(FIREBASE_CONFIG);
@@ -834,6 +904,23 @@ function tailleOctets(objet){
   catch (e) { return JSON.stringify(objet).length; }
 }
 
+/* Majorant de conception : valeurs JSON, noms UTF-8 et surcharge de maps.
+   Marge pour le chemin du document ; les index ne sont pas sa taille stockée.
+   Référence : firebase.google.com/docs/firestore/storage-size */
+function budgetDocument(objet){
+  const utf8 = s => new TextEncoder().encode(s).length + 1;
+  const mesurer = (v, profondeur) => {
+    if (profondeur > 16) throw Object.assign(new Error('Données trop imbriquées'),{code:'profondeur-excessive'});
+    if (v === null) return 1;
+    if (typeof v === 'string') return utf8(v);
+    if (typeof v === 'boolean') return 1;
+    if (typeof v === 'number') return 8;
+    if (Array.isArray(v)) return v.reduce((n,x) => n + mesurer(x,profondeur+1),0);
+    return 32 + Object.entries(v).reduce((n,[k,x]) => n + utf8(k) + mesurer(x,profondeur+1),0);
+  };
+  return 8192 + mesurer(objet,0);
+}
+
 window.SabosseSync = {
   disponible: configure && !!bdd,
   derniereTaille: 0,
@@ -847,92 +934,138 @@ window.SabosseSync = {
      document parent : c'est ce qui donne la marge sur plusieurs
      années. `parts` ne contient que les documents réellement
      modifiés — l'appelant décide de ce qu'il envoie. */
+  /* v54 : index borné, fragments dans la collection annees déjà utilisée.
+     Les anciens documents annuels volumineux ne sont pas supprimés.
+     Un lot atomique publie les fragments ET leur index. */
+  indexParCode: Object.create(null),
   async envoyer(code, donnees, parts){
-    if (!this.disponible || !code) return false;
+    if (!this.disponible || !/^[A-Za-z0-9_-]{8,128}$/.test(code)) return false;
+    this.dernierMotifEchec = ''; this.derniereAlerteTaille = null;
     try {
-      const u = await assurerAuth();
-      /* Tentative d'enregistrement comme écrivain autorisé — n'a
-         d'effet réel que la toute première fois (le document est
-         ensuite verrouillé par les règles Firestore) ; les tentatives
-         suivantes échouent silencieusement, sans conséquence. */
-      try { await setDoc(doc(bdd, 'sabosse_writers', code), {uid: u.uid}); } catch (e) { /* déjà pris, sans effet */ }
-
-      const racine = Object.assign({}, donnees, {misAJour: Date.now()});
-      const octets = tailleOctets(racine);
-      this.derniereTaille = octets;
-      if (octets > SEUIL_REFUS_OCTETS) {
-        /* Au-delà, on refuse plutôt que de laisser Firestore rejeter
-           l'écriture avec une erreur incompréhensible. */
-        this.dernierMotifEchec = 'document-trop-gros';
-        this.derniereAlerteTaille = octets;
-        console.error('SABOSSE sync : document racine trop volumineux', octets);
-        return false;
-      }
-      if (octets > SEUIL_ALERTE_OCTETS) this.derniereAlerteTaille = octets;
-
-      await setDoc(doc(bdd, 'sabosse', code), racine);
-
-      /* Documents annexes : uniquement ceux qu'on nous passe. */
-      if (parts && parts.annees) {
-        for (const cle of Object.keys(parts.annees)) {
-          const contenu = Object.assign({}, parts.annees[cle], {misAJour: Date.now()});
-          const t = tailleOctets(contenu);
-          if (t > SEUIL_REFUS_OCTETS) {
-            console.error('SABOSSE sync : année', cle, 'trop volumineuse', t);
-            this.dernierMotifEchec = 'annee-trop-grosse';
-            continue;
+      const generation = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+      const index = Object.assign({}, this.indexParCode[code] || {});
+      const documents = [];
+      for (const [annee, contenu] of Object.entries((parts && parts.annees) || {})) {
+        if (!/^[0-9]{4}-[0-9]{4}$/.test(annee)) throw new Error('Année invalide');
+        if (!contenu.cours.length && !contenu.revisions.length) {
+          delete index[annee];
+          documents.push({id:annee, data:{cours:[], revisions:[], generation}});
+          continue;
+        }
+        const fragments = [];
+        let courant = {cours:[], revisions:[], generation}, nombre = 0;
+        const finir = () => { if (nombre) { fragments.push(courant); courant = {cours:[], revisions:[], generation}; nombre = 0; } };
+        for (const section of ['cours','revisions']) {
+          for (const item of contenu[section] || []) {
+            const essai = Object.assign({}, courant, {[section]:courant[section].concat([item])});
+            if (nombre && (nombre >= 200 || tailleOctets(essai) > 256 * 1024)) finir();
+            courant[section].push(item); nombre++;
+            if (tailleOctets(courant) > 256 * 1024) throw Object.assign(new Error('Élément trop volumineux'), {code:'element-trop-gros'});
           }
-          if (t > SEUIL_ALERTE_OCTETS) this.derniereAlerteTaille = t;
-          await setDoc(doc(bdd, 'sabosse', code, 'annees', cle), contenu);
         }
+        finir();
+        const ids = fragments.map((data,n) => {
+          const id = annee + '__v54_' + n;
+          documents.push({id, data}); return id;
+        });
+        index[annee] = {generation, ids};
       }
-      if (parts && parts.quizz) {
-        for (const id of Object.keys(parts.quizz)) {
-          await setDoc(doc(bdd, 'sabosse', code, 'quizz', id), parts.quizz[id]);
-        }
+      const racine = Object.assign({}, donnees, {schemaSync:2, versionMin:54, indexAnnees:index, misAJour:Date.now()});
+      this.derniereTaille = tailleOctets(racine);
+      /* A3 : la racine porte tâches et occurrences (un an d'historique) ;
+         on garde la limite dure v53 (900 Kio) et l'alerte à 700 Kio. */
+      if (this.derniereTaille > SEUIL_REFUS_OCTETS) throw Object.assign(new Error('État courant trop volumineux'), {code:'document-trop-gros'});
+      if (this.derniereTaille > SEUIL_ALERTE_OCTETS) this.derniereAlerteTaille = this.derniereTaille;
+      if ([racine,...documents.map(d => d.data)].some(d => budgetDocument(d) > 950 * 1024)) {
+        throw Object.assign(new Error('Budget de document dépassé'),{code:'document-trop-gros'});
       }
+      const volume = tailleOctets(racine) + documents.reduce((n,d) => n + tailleOctets(d.data),0);
+      if (documents.length > 400 || volume > 8 * 1024 * 1024) throw Object.assign(new Error('Lot trop volumineux'), {code:'lot-trop-gros'});
+      // Tous les contrôles précèdent les écritures de données.
+      const u = await assurerAuth();
+      try { await setDoc(doc(bdd,'sabosse_writers',code),{uid:u.uid}); } catch (e) { /* droits vérifiés par les règles lors du lot */ }
+      const lot = writeBatch(bdd);
+      documents.forEach(d => lot.set(doc(bdd,'sabosse',code,'annees',d.id),d.data));
+      lot.set(doc(bdd,'sabosse',code),racine);
+      await lot.commit();
+      this.indexParCode[code] = index;
       return true;
     } catch (e) {
-      console.error('SABOSSE sync : envoi impossible', e);
-      /* Remonte le motif : « permission-denied » signifie que ce code
-         appartient à une autre identité d'appareil (code restauré
-         depuis une sauvegarde, ou données du site effacées). Sans
-         cette distinction, la panne restait indéchiffrable. */
-      window.SabosseSync.dernierMotifEchec = (e && e.code) || 'inconnu';
+      this.dernierMotifEchec = e.code || 'inconnu';
+      console.error('Cabosse : lot non synchronisé', e);
       return false;
     }
   },
 
-  /* Suivi : on écoute la racine, plus l'année en cours seulement.
-     Les années passées ne sont pas chargées côté parent — inutiles
-     à l'affichage et coûteuses en lectures Firestore. */
   suivre(code, callback, anneeCourante){
-    if (!this.disponible || !code) return;
+    if (!this.disponible || !/^[A-Za-z0-9_-]{8,128}$/.test(code)) return;
     if (ecoutesSuivi[code]) ecoutesSuivi[code]();
-    const etat = {racine: null, annee: null};
-    const pousser = () => {
-      if (!etat.racine) return;
-      const fusion = Object.assign({}, etat.racine);
-      if (etat.annee) {
-        fusion.cours = etat.annee.cours || [];
-        fusion.revisions = etat.annee.revisions || [];
+    let racine = null, ferme = false, demande = 0;
+    let arrets = [], contenus = new Map();
+    const erreur = e => { if (!ferme) callback(null,e); };
+    const arretRacine = onSnapshot(doc(bdd,'sabosse',code), snap => {
+      if (ferme) return;
+      demande++;
+      const serie = demande;
+      arrets.forEach(f => f()); arrets = []; contenus = new Map();
+      if (!snap.exists()) { racine = null; erreur(Object.assign(new Error('Partage absent ou supprimé'),{code:'not-found'})); return; }
+      racine = snap.data();
+      let attendus;
+      if (racine.schemaSync === 2) {
+        attendus = Object.values(racine.indexAnnees || {}).flatMap(a =>
+          (a.ids || []).map(id => ({id, generation:a.generation})));
+      } else {
+        if (Array.isArray(racine.cours) && Array.isArray(racine.revisions)) { callback(racine); return; }
+        if (!racine.anneesDisponibles) {
+          // Format v53 : aucun index, donc lecture de la collection historique.
+          const arret = onSnapshot(collection(bdd,'sabosse',code,'annees'), snapshot => {
+            if (ferme || serie !== demande) return;
+            const fusion = Object.assign({},racine,{cours:[],revisions:[]});
+            snapshot.forEach(d => {
+              if (!/^[0-9]{4}-[0-9]{4}$/.test(d.id)) return;
+              const v = d.data();
+              fusion.cours.push(...(v.cours || [])); fusion.revisions.push(...(v.revisions || []));
+            });
+            callback(fusion);
+          }, erreur);
+          arrets.push(arret); return;
+        }
+        // Ancien format : année courante plus années explicitement publiées.
+        attendus = (racine.anneesDisponibles || [anneeCourante]).filter(Boolean).map(id => ({id}));
       }
-      callback(fusion);
-    };
-    const arretRacine = onSnapshot(
-      doc(bdd, 'sabosse', code),
-      snap => { if (snap.exists()) { etat.racine = snap.data(); pousser(); } },
-      err => { console.error('SABOSSE sync : écoute interrompue', err); callback(null, err); }
-    );
-    let arretAnnee = () => {};
-    if (anneeCourante) {
-      arretAnnee = onSnapshot(
-        doc(bdd, 'sabosse', code, 'annees', anneeCourante),
-        snap => { etat.annee = snap.exists() ? snap.data() : null; pousser(); },
-        err => { console.error('SABOSSE sync : écoute année interrompue', err); }
-      );
-    }
-    ecoutesSuivi[code] = () => { arretRacine(); arretAnnee(); };
+      if (attendus.length > 4000 || attendus.some(a => !/^[0-9]{4}-[0-9]{4}(?:__v54_[0-9]+)?$/.test(a.id))) {
+        erreur(new Error('Index de partage invalide')); return;
+      }
+      const publier = () => {
+        if (ferme || serie !== demande || contenus.size !== attendus.length) return;
+        const fusion = Object.assign({},racine);
+        fusion.cours = []; fusion.revisions = [];
+        attendus.forEach(a => {
+          const d = contenus.get(a.id);
+          fusion.cours.push(...(d.cours || [])); fusion.revisions.push(...(d.revisions || []));
+        });
+        // Un ancien document racine peut encore contenir les listes.
+        if (!attendus.length && racine.schemaSync !== 2) {
+          fusion.cours = racine.cours || []; fusion.revisions = racine.revisions || [];
+        }
+        callback(fusion);
+      };
+      if (!attendus.length) publier();
+      attendus.forEach(a => {
+        const arret = onSnapshot(doc(bdd,'sabosse',code,'annees',a.id), d => {
+          if (ferme || serie !== demande) return;
+          if (!d.exists()) {
+            if (a.generation) { erreur(new Error('Fragment de partage manquant')); return; }
+            contenus.set(a.id,{}); publier(); return;
+          }
+          const v = d.data();
+          if (a.generation && v.generation !== a.generation) return; // réponses d'une autre version : jamais fusionnées
+          contenus.set(a.id,v); publier();
+        }, erreur);
+        arrets.push(arret);
+      });
+    }, erreur);
+    ecoutesSuivi[code] = () => { ferme = true; demande++; arretRacine(); arrets.forEach(f => f()); };
   },
   arreter(code){
     if (code) {
@@ -1001,7 +1134,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v53 · 8 septembre 2026';
+const VERSION = 'v55 · correctifs de fiabilité';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1020,14 +1153,11 @@ const ANNEES = (function(){
 /* ============================================================
    Rappels à long terme
    Une fois l'échéancier de l'année scolaire épuisé, le cours
-   revient à la date anniversaire de sa création : une fois par an
-   s'il n'a pas de note de difficulté, une fois par trimestre s'il
-   en a une, et cela pendant 60 ans.
+   revient à sa date anniversaire, une fois par an, seulement s'il
+   porte une note non archivée, avec une borne de 60 ans.
 
-   Ces rappels ne sont PAS tous générés d'avance : 60 ans de rappels
-   trimestriels feraient 240 lignes par cours, ce qui saturerait le
-   stockage local et dépasserait la limite de 1 Mo d'un document
-   Firestore. On génère donc jusqu'à un horizon glissant, complété
+   Les rappels ne sont pas tous générés d'avance. Leurs données sont
+   conservées sur un horizon glissant de 36 mois, complété
    automatiquement à chaque ouverture de l'application.
    ============================================================ */
 const RAPPEL_ANNEES = 60;
@@ -1084,7 +1214,7 @@ function completerRappels(){
     const existants = DB.revisions.filter(r => r.cours === c.id && r.rappel);
 
     attendus.forEach(iso => {
-      if (!existants.some(r => r.date === iso)) {
+      if (!DB.revisions.some(r => r.cours === c.id && (r.date === iso || (r.origines || [r.prevue]).includes(iso)))) {
         DB.revisions.push({
           id: c.id + '@' + iso, cours: c.id, rang: 'Rappel', ancrage: false,
           rappel: true, prevue: iso, date: iso, statut: 'aFaire'
@@ -1094,7 +1224,7 @@ function completerRappels(){
     });
 
     existants.forEach(r => {
-      if (r.statut === 'aFaire' && r.date > ajISO && attendus.indexOf(r.date) === -1) {
+      if (r.statut === 'aFaire' && r.date > ajISO && attendus.indexOf(r.prevue) === -1 && r.date === r.prevue) {
         DB.revisions = DB.revisions.filter(x => x.id !== r.id);
         change = true;
       }
@@ -1143,7 +1273,10 @@ function occurrencesAttendues(t){
   const sortie = [];
   const r = t.recur || {type:'aucune'};
   const pas = Math.max(1, parseInt(r.intervalle, 10) || 1);
-  const GARDE = 400; // filet de sécurité : jamais de boucle infinie
+  const GARDE = 400;
+  // À partir d'un an d'historique utile ; les occurrences stockées ne sont pas supprimées.
+  const borne = debut > plus(aujourdhui(), -366) ? debut : plus(aujourdhui(), -366);
+  const joursEcoules = Math.max(0, Math.round((borne - debut) / 86400000));
 
   if (r.type === 'aucune' || !r.type) {
     if (debut <= butoir) sortie.push(isoDe(debut));
@@ -1151,7 +1284,7 @@ function occurrencesAttendues(t){
   }
 
   if (r.type === 'jour') {
-    for (let d = debut, n = 0; d <= butoir && n < GARDE; d = plus(d, pas), n++) sortie.push(isoDe(d));
+    for (let d = plus(debut, Math.ceil(joursEcoules / pas) * pas), n = 0; d <= butoir && n < 800; d = plus(d, pas), n++) sortie.push(isoDe(d));
     return sortie;
   }
 
@@ -1159,7 +1292,7 @@ function occurrencesAttendues(t){
     const jours = (r.jours && r.jours.length) ? r.jours : [debut.getDay()];
     /* On avance semaine par semaine depuis le lundi de la semaine de
        début, en ne retenant que les jours cochés. */
-    let lundi = lundiDe(debut);
+    let lundi = plus(lundiDe(debut), Math.floor(joursEcoules / (7 * pas)) * 7 * pas);
     for (let n = 0; n < GARDE; n++) {
       for (let i = 0; i < 7; i++) {
         const d = plus(lundi, i);
@@ -1173,7 +1306,7 @@ function occurrencesAttendues(t){
   }
 
   if (r.type === 'mois') {
-    for (let n = 0; n < GARDE; n++) {
+    for (let n = Math.max(0, Math.floor(((borne.getFullYear()-debut.getFullYear())*12+borne.getMonth()-debut.getMonth()) / pas)), compte = 0; compte < GARDE; n++, compte++) {
       const ref = new Date(debut.getFullYear(), debut.getMonth() + n * pas, 1, 12, 0, 0, 0);
       if (ref > butoir && ref.getMonth() !== butoir.getMonth()) break;
       let d;
@@ -1192,7 +1325,7 @@ function occurrencesAttendues(t){
   }
 
   if (r.type === 'an') {
-    for (let n = 0; n < GARDE; n++) {
+    for (let n = Math.max(0, Math.floor((borne.getFullYear()-debut.getFullYear()) / pas)), compte = 0; compte < GARDE; n++, compte++) {
       const d = new Date(debut.getFullYear() + n * pas, debut.getMonth(), debut.getDate(), 12, 0, 0, 0);
       if (d > butoir) break;
       if (d >= debut) sortie.push(isoDe(d));
@@ -1216,7 +1349,7 @@ function completerTaches(){
     const existantes = DB.occurrences.filter(o => o.tache === t.id);
 
     attendues.forEach(iso => {
-      if (!existantes.some(o => o.date === iso)) {
+      if (!existantes.some(o => o.date === iso || (o.origines || [o.prevue]).includes(iso))) {
         DB.occurrences.push({
           id: idOccurrence(t.id, iso), tache: t.id,
           prevue: iso, date: iso, statut: 'aFaire',
@@ -1227,7 +1360,7 @@ function completerTaches(){
     });
 
     existantes.forEach(o => {
-      if (o.statut === 'aFaire' && o.date > ajISO && attendues.indexOf(o.date) === -1) {
+      if (o.statut === 'aFaire' && o.date > ajISO && attendues.indexOf(o.prevue) === -1 && o.date === o.prevue) {
         DB.occurrences = DB.occurrences.filter(x => x.id !== o.id);
         change = true;
       }
@@ -1976,9 +2109,7 @@ function lundiDe(d){
 }
 function dimancheDe(d){ return plus(lundiDe(d), 6); }
 
-/* Une révision n'est validable que si son échéance est dépassée,
-   ou à sept jours au plus. Au-delà, le bouton « Faite » est verrouillé
-   pour éviter une validation par anticipation excessive. */
+/* Écart calendaire local entre aujourd'hui et la date de révision. */
 function joursAvant(iso){ return Math.round((dDe(iso) - aujourdhui()) / 86400000); }
 /* Fenêtre de validation : 72 h avant la date prévue, jusqu'à 72 h
    après. Au-delà, seuls Reporter et Annuler restent possibles — une
@@ -2035,10 +2166,10 @@ function calendrierDefaut(){
       rentree: '2026-09-01',
       finAnnee: '2027-07-02',
       vacances: {
-        toussaint: {debut:'2026-10-17', fin:'2026-11-02'},
-        noel:      {debut:'2026-12-19', fin:'2027-01-04'},
-        hiver:     {debut:'2027-02-20', fin:'2027-03-08'},
-        printemps: {debut:'2027-04-17', fin:'2027-05-03'},
+        toussaint: {debut:'2026-10-17', fin:'2026-11-01'},
+        noel:      {debut:'2026-12-19', fin:'2027-01-03'},
+        hiver:     {debut:'2027-02-20', fin:'2027-03-07'},
+        printemps: {debut:'2027-04-17', fin:'2027-05-02'},
         grandes:   {debut:'2027-07-03', fin:'2027-09-02'}
       },
       fige: true
@@ -2051,6 +2182,38 @@ function calendrierDefaut(){
 function libelleAnneeScolaire(d){
   const a = d.getFullYear();
   return (d.getMonth() >= 8) ? (a + '-' + (a + 1)) : ((a - 1) + '-' + a);
+}
+
+
+function corrigerCalendrierHistorique(){
+  const actuel = DB.reglages.calendrier && DB.reglages.calendrier['2026-2027'];
+  const ancien = ({
+    '2026-2027': {
+      annee: '2026-2027',
+      rentree: '2026-09-01',
+      finAnnee: '2027-07-02',
+      vacances: {
+        toussaint: {debut:'2026-10-17', fin:'2026-11-02'},
+        noel:      {debut:'2026-12-19', fin:'2027-01-04'},
+        hiver:     {debut:'2027-02-20', fin:'2027-03-08'},
+        printemps: {debut:'2027-04-17', fin:'2027-05-03'},
+        grandes:   {debut:'2027-07-03', fin:'2027-09-02'}
+      },
+      fige: true
+    }
+  })['2026-2027'];
+  if (!actuel || JSON.stringify(actuel.vacances) !== JSON.stringify(ancien.vacances) ||
+      actuel.rentree !== ancien.rentree || actuel.finAnnee !== ancien.finAnnee) { toast('Pas de calendrier identique à l’ancien défaut : dates personnalisées conservées.'); return; }
+  if (!confirm('Calendrier 2026–2027 : les quatre lundis de reprise sont inclus dans les vacances de l’ancien défaut. Corriger ces quatre fins au dimanche précédent ? Les autres dates restent inchangées.')) return;
+  if (!Store.sauvegarderOriginal(localStorage.getItem(CLE), 'Avant correction du calendrier')) { toast(Store.erreur); return; }
+  actuel.vacances = calendrierDefaut()['2026-2027'].vacances;
+  DB.revisions.forEach(r => {
+    if (r.statut !== 'aFaire' || r.rang === 'Cahier' || r.rang === 'Reprise des cours') return;
+    const p = Object.values(ancien.vacances).find(v => r.prevue >= v.debut && r.prevue <= v.fin &&
+      r.date === isoDe(plus(dDe(v.fin),1)));
+    if (p) r.date = prochainJourEcole(r.prevue);
+  });
+  entretenirPlanning(true); sauver(); rendre();
 }
 
 function calendriers(){
@@ -2076,14 +2239,15 @@ function calendrierPour(iso){
    bornes sont inclusives des deux côtés : « du samedi 17 octobre au
    lundi 2 novembre » comprend bien ces deux jours. */
 function vacancesPour(iso){
-  const cal = calendrierPour(iso);
-  if (!cal) return null;
+  const possibles = Object.values(calendriers());
+  for (const cal of possibles) {
   for (let i = 0; i < VACANCES_LIBELLES.length; i++) {
     const v = VACANCES_LIBELLES[i];
     const p = (cal.vacances || {})[v.cle];
     if (p && p.debut && p.fin && iso >= p.debut && iso <= p.fin) {
       return {cle: v.cle, nom: v.nom, debut: p.debut, fin: p.fin};
     }
+  }
   }
   return null;
 }
@@ -2162,8 +2326,8 @@ function echeancier(dateISO){
 
    La règle 3 ne se calcule pas une fois pour toutes à l'encodage :
    elle dépend en permanence de quels cours sont « les 3 derniers ».
-   Elle est donc appliquée par replanifierEleve(), rejouée à chaque
-   ajout de cours — d'où l'importance de ne jamais toucher aux
+   Elle est appliquée par entretenirPlanning(), au changement de jour
+   et après les changements métier, sans toucher aux
    révisions déjà traitées.
    ============================================================ */
 const NB_DERNIERS_COURS = 3;
@@ -2179,7 +2343,7 @@ function jourRevisionAvant(isoJourMatiere){
 
 /* Échéances de base d'un cours en mode élève : jour d'encodage et
    samedi de la même semaine. Le reste est ajouté par
-   replanifierEleve(). */
+   entretenirPlanning(). */
 function echeancierEleve(dateISO){
   const d = dDe(dateISO);
   const sortie = [{rang:'Encodage', ancrage:false, date:isoDe(d)}];
@@ -2197,7 +2361,7 @@ function echeancierEleve(dateISO){
    quelles que soient les règles qui la réclament. */
 function ajouterRevisionSiAbsente(idCours, iso, rang, ancrage){
   if (!iso) return false;
-  if (DB.revisions.some(r => r.cours === idCours && r.date === iso)) return false;
+  if (DB.revisions.some(r => r.cours === idCours && (r.date === iso || (r.origines || [r.prevue]).includes(iso)))) return false;
   DB.revisions.push({
     id: idCours + '#' + rang.toLowerCase().replace(/[^a-z0-9]+/g, '') + '-' + iso,
     cours: idCours, rang: rang, ancrage: !!ancrage,
@@ -2232,7 +2396,7 @@ function planifierDerniersCours(code){
   DB.revisions = DB.revisions.filter(r => {
     if (r.rang !== 'Avant cours') return true;
     if (r.statut !== 'aFaire') return true;      // déjà traitée : intouchable
-    if (r.date < ajISO) return true;             // passée : on n'y touche pas
+    if (r.date < ajISO || r.date !== r.prevue) return true; // passée/reportée : conservée
     const c = DB.cours.find(x => x.id === r.cours);
     if (!c || c.code !== code) return true;      // autre matière
     return idsDerniers.indexOf(r.cours) !== -1;  // gardée si encore dans le trio
@@ -2295,7 +2459,7 @@ function prochainJourEcole(iso){
 function debutPerimetreCahier(vac){
   const cal = calendrierPour(vac.debut);
   if (!cal) return vac.debut;
-  let borne = cal.rentree || '';
+  let borne = cal.rentree ? isoDe(plus(dDe(cal.rentree), -1)) : '';
   VACANCES_LIBELLES.forEach(v => {
     const p = (cal.vacances || {})[v.cle];
     if (p && p.fin && p.fin < vac.debut && p.fin > borne) borne = p.fin;
@@ -2322,7 +2486,7 @@ function genererCahierVacances(vac){
       r.prevue === vac.debut);
     if (deja) return;
     DB.revisions.push({
-      id: c.id + '#cahier-' + vac.cle,
+      id: c.id + '#cahier-' + vac.cle + '-' + vac.debut,
       cours: c.id, rang: 'Cahier', ancrage: false,
       prevue: vac.debut, date: vac.debut, statut: 'aFaire'
     });
@@ -2350,7 +2514,7 @@ function repousserRevisionsVacances(){
     const cible = prochainJourEcole(r.date);
     if (cible !== r.date) { r.date = cible; deplacees++; }
   });
-  if (deplacees) sauver();
+  if (deplacees) { reconcilierOccurrences(); sauver(); }
   return deplacees;
 }
 
@@ -2388,6 +2552,7 @@ function planifierReprises(){
   });
 
   let ajouts = 0;
+  const attendues = new Set();
   reprises.forEach(reprise => {
     /* Samedi qui précède strictement ce jour de reprise. */
     let s = plus(dDe(reprise), -1);
@@ -2403,15 +2568,78 @@ function planifierReprises(){
         .sort((a, b) => a.date < b.date ? 1 : -1)
         .slice(0, NB_DERNIERS_COURS)
         .forEach(c => {
+          attendues.add(c.id + '|' + iso);
           if (ajouterRevisionSiAbsente(c.id, iso, 'Reprise des cours', false)) ajouts++;
         });
     });
   });
-  if (ajouts) sauver();
-  return ajouts;
+  const avant = DB.revisions.length;
+  DB.revisions = DB.revisions.filter(r => r.rang !== 'Reprise des cours' ||
+    r.statut !== 'aFaire' || r.date !== r.prevue || r.date < ajISO || attendues.has(r.cours + '|' + r.date));
+  if (ajouts || DB.revisions.length !== avant) sauver();
+  return ajouts + avant - DB.revisions.length;
 }
 
 
+/* C08/C11 : entretien quotidien, avec traces des fusions antérieures. */
+let entretienEnCours = false, dernierJourPlanning = '';
+function tracesFusion(r){
+  const sortie = [], pile = [r];
+  while (pile.length) {
+    const objet = pile.pop(), copie = Object.assign({},objet);
+    if (Array.isArray(copie.fusions)) pile.push(...copie.fusions);
+    delete copie.fusions;
+    sortie.push(copie);
+  }
+  return sortie;
+}
+function reconcilierOccurrences(){
+  /* A4 : ne fusionne que les vraies doublures — même cours (ou tâche)
+     et même date PRÉVUE, telles que peut en produire une régénération.
+     Deux échéances distinctes reportées sur le même jour coexistent.
+     Priorité : faite > reportee > aFaire > annulee, de sorte qu'une
+     annulation n'absorbe jamais une échéance encore active. */
+  const POIDS = {faite:3, reportee:2, aFaire:1, annulee:0};
+  let change = false;
+  for (const [liste, relation] of [['revisions','cours'], ['occurrences','tache']]) {
+    const uniques = [], parCle = new Map(), ids = new Set();
+    for (const r of DB[liste]) {
+      const cle = r[relation] + '|' + (r.prevue || r.date);
+      const precedente = parCle.get(cle);
+      if (precedente) {
+        let gardee = precedente, absorbee = r;
+        if ((POIDS[r.statut] || 0) > (POIDS[precedente.statut] || 0)) { gardee = r; absorbee = precedente; }
+        gardee.fusions = (gardee.fusions || []).concat(tracesFusion(absorbee));
+        gardee.origines = Array.from(new Set([gardee.prevue, ...(gardee.origines || []), absorbee.prevue, ...(absorbee.origines || [])]));
+        if (gardee !== precedente) { uniques[uniques.indexOf(precedente)] = gardee; parCle.set(cle, gardee); ids.add(gardee.id); }
+        change = true;
+        continue;
+      }
+      if (ids.has(r.id)) { r.ancienId = r.id; r.id += '-recup-' + uniques.length; change = true; }
+      ids.add(r.id); parCle.set(cle, r); uniques.push(r);
+    }
+    DB[liste] = uniques;
+  }
+  return change;
+}
+function entretenirPlanning(force){
+  if (entretienEnCours || modeLecture() || Store.bloque) return false;
+  if (navigator.locks && !Store.verrouAcquis) return false; // A12 : attend le verrou
+  const jour = isoDe(aujourdhui());
+  if (!force && jour === dernierJourPlanning) return false;
+  entretienEnCours = true;
+  try {
+    completerRappels(); completerTaches();
+    if (modeEleve()) {
+      [...new Set(DB.cours.map(c => c.code))].forEach(planifierDerniersCours);
+      appliquerReglesVacances();
+    }
+    reconcilierOccurrences();
+    dernierJourPlanning = jour;
+    sauver();
+  } finally { entretienEnCours = false; }
+  return true;
+}
 function reporterAuProchainCours(idCours, depuisISO){
   const c = trouverCours(idCours);
   if (!c) return null;
@@ -2429,7 +2657,34 @@ function reporterAuProchainCours(idCours, depuisISO){
 const CLE = 'sabosse';
 const Store = {
   dispo: true,
-  lire(){
+  session: Date.now().toString(36) + '-' + Math.random().toString(36).slice(2),
+  brutLu: null,
+  bloque: false,
+  erreur: '',
+  recuperations: [],
+  dernierBrutSauve: null,
+  reparations: [],
+  verrouEtat: navigator.locks ? 'attente' : 'sans',
+  clesRecuperation(){
+    const cles = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(CLE + '-recuperation-')) cles.push(k); }
+    return cles.sort();
+  },
+  sauvegarderOriginal(brut, raison){
+    if (brut === null) return true;
+    /* A2 : jamais deux fois le même contenu, et au plus 5 copies. */
+    if (brut === this.dernierBrutSauve) return true;
+    try {
+      const cles = this.clesRecuperation();
+      while (cles.length >= 5) localStorage.removeItem(cles.shift());
+      const cle = CLE + '-recuperation-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+      localStorage.setItem(cle, JSON.stringify({raison, brut, quand:Date.now()}));
+      this.dernierBrutSauve = brut;
+      return true;
+    } catch (e) { this.erreur = 'Sauvegarde de sécurité impossible : exporte tes données avant de continuer.'; return false; }
+  },
+  lire(candidate){
+
     const REGLAGES_DEFAUT = {afficherAncrage:true, prenom:'', email:'', typeCompte:'',
                     role:'aucun', codePartage:'', affichage:'personnel', tolerance:3,
                     derniereAnnee:'', chatVuJusquePar:{},
@@ -2453,13 +2708,18 @@ const Store = {
                     codePin: '0000',
                     /* Décor choisi pour l'affichage plein écran du singe. */
                     paysageCabosse: 'bibliotheque'};
-    const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
+    const defaut = {schemaFiabilite:1,cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
                     taches:[], occurrences:[], quizz:{},
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
     try {
-      const brut = localStorage.getItem(CLE);
+      const brut = candidate === undefined ? localStorage.getItem(CLE) : JSON.stringify(candidate);
+      if (candidate === undefined) this.brutLu = brut;
       if (!brut) return defaut;
-      const o = JSON.parse(brut);
+      const o = validerBase(JSON.parse(brut));
+      if (candidate === undefined) this.reparations = validerBase.dernierRapport.slice();
+      if (candidate === undefined && (!o.schemaFiabilite || validerBase.dernierRapport.length)) {
+        if (!this.sauvegarderOriginal(brut, validerBase.dernierRapport.length ? 'Avant écart d\u2019éléments invalides' : 'Avant normalisation v54')) throw new Error(this.erreur);
+      }
       const reglages = Object.assign({}, REGLAGES_DEFAUT, o.reglages || {});
       /* L'option de masquage de l'ancrage a été retirée de l'interface :
          on force la valeur, sinon un appareil l'ayant désactivée autrefois
@@ -2528,45 +2788,14 @@ const Store = {
         progression: {dernierNiveauAnnonce: niveauAcquis}
       });
 
-      /* ---- Version majeure : remise à zéro des cours ----
-         Le moteur de planification a entièrement changé (échéances
-         calées sur l'emploi du temps réel au lieu d'une rampe fixe).
-         Les révisions générées par l'ancien moteur n'ont plus de
-         sens dans le nouveau, et un mélange des deux donnerait un
-         agenda incohérent. On repart donc d'une base vide, une
-         seule fois, marquée par un drapeau pour ne jamais
-         recommencer. Matières, emploi du temps, calendrier, tâches
-         et identité de synchronisation sont préservés — seuls les
-         cours et leurs révisions partent. */
-      /* Le drapeau doit être lu dans les données STOCKÉES, pas dans
-         `reglages` qui a déjà été fusionné avec REGLAGES_DEFAUT — où
-         il vaut true (installation neuve = rien à réinitialiser). */
-      const remiseAZeroFaite = !!(o.reglages && o.reglages.remiseAZeroV2);
+      // Marqueurs conservés pour compatibilité ; jamais de remise à zéro automatique.
       reglages.remiseAZeroV2 = true;
-
-      /* Second drapeau, indispensable : les versions v44 à v46 ont
-         déjà consommé remiseAZeroV2. Sans un marqueur distinct, les
-         appareils qui les ont installées garderaient une progression
-         calculée sur l'ancien barème (5 points par niveau), sans
-         rapport avec la courbe progressive du lot 5. Ce drapeau
-         remet donc la progression — et elle seule — à zéro une fois
-         de plus. */
-      const progressionRemiseAZero = !!(o.reglages && o.reglages.remiseAZeroProgressionV3);
       reglages.remiseAZeroProgressionV3 = true;
 
-      if (!remiseAZeroFaite || !progressionRemiseAZero) {
-        /* La gamification se recalcule depuis les cours et révisions :
-           on repart d'un singe vierge, niveau 1, aucun point dépensé.
-           Les préférences sons/animations sont conservées — ce sont
-           des réglages d'usage, pas de la progression. */
-        const prefs = (reglages.gamification && reglages.gamification.preferences) || null;
-        reglages.gamification = gamificationVierge();
-        if (prefs) reglages.gamification.preferences = prefs;
-      }
-
-      return {
-        cours: remiseAZeroFaite ? (o.cours || []) : [],
-        revisions: remiseAZeroFaite ? (o.revisions || []) : [],
+      return Object.assign({}, o, {
+        schemaFiabilite: 1,
+        cours: o.cours || [],
+        revisions: o.revisions || [],
         matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
         suivis: suivis,
         taches: Array.isArray(o.taches) ? o.taches : [],
@@ -2574,16 +2803,226 @@ const Store = {
         /* Essais de quizz : absents des sauvegardes antérieures. */
         quizz: (o.quizz && typeof o.quizz === 'object') ? o.quizz : {},
         reglages: reglages
-      };
-    } catch (e) { this.dispo = false; return defaut; }
+      });
+    } catch (e) {
+      if (candidate !== undefined) throw e;
+      this.dispo = false; this.bloque = true;
+      this.erreur = 'Données non chargées : original conservé. ' + e.message;
+      return defaut;
+    }
   },
   ecrire(db){
-    try { localStorage.setItem(CLE, JSON.stringify(db)); }
-    catch (e) { this.dispo = false; toast('Stockage indisponible.'); }
+    if (navigator.locks && !this.verrouAcquis) {
+      if (this.verrouEtat === 'attente') return false; // A12 : silencieux, le verrou arrive
+      this.erreur = 'Lecture seule : Cabosse est ouvert dans un autre onglet.';
+      this.dispo = false; this.travailNonEnregistre = true; signalerStockage(); return false;
+    }
+    if (this.bloque) { signalerStockage(); return false; }
+    try {
+      const actuel = localStorage.getItem(CLE);
+      if (actuel !== this.brutLu) {
+        this.sauvegarderOriginal(JSON.stringify(db), 'Conflit : travail de cet onglet');
+        this.bloque = true; this.dispo = false; this.travailNonEnregistre = true;
+        this.erreur = 'Conflit entre onglets : modifications non enregistrées. Exporte ce travail avant de recharger.';
+        signalerStockage(); return false;
+      }
+      const brut = JSON.stringify(db);
+      /* A1 : plus de copie de session (une clé permanente par ouverture saturait
+         le quota). Sans Web Locks, la détection de conflit ci-dessus et la copie
+         de récupération qu'elle déclenche suffisent. */
+      try { localStorage.setItem(CLE, brut); }
+      catch (e) {
+        // Les instantanés secondaires ne doivent pas empêcher la base principale de tenir.
+        if (e.name !== 'QuotaExceededError' || !localStorage.getItem('cabosse-instantanes')) throw e;
+        localStorage.removeItem('cabosse-instantanes');
+        this.alerteInstantane = 'Instantanés libérés pour enregistrer la base principale. Exporte une copie de secours.';
+        localStorage.setItem(CLE, brut);
+      }
+      this.brutLu = brut; this.dispo = true; this.erreur = ''; this.travailNonEnregistre = false;
+      signalerStockage(); return true;
+    } catch (e) {
+      this.dispo = false; this.travailNonEnregistre = true;
+      this.erreur = 'Modifications non enregistrées : stockage indisponible ou saturé. Exporte ce travail sans fermer.';
+      signalerStockage(); return false;
+    }
   }
 };
 let DB = Store.lire();
 
+/* C01/C17 : refus sans écrasement ; les champs inconnus légitimes sont conservés. */
+function dateValide(v){
+  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) &&
+    isoDe(dDe(v)) === v;
+}
+function identifiantValide(v){
+  return typeof v === 'string' && v.length > 0 && v.length <= 512 &&
+    !/[<>"'`&\\\x00-\x1f]/.test(v) && !['__proto__','constructor','prototype'].includes(v);
+}
+function couleurValide(v){ return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v); }
+function validerBase(o){
+  /* A6 : tolérant. Les défauts de structure (racine, listes principales,
+     clés interdites) restent bloquants ; chaque élément invalide est
+     écarté individuellement et consigné dans validerBase.dernierRapport.
+     L'appelant conserve la copie brute avant tout écart. */
+  const objet = v => v && typeof v === 'object' && !Array.isArray(v);
+  const rapport = [];
+  if (!objet(o) || !Array.isArray(o.cours) || !Array.isArray(o.revisions)) throw new Error('Structure de sauvegarde invalide.');
+  const inspecter = v => {
+    if (!v || typeof v !== 'object') return;
+    for (const k of Object.keys(v)) {
+      if (['__proto__','constructor','prototype'].includes(k)) throw new Error('Clé de données interdite.');
+      inspecter(v[k]);
+    }
+  };
+  inspecter(o);
+  for (const k of ['matieres','taches','occurrences','suivis']) {
+    if (o[k] !== undefined && !Array.isArray(o[k])) { rapport.push('liste ' + k); delete o[k]; }
+  }
+  for (const k of ['reglages','quizz']) if (o[k] !== undefined && !objet(o[k])) { rapport.push('objet ' + k); delete o[k]; }
+  const garder = (liste, test, libelle) => liste.filter(x => {
+    try { if (test(x)) return true; } catch (e) { /* écarté */ }
+    rapport.push(libelle + (x && x.id ? ' ' + String(x.id).slice(0, 40) : '')); return false;
+  });
+  const ids = new Set();
+  o.cours = garder(o.cours, c => {
+    if (!objet(c) || !identifiantValide(c.id) || !identifiantValide(c.code) || !dateValide(c.date) ||
+        (c.commentaire !== undefined && typeof c.commentaire !== 'string') || ids.has(c.id)) return false;
+    ids.add(c.id); return true;
+  }, 'cours');
+  const echeanceValide = (r, relation) => {
+    if (!objet(r) || !identifiantValide(r.id) || !identifiantValide(r[relation]) ||
+        !dateValide(r.date) || (r.prevue !== undefined && r.prevue !== '' && !dateValide(r.prevue)) ||
+        !['aFaire','reportee','faite','annulee'].includes(r.statut)) return false;
+    if (!r.prevue) r.prevue = r.date;
+    if (r.faitLe && !dateValide(r.faitLe)) delete r.faitLe;
+    if (r.rang !== undefined && typeof r.rang !== 'string') r.rang = String(r.rang);
+    if (r.origines !== undefined && (!Array.isArray(r.origines) || r.origines.some(v => !dateValide(v)))) delete r.origines;
+    if (r.fusions !== undefined && !Array.isArray(r.fusions)) delete r.fusions;
+    return true;
+  };
+  o.revisions = garder(o.revisions, r => echeanceValide(r, 'cours') && ids.has(r.cours), 'révision');
+  if (o.matieres) o.matieres = garder(o.matieres, m => {
+    if (!objet(m) || !identifiantValide(m.code) || typeof m.nom !== 'string') return false;
+    if (!couleurValide(m.c)) { m.c = '#9AA3B2'; rapport.push('couleur ' + m.code); }
+    return true;
+  }, 'matière');
+  const taches = new Set();
+  if (o.taches) o.taches = garder(o.taches, t => {
+    if (!objet(t) || !identifiantValide(t.id) || taches.has(t.id) || typeof t.intitule !== 'string' ||
+        !dateValide(t.debut) || !Number.isFinite(Number(t.duree)) || Number(t.duree) < 1) return false;
+    if (t.recur && (!objet(t.recur) || !['aucune','jour','semaine','mois','an'].includes(t.recur.type) ||
+        (t.recur.finLe && (!dateValide(t.recur.finLe) || t.recur.finLe < t.debut)) ||
+        (t.recur.intervalle !== undefined && (!Number.isInteger(t.recur.intervalle) || t.recur.intervalle < 1)))) return false;
+    taches.add(t.id); return true;
+  }, 'tâche');
+  if (o.occurrences) o.occurrences = garder(o.occurrences, r => echeanceValide(r, 'tache') && taches.has(r.tache), 'occurrence');
+  for (const [id, q] of Object.entries(o.quizz || {})) {
+    let ok = identifiantValide(id) && objet(q) && (q.reussites || 0) <= (q.essais || 0);
+    for (const cle of ['essais','reussites','bonusEnAttente','bonusConsomme']) {
+      if (ok && q[cle] !== undefined && (!Number.isSafeInteger(q[cle]) || q[cle] < 0)) ok = false;
+    }
+    for (const cle of ['dernierEssai','bloqueJusqu']) if (ok && q[cle] && !dateValide(q[cle])) ok = false;
+    if (!ok) { rapport.push('quizz ' + String(id).slice(0, 40)); delete o.quizz[id]; }
+  }
+  const reg = o.reglages || {};
+  for (const cle of ['prenom','email','role','codePartage','affichage','typeCompte']) {
+    if (reg[cle] !== undefined && typeof reg[cle] !== 'string') { rapport.push('réglage ' + cle); delete reg[cle]; }
+  }
+  for (const cle of ['calendrier','emploiDuTemps','gamification','semainesEncaissees']) {
+    if (reg[cle] !== undefined && !objet(reg[cle])) { rapport.push('réglage ' + cle); delete reg[cle]; }
+  }
+  for (const [k, cal] of Object.entries(reg.calendrier || {})) {
+    let ok = objet(cal) && (!cal.rentree || dateValide(cal.rentree)) && (!cal.finAnnee || dateValide(cal.finAnnee));
+    for (const v of Object.values((ok && cal.vacances) || {})) {
+      if (!objet(v) || (v.debut && !dateValide(v.debut)) || (v.fin && !dateValide(v.fin)) || (v.debut && v.fin && v.fin < v.debut)) ok = false;
+    }
+    if (!ok) { rapport.push('calendrier ' + k); delete reg.calendrier[k]; }
+  }
+  for (const [k, emploi] of Object.entries(reg.emploiDuTemps || {})) {
+    let ok = objet(emploi) && objet(emploi.jours);
+    for (const [jour, frequence] of Object.entries((ok && emploi.jours) || {})) if (!/^[1-6]$/.test(jour) || !['toutes','A','B'].includes(frequence)) ok = false;
+    if (!ok) { rapport.push('emploi du temps ' + k); delete reg.emploiDuTemps[k]; }
+  }
+  const g = reg.gamification || {};
+  for (const cle of ['niveauGlobal','pointsTotaux','pointsDepenses','rangIndex']) {
+    if (g[cle] !== undefined && (!Number.isFinite(g[cle]) || g[cle] < 0)) { rapport.push('progression ' + cle); delete g[cle]; }
+  }
+  for (const cle of ['jauges','penalites','bonusQuizz','artefacts','preferences']) if (g[cle] !== undefined && !objet(g[cle])) { rapport.push('progression ' + cle); delete g[cle]; }
+  for (const bloc of [g.penalites, g.bonusQuizz]) for (const [k, n] of Object.entries(bloc || {})) {
+    if (!Number.isFinite(n) || n < 0) { rapport.push('points ' + k); delete bloc[k]; }
+  }
+  for (const [k, jauge] of Object.entries(g.jauges || {})) if (!objet(jauge) || (jauge.points !== undefined && (!Number.isFinite(jauge.points) || jauge.points < 0))) { rapport.push('jauge ' + k); delete g.jauges[k]; }
+  if (o.suivis) o.suivis = garder(o.suivis, s => {
+    if (!objet(s) || !identifiantValide(s.code)) return false;
+    const sous = validerBase(Object.assign({}, s, {cours:s.cours || [],revisions:s.revisions || [],suivis:[]}));
+    s.cours = sous.cours; s.revisions = sous.revisions; s.taches = sous.taches; s.occurrences = sous.occurrences;
+    s.matieres = sous.matieres; s.reglages = sous.reglages;
+    return true;
+  }, 'profil suivi');
+  validerBase.dernierRapport = rapport;
+  return o;
+}
+function signalerStockage(){
+  const el = document.getElementById('stockage-alerte');
+  if (!el) return;
+  if (Store.reparations.length && !Store.reparationsSignalees) {
+    Store.reparationsSignalees = true;
+    toast(Store.reparations.length + ' élément(s) invalide(s) ignoré(s) au chargement ; copie brute conservée (Réglages › copies de récupération).');
+  }
+  el.hidden = Store.dispo && !Store.bloque;
+  const texte = el.querySelector('span');
+  if (texte) texte.textContent = Store.erreur;
+}
+
+
+/* Verrou exclusif d'écriture pour la durée de l'onglet (API Web Locks).
+   Sans API, contrôle de version + copie de récupération en cas de conflit.
+   A5 : le verrou est libéré à pagehide et REPRIS à pageshow / retour au
+   premier plan ; un onglet passif redevient actif si l'autre se ferme. */
+function demanderVerrou(premiere){
+  if (!navigator.locks || Store.verrouAcquis || Store.verrouDemande) return;
+  Store.verrouDemande = true;
+  navigator.locks.request('cabosse-ecriture-sabosse', {ifAvailable:true}, async verrou => {
+    Store.verrouDemande = false;
+    if (!verrou) {
+      Store.verrouEtat = 'refuse'; Store.bloque = true; Store.dispo = false;
+      Store.erreur = 'Lecture seule : Cabosse est déjà ouvert dans un autre onglet. Ferme cet onglet, ou reviens ici quand l’autre est fermé.';
+      signalerStockage(); return;
+    }
+    Store.verrouEtat = 'acquis'; Store.verrouAcquis = true;
+    /* Relecture si le stockage a changé pendant l'absence (autre onglet). */
+    const stocke = localStorage.getItem(CLE);
+    if (premiere || stocke !== Store.brutLu) {
+      if (!premiere && !Store.bloque && Store.travailNonEnregistre) {
+        Store.sauvegarderOriginal(JSON.stringify(DB), 'Travail local avant relecture après changement externe');
+      }
+      Store.bloque = false; Store.dispo = true; Store.erreur = ''; Store.travailNonEnregistre = false;
+      if (!premiere) DB = Store.lire();
+    } else { Store.bloque = false; Store.dispo = true; Store.erreur = ''; }
+    signalerStockage();
+    entretenirPlanning(true); rafraichirGamification(true); rendre();
+    await new Promise(resolve => window.addEventListener('pagehide', resolve, {once:true}));
+    Store.verrouAcquis = false; Store.verrouEtat = 'attente';
+  }).catch(() => { Store.verrouDemande = false; Store.bloque = true; Store.dispo = false; Store.erreur = 'Verrou de stockage indisponible. Exporte tes données avant de recharger.'; signalerStockage(); });
+}
+if (navigator.locks) {
+  demanderVerrou(true);
+  window.addEventListener('pageshow', () => demanderVerrou(false));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') demanderVerrou(false); });
+}
+window.addEventListener('storage', e => {
+  if (e.key !== CLE || e.newValue === Store.brutLu) return;
+  /* A2 : un onglet déjà passif n'a rien de nouveau à conserver. */
+  if (!Store.bloque && Store.verrouAcquis !== false) Store.sauvegarderOriginal(JSON.stringify(DB), 'Travail local avant changement externe');
+  Store.bloque = true; Store.dispo = false;
+  Store.erreur = navigator.locks
+    ? 'Données modifiées dans un autre onglet. Elles seront relues au retour sur cet onglet.'
+    : 'Données modifiées dans un autre onglet. Ton travail reste exportable ; recharge après sauvegarde.';
+  signalerStockage();
+});
+window.addEventListener('beforeunload', e => {
+  if (Store.travailNonEnregistre) { e.preventDefault(); e.returnValue = ''; }
+});
 /* Deux jeux de données ou plus peuvent coexister sur un même appareil :
    le « personnel » (celui que l'appareil encode lui-même) et un miroir
    en lecture seule par enfant suivi (reçu par Firebase, un par code).
@@ -2654,7 +3093,7 @@ function peutControler(){ return peutVoir('controle'); }
    moteur de planification (calendrier scolaire, emploi du temps des
    matières, cahier de vacances). Le mode ÉTUDIANT conserve
    intégralement le fonctionnement historique. */
-function modeEleve(){ return typeCompte() === 'enfant'; }
+function modeEleve(){ const s = suiviActif(); return (s ? (s.reglages || {}).typeCompte : typeCompte()) === 'enfant'; }
 
 let derniereSyncEnvoi = null, echecsSyncConsecutifs = 0;
 /* Regroupement des envois : une action utilisateur déclenche souvent
@@ -2667,6 +3106,7 @@ const DELAI_REGROUPEMENT_MS = 700;
 /* Empreintes du dernier envoi réussi, par document : sert à
    n'envoyer que ce qui a réellement changé. */
 let empreintesSync = {racine: null, annees: {}};
+let envoiEnCours = false, renvoiDemande = false, codeEmpreintes = ''; 
 
 function anneeCouranteCle(){ return libelleAnneeScolaire(aujourdhui()); }
 
@@ -2693,13 +3133,15 @@ function chargesSync(){
                   appareil suivi ne fait que l'afficher, jamais le recalculer
                   ni le réécrire (rafraichirGamification sort si modeLecture). */
                gamification: DB.reglages.gamification},
-    anneeCourante: anneeCouranteCle()
+    anneeCourante: anneeCouranteCle(),
+    anneesDisponibles: []
   };
 
   /* Cours et révisions ventilés par année scolaire : c'est ce
      découpage qui garde chaque document loin de la limite de 1 Mio,
      même après plusieurs années d'usage. */
   const annees = {};
+  const coursParId = new Map(DB.cours.map(c => [c.id,c]));
   const cleDe = iso => libelleAnneeScolaire(dDe(iso));
   DB.cours.forEach(c => {
     const k = cleDe(c.date);
@@ -2707,57 +3149,69 @@ function chargesSync(){
     annees[k].cours.push(c);
   });
   DB.revisions.forEach(r => {
-    const c = DB.cours.find(x => x.id === r.cours);
+    const c = coursParId.get(r.cours);
     const k = cleDe(c ? c.date : r.date);
     if (!annees[k]) annees[k] = {cours: [], revisions: []};
     annees[k].revisions.push(r);
   });
+  racine.anneesDisponibles = Object.keys(annees).sort();
   return {racine: racine, annees: annees};
 }
 
-function envoyerSync(){
-  const charges = chargesSync();
-  /* Seuls les documents dont l'empreinte a changé sont réenvoyés. */
+async function envoyerSync(){
+  if (!Store.dispo || Store.bloque || !window.SabosseSync || DB.reglages.role !== 'source') return false;
+  if (envoiEnCours) { renvoiDemande = true; return false; }
+  const code = DB.reglages.codePartage;
+  if (!code) return false;
+  if (code !== codeEmpreintes) {
+    codeEmpreintes = code; empreintesSync = {racine:null,annees:{}};
+  }
+  const charges = JSON.parse(JSON.stringify(chargesSync()));
   const empreinteRacine = JSON.stringify(charges.racine);
-  const aEnvoyer = {annees: {}};
-  let racineChangee = empreinteRacine !== empreintesSync.racine;
-  Object.keys(charges.annees).forEach(k => {
-    const e = JSON.stringify(charges.annees[k]);
-    if (e !== empreintesSync.annees[k]) aEnvoyer.annees[k] = charges.annees[k];
+  const parts = {annees:{}}, empreintes = {};
+  const cles = new Set([...Object.keys(charges.annees), ...Object.keys(empreintesSync.annees)]);
+  cles.forEach(k => {
+    const contenu = charges.annees[k] || {cours:[],revisions:[]};
+    const empreinte = JSON.stringify(contenu);
+    if (empreinte !== empreintesSync.annees[k]) { parts.annees[k] = contenu; empreintes[k] = empreinte; }
   });
-  if (!racineChangee && !Object.keys(aEnvoyer.annees).length) return;
-
-  window.SabosseSync.envoyer(DB.reglages.codePartage, charges.racine, aEnvoyer).then(ok => {
-    /* Un échec d'envoi était jusque-là totalement silencieux — c'est
-       très probablement ce qui a causé le bug de suivi rapporté :
-       rien n'avertissait qu'une mise à jour n'était pas partie. */
+  if (empreinteRacine === empreintesSync.racine && !Object.keys(parts.annees).length) return true;
+  envoiEnCours = true;
+  let ok = false;
+  try {
+    ok = await window.SabosseSync.envoyer(code,charges.racine,parts);
+    if (code !== DB.reglages.codePartage || DB.reglages.role !== 'source') { renvoiDemande = true; return false; }
     if (ok) {
-      derniereSyncEnvoi = Date.now();
-      echecsSyncConsecutifs = 0;
+      derniereSyncEnvoi = Date.now(); echecsSyncConsecutifs = 0;
       empreintesSync.racine = empreinteRacine;
-      Object.keys(aEnvoyer.annees).forEach(k => {
-        empreintesSync.annees[k] = JSON.stringify(charges.annees[k]);
-      });
-      const alerte = window.SabosseSync.derniereAlerteTaille;
-      if (alerte) {
+      Object.assign(empreintesSync.annees,empreintes);
+      if (window.SabosseSync.derniereAlerteTaille) {
+        toast('Données partagées volumineuses (' + Math.round(window.SabosseSync.derniereAlerteTaille / 1024) + ' Kio) — pense à archiver.');
         window.SabosseSync.derniereAlerteTaille = null;
-        toast('Données volumineuses (' + Math.round(alerte / 1024) + ' Kio) — pense à archiver.');
       }
+      // Une modification arrivée pendant l'attente devra partir à son tour.
+      renvoiDemande = renvoiDemande || JSON.stringify(chargesSync()) !== JSON.stringify(charges);
+    } else {
+      echecsSyncConsecutifs++;
+      toast('Partage non synchronisé : ' + (window.SabosseSync.dernierMotifEchec || 'connexion indisponible') + '. Données locales conservées.');
     }
-    else if (++echecsSyncConsecutifs === 3) {
-      const motif = window.SabosseSync.dernierMotifEchec;
-      toast(motif === 'permission-denied'
-        ? 'Ce code de partage appartient à un autre appareil — régénère-le.'
-        : motif === 'document-trop-gros' || motif === 'annee-trop-grosse'
-          ? 'Données trop volumineuses pour être partagées.'
-          : 'Le partage ne se synchronise plus — vérifie ta connexion.');
-    }
-    if (vueActive === 'reglages') rendre();
-  });
+  } catch (e) { echecsSyncConsecutifs++; toast('Partage non synchronisé. Données locales conservées.'); }
+  finally {
+    envoiEnCours = false;
+    if (renvoiDemande) { renvoiDemande = false; setTimeout(envoyerSync, DELAI_REGROUPEMENT_MS); }
+    else if (!ok && echecsSyncConsecutifs < 6) setTimeout(envoyerSync, Math.min(60000, 2000 * 2 ** echecsSyncConsecutifs));
+  }
+  if (vueActive === 'reglages') rendre();
+  return ok;
 }
 
 function sauver(){
-  Store.ecrire(DB);
+  if (!modeLecture() && DB.reglages.gamification) {
+    const g = DB.reglages.gamification;
+    const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz);
+    g.pointsTotaux = calc.pointsTotaux; g.jauges = calc.jauges;
+  }
+  if (!Store.ecrire(DB)) return false;
   if (!modeLecture()) enregistrerInstantane(); // jamais pour un profil suivi : ce n'est pas nos données
   if (DB.reglages.role === 'source' && DB.reglages.codePartage &&
       window.SabosseSync && window.SabosseSync.disponible) {
@@ -2777,29 +3231,19 @@ const CLE_INSTANTANES = 'cabosse-instantanes';
 function enregistrerInstantane(){
   try {
     const maintenant = Date.now();
-    let liste = JSON.parse(localStorage.getItem(CLE_INSTANTANES) || '[]');
+    let liste = listeInstantanes();
     const dernier = liste[liste.length - 1];
-    if (dernier && maintenant - dernier.quand < 3600000) return; // au plus un par heure
-    liste.push({quand: maintenant, cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
-                /* Tâches bonus, occurrences et cagnotte doivent suivre :
-                   sans elles, une restauration rapide effacerait tout
-                   le volet bonus sans prévenir. */
-                taches: DB.taches, occurrences: DB.occurrences,
-                cagnotte: DB.reglages.cagnotte,
-                semainesEncaissees: DB.reglages.semainesEncaissees});
-
-    const limite24h = maintenant - 24 * 3600000;
-    const limite7j = maintenant - 7 * 24 * 3600000;
-    const recents = liste.filter(s => s.quand >= limite24h);
-    const anciens = liste.filter(s => s.quand < limite24h && s.quand >= limite7j);
-    const parJour = {};
-    anciens.forEach(s => {
-      const j = new Date(s.quand).toDateString();
-      if (!parJour[j] || s.quand > parJour[j].quand) parJour[j] = s;
-    });
-    liste = Object.values(parJour).concat(recents).sort((a, b) => a.quand - b.quand);
+    if (dernier && maintenant - dernier.quand < 3600000) return;
+    const copie = JSON.parse(JSON.stringify(DB));
+    delete copie.suivis;
+    liste.push({version:2, quand:maintenant, base:copie});
+    liste = liste.filter(x => maintenant - x.quand <= 7 * 86400000);
+    // Budget distinct de la base principale, en unités UTF-16 de localStorage.
+    while (liste.length && JSON.stringify(liste).length * 2 > 1024 * 1024) liste.shift();
+    if (!liste.length) { Store.alerteInstantane = 'Base trop volumineuse pour un instantané local : utilise Exporter.'; return; }
     localStorage.setItem(CLE_INSTANTANES, JSON.stringify(liste));
-  } catch (e) { /* ce n'est qu'une sécurité : une erreur ici ne doit rien bloquer */ }
+    Store.alerteInstantane = '';
+  } catch (e) { Store.alerteInstantane = 'Instantané impossible : utilise Exporter pour une copie de secours.'; }
 }
 
 function listeInstantanes(){
@@ -2817,9 +3261,22 @@ function restaurerInstantane(decalageMs){
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
   if (!confirm('Restaurer l\u2019état du ' + quand + ' ? Cela remplace tes cours, révisions et tâches actuels.')) return;
-  DB.cours = meilleur.cours;
-  DB.revisions = meilleur.revisions;
-  DB.matieres = meilleur.matieres;
+  if (meilleur.version !== 2 || !meilleur.base) {
+    toast('Instantané ancien incomplet : restauration automatique refusée pour préserver les points. Utilise une sauvegarde complète.');
+    return;
+  }
+  if (!Store.sauvegarderOriginal(localStorage.getItem(CLE), 'Avant restauration')) { toast(Store.erreur); return; }
+  const candidate = Store.lire(meilleur.base);
+  candidate.reglages = Object.assign(candidate.reglages, {
+    role:DB.reglages.role, codePartage:DB.reglages.codePartage, affichage:DB.reglages.affichage
+  });
+  candidate.suivis = DB.suivis;
+  DB = candidate;
+  /* Les captures v2 contiennent les compteurs et les réglages associés. */
+  /* Ancien chemin conservé ci-dessous uniquement pour les champs disponibles. */
+  if (meilleur.cours) DB.cours = meilleur.cours;
+  if (meilleur.revisions) DB.revisions = meilleur.revisions;
+  if (meilleur.matieres) DB.matieres = meilleur.matieres;
   /* Instantanés d'avant la v33 : ces champs peuvent manquer. On ne
      touche alors à rien plutôt que d'écraser par du vide. */
   if (Array.isArray(meilleur.taches)) DB.taches = meilleur.taches;
@@ -2863,6 +3320,7 @@ function prochainNumero(code){
 }
 
 function ajouterCours(code, numero, dateISO, annee){
+  if (modeLecture() || !identifiantValide(code) || !/^\d+$/.test(String(numero)) || !dateValide(dateISO)) return false;
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
   DB.cours.push({id, code, numero, date: dateISO, annee: annee || '', commentaire: ''});
@@ -2891,6 +3349,7 @@ function ajouterCours(code, numero, dateISO, annee){
 
   if (annee) DB.reglages.derniereAnnee = annee;
   completerRappels();
+  entretenirPlanning(true);
   sauver();
   /* 🍫 Nourrir Cabosse : un nouveau cours, c'est de l'énergie. */
   gainCabosse('energie', XP_CABOSSE.coursEncode);
@@ -2902,6 +3361,7 @@ function supprimerCours(id){
   if (!DB.cours.some(c => c.id === id)) return;
   DB.cours = DB.cours.filter(c => c.id !== id);
   DB.revisions = DB.revisions.filter(r => r.cours !== id);
+  if (DB.quizz) delete DB.quizz[id];
   /* Le malus de suppression ne peut pas se recalculer depuis
      l'historique — le cours n'y est plus. On le compte ici. */
   const g = gamif();
@@ -2926,6 +3386,8 @@ function supprimerRevision(id){
    une révision est déjà prévue ce jour-là pour ce cours, auquel cas
    la rampe normale suffit et on ne double pas la charge. */
 function assurerRenfortJ7(idCours, depuisISO){
+  // Convention existante conservée : prochain JOUR de matière, pas nouvelle règle de veille.
+  depuisISO = depuisISO < isoDe(aujourdhui()) ? isoDe(aujourdhui()) : depuisISO;
   /* Mode ÉLÈVE : le renfort ne tombe plus à J+7 fixe mais au
      prochain jour où la matière a effectivement lieu — réviser la
      veille du cours suivant a bien plus de sens que sept jours plus
@@ -2934,8 +3396,7 @@ function assurerRenfortJ7(idCours, depuisISO){
     ? reporterAuProchainCours(idCours, depuisISO)
     : isoDe(plus(dDe(depuisISO), 7));
   if (!cible) return false;
-  const dejaPlanifiee = DB.revisions.some(r => r.cours === idCours && r.date === cible &&
-    (r.statut === 'aFaire' || r.statut === 'reportee'));
+  const dejaPlanifiee = DB.revisions.some(r => r.cours === idCours && r.date === cible);
   if (dejaPlanifiee) return false;
   DB.revisions.push({
     id: idCours + '#renfort-' + Date.now().toString(36),
@@ -3004,11 +3465,14 @@ document.getElementById('motdepasse-champ').addEventListener('keydown', e => {
 
 const vue = document.getElementById('vue');
 
+function couleurSure(c){ return couleurValide(c) ? c : '#9AA3B2'; }
 function ech(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function rendre(){
+  entretenirPlanning(false);
+  signalerStockage();
   /* Un compte ÉTUDIANT n'a pas de chat familial : on retire l'onglet
      et on quitte la vue si elle était affichée. */
   const ongletChat = document.getElementById('btn-tab-chat');
@@ -3027,6 +3491,18 @@ function rendre(){
   else if (vueActive === 'chat') { vue.innerHTML = vueChat(); vue.scrollTop = vue.scrollHeight; marquerChatVu(codeFamille()); }
   else if (vueActive === 'reglages') vue.innerHTML = vueReglages();
   else vue.innerHTML = vueStats();
+  if (vueActive === 'chat') {
+    const champ = document.getElementById('chat-texte'), code = codeFamille();
+    if (champ && brouillonsChat[code]) champ.value = brouillonsChat[code];
+    if (champ) champ.disabled = envoisChat.has(code);
+  }
+  const suivi = suiviActif();
+  if (suivi && (!suivi.recuLe || suivi.erreur)) {
+    vue.insertAdjacentHTML('afterbegin','<p role="status" class="carte">' + ech(suivi.erreur || 'Chargement du suivi…') + '</p>');
+  }
+  if (Store.alerteInstantane && vueActive === 'reglages') {
+    vue.insertAdjacentHTML('afterbegin','<p role="status" class="carte">' + ech(Store.alerteInstantane) + '</p>');
+  }
   if (vueActive !== 'chat') vue.scrollTop = 0;
   majBascule();
   majIconeAgenda();
@@ -3176,19 +3652,19 @@ function carteRevision(r, aujourdhuiCarte){
   const m = matiereDe(c.code);
   const validable = estValidable(r.date);
   const boutonFaite = validable
-    ? '<button class="ok" data-act="faite" data-id="' + r.id + '">J\u2019ai révisé <span class="emo">😎</span></button>'
+    ? '<button class="ok" data-act="faite" data-id="' + ech(r.id) + '">J\u2019ai révisé <span class="emo">😎</span></button>'
     : '<button class="verrou" disabled>J\u2019ai révisé <span class="emo">😎</span></button>';
   const cmds = modeLecture() ? '' :
     '<div class="cmds">' + boutonFaite +
-      '<button data-act="reporter" data-id="' + r.id + '">Reporter <span class="emo">😳</span></button>' +
-      '<button data-act="annuler" data-id="' + r.id + '">Annuler <span class="emo">🫣</span></button>' +
+      '<button data-act="reporter" data-id="' + ech(r.id) + '">Reporter <span class="emo">😳</span></button>' +
+      '<button data-act="annuler" data-id="' + ech(r.id) + '">Annuler <span class="emo">🫣</span></button>' +
     '</div>';
   const commentaire = (c.commentaire || '').trim();
   const texteNote = ech(commentaire.length > 90 ? commentaire.slice(0, 90) + '…' : commentaire);
-  const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + c.id + '"');
+  const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + ech(c.id) + '"');
   const zoneNote = commentaire
     ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">📝</span> ' + texteNote + '</button>'
-    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + c.id + '">Ajouter un Quizz ?</button>');
+    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + ech(c.id) + '">Ajouter un Quizz ?</button>');
   /* Deux styles de pastille seulement : « Nouveau ! » (jour
      d'encodage) et « Renfort » (rappel ajouté après un « pas encore
      retenu »). L'ancrage du samedi n'a plus de style propre : il
@@ -3221,7 +3697,7 @@ function enteteCarte(m, c, pastille){
   /* Matière et code du cours accolés à gauche (« Histoire · HIS-001 »),
      année et pastille alignées à droite. */
   return '<div class="haut">' +
-    '<i class="puce" style="background:' + m.c + '"></i>' +
+    '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
     '<span class="matiere">' + ech(m.nom) +
       ' <b class="code">· ' + ech(refCours(c)) + '</b></span>' +
     '<span class="refs">' + pastilleAnnee(c) + (pastille || '') + '</span>' +
@@ -3267,7 +3743,7 @@ function carteBilanSemaine(samediISO){
   liste.forEach(c => {
     const m = matiereDe(c.code);
     lignes += '<div class="bilan-ligne">' +
-      '<i class="puce" style="background:' + m.c + '"></i>' +
+      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
       '<b>' + ech(refCours(c)) + '</b><span>' + ech(m.nom) + '</span></div>';
   });
   return '<div class="carte bilan-semaine">' +
@@ -3306,13 +3782,13 @@ function carteTache(o){
   if (!modeLecture()) {
     if (o.statut === 'aFaire' || o.statut === 'reportee') {
       cmds = '<div class="cmds">' +
-        '<button class="ok force" data-act="tache-faite" data-id="' + o.id + '">J\u2019ai fait ! <span class="emo">💪</span></button>' +
-        '<button data-act="tache-reporter" data-id="' + o.id + '">Reporter <span class="emo">😳</span></button>' +
-        '<button data-act="tache-annuler" data-id="' + o.id + '">Annuler <span class="emo">🫣</span></button>' +
+        '<button class="ok force" data-act="tache-faite" data-id="' + ech(o.id) + '">J\u2019ai fait ! <span class="emo">💪</span></button>' +
+        '<button data-act="tache-reporter" data-id="' + ech(o.id) + '">Reporter <span class="emo">😳</span></button>' +
+        '<button data-act="tache-annuler" data-id="' + ech(o.id) + '">Annuler <span class="emo">🫣</span></button>' +
       '</div>';
     } else {
       cmds = '<div class="cmds">' +
-        '<button data-act="tache-reactiver" data-id="' + o.id + '">Remettre en attente</button>' +
+        '<button data-act="tache-reactiver" data-id="' + ech(o.id) + '">Remettre en attente</button>' +
       '</div>';
     }
   }
@@ -3323,7 +3799,7 @@ function carteTache(o){
 
   const retard = o.date < ajISO && (o.statut === 'aFaire' || o.statut === 'reportee');
   const chrono = (!modeLecture() && (o.statut === 'aFaire' || o.statut === 'reportee'))
-    ? '<button class="note-ajouter" data-act="tache-timer" data-id="' + o.id + '">⏱ Lancer le minuteur</button>'
+    ? '<button class="note-ajouter" data-act="tache-timer" data-id="' + ech(o.id) + '">⏱ Lancer le minuteur</button>'
     : '';
 
   return '<article class="rev tache-carte' + (o.statut === 'faite' ? ' faite' : '') + '">' +
@@ -3392,7 +3868,8 @@ function pointsSemaineCabosse(){
     else if (r.statut === 'reportee') pts += XP_CABOSSE.revisionReportee;
   });
   (dl.occurrences || []).forEach(o => {
-    if (o.date < sem.debut || o.date > sem.fin) return;
+    const quand = o.faitLe || o.date;
+    if (quand < sem.debut || quand > sem.fin) return;
     const t = (dl.taches || []).find(x => x.id === o.tache);
     if (!t) return;
     if (o.statut === 'faite') {
@@ -3691,6 +4168,7 @@ function grouperParDate(liste){
 }
 
 function vueAgenda(){
+  entretenirPlanning(false);
   const dl = donneesLecture();
   const banniere = modeLecture()
     ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
@@ -3917,14 +4395,18 @@ function quizzJouable(idCours){
 
 function enregistrerEssaiQuizz(idCours, reussi){
   if (modeLecture()) return;
+  if (!DB.cours.some(c => c.id === idCours) || !quizzJouable(idCours)) return false;
   const etats = quizzEtats();
   const e = etats[idCours] || {essais: 0, reussites: 0, dernierEssai: '', bloqueJusqu: ''};
   e.essais += 1;
   if (reussi) { e.reussites += 1; e.bloqueJusqu = ''; }
   else { e.bloqueJusqu = isoDe(plus(aujourdhui(), 1)); }  // règle 3
   e.dernierEssai = isoDe(aujourdhui());
+  e.dernierResultat = reussi ? 'reussi' : 'rate';
+  if (reussi) e.bonusEnAttente = e.essais;
   etats[idCours] = e;
   sauver();
+  return true;
 }
 
 /* --- Quizz : historique des notes de difficulté ---------------
@@ -4076,7 +4558,11 @@ function vueQuizz(){
 let quizzOuverte = null;
 
 /* Choix de la caractéristique à créditer après une réussite. */
+let bonusQuizzActif = null;
 function ouvrirBonusQuizz(idCours){
+  const etat = quizzEtat(idCours);
+  if (!etat.bonusEnAttente || etat.bonusConsomme === etat.bonusEnAttente) return;
+  bonusQuizzActif = {id:idCours, essai:etat.bonusEnAttente};
   const actions = document.getElementById('confirm-actions');
   document.getElementById('confirm-titre').textContent = 'Bravo ! Choisis ta récompense';
   document.getElementById('confirm-info').textContent =
@@ -4094,6 +4580,7 @@ function ouvrirBonusQuizz(idCours){
 
 /* --- Ajout ------------------------------------------------- */
 let matiereEnEdition = null;
+let emploiEnEdition = null;
 
 /* --- Emploi du temps d'une matière (formulaire Nouveau cours) ---
    Replié par défaut. Il ne concerne que le mode ÉLÈVE : en mode
@@ -4116,7 +4603,7 @@ function contenuEmploiMatiere(code){
   const m = matiereDe(code);
   const e = emploiMatiere(code);
 
-  if (e) {
+  if (e && emploiEnEdition !== code) {
     /* Déjà connu : on le rappelle, modifiable d'un bouton. Le
        report automatique sur les cours suivants, c'est simplement
        le fait de ne rien redemander ici. */
@@ -4134,13 +4621,13 @@ function contenuEmploiMatiere(code){
     const nom = JOURS[j].charAt(0).toUpperCase() + JOURS[j].slice(1, 3);
     let opts = '';
     FREQUENCES.forEach(f => {
-      opts += '<option value="' + f.cle + '">' + ech(f.nom) + '</option>';
+      opts += '<option value="' + f.cle + '"' + (e && e.jours[j] === f.cle ? ' selected' : '') + '>' + ech(f.nom) + '</option>';
     });
     jours += '<div class="emploi-ligne">' +
       '<label class="check-ligne" style="padding:0;flex:0 0 auto">' +
-        '<input type="checkbox" data-emploi-jour="' + j + '">' +
+        '<input type="checkbox" data-emploi-jour="' + j + '"' + (e && e.jours[j] ? ' checked' : '') + '>' +
         '<span style="min-width:34px">' + nom + '</span></label>' +
-      '<select data-emploi-freq="' + j + '" disabled>' + opts + '</select>' +
+      '<select data-emploi-freq="' + j + '"' + (e && e.jours[j] ? '' : ' disabled') + '>' + opts + '</select>' +
     '</div>';
   });
 
@@ -4198,7 +4685,7 @@ function vueAjout(){
       const reste = DB.revisions.filter(r =>
         r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
       html += '<div class="ligne">' +
-        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
         '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
         '<span>' + ech(m.nom) + ' · encodé le ' + libelleCourt(c.date) +
         ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' à venir</span></div></div>';
@@ -4285,7 +4772,7 @@ function blocNouvelleTache(){
         '<div class="txt"><b>' + ech(t.intitule) + '</b>' +
         '<span>' + t.duree + ' min · ' + ech(libelleRecurrence(t)) +
         (t.controleParent ? ' · contrôle parent' : '') + '</span></div>' +
-        '<button class="sup" data-act="tache-suppr" data-id="' + t.id + '">✕</button></div>';
+        '<button class="sup" data-act="tache-suppr" data-id="' + ech(t.id) + '">✕</button></div>';
     });
     html += '</div>';
   }
@@ -4314,13 +4801,13 @@ function carteCoursEnregistres(){
       optsAnnee += '<option value="' + ech(a) + '"' + (a === c.annee ? ' selected' : '') + '>' + ech(a) + '</option>';
     });
     html += '<div class="hist-l">' +
-      '<i class="puce" style="background:' + m.c + '"></i>' +
+      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
       '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
       '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span>' +
-      '<select class="annee-select" data-act="cours-annee" data-id="' + c.id + '">' + optsAnnee + '</select>' +
+      '<select class="annee-select" data-act="cours-annee" data-id="' + ech(c.id) + '">' + optsAnnee + '</select>' +
       '</div>' +
-      '<button data-act="cours-annuler-serie" data-id="' + c.id + '">Annuler la série</button>' +
-      '<button class="sup" data-act="suppr" data-id="' + c.id + '">✕</button></div>';
+      '<button data-act="cours-annuler-serie" data-id="' + ech(c.id) + '">Annuler la série</button>' +
+      '<button class="sup" data-act="suppr" data-id="' + ech(c.id) + '">✕</button></div>';
   });
   html += '</div>';
   return html;
@@ -4331,9 +4818,9 @@ function carteMatieres(){
   DB.matieres.forEach(m => {
     if (matiereEnEdition === m.code) {
       html += '<div class="mat-l mat-edit">' +
-        '<input type="color" id="me-couleur" value="' + m.c + '">' +
+        '<input type="color" id="me-couleur" value="' + couleurSure(m.c) + '">' +
         '<input type="text" id="me-nom" value="' + ech(m.nom) + '">' +
-        '<button class="mini ok" data-act="matiere-enregistrer" data-id="' + m.code + '">\u2713</button>' +
+        '<button class="mini ok" data-act="matiere-enregistrer" data-id="' + ech(m.code) + '">\u2713</button>' +
         '<button class="mini" data-act="matiere-annuler-edition">\u2715</button>' +
       '</div>';
     } else {
@@ -4341,11 +4828,11 @@ function carteMatieres(){
          c'est l'endroit naturel pour vérifier ce qui a été saisi. */
       const emploi = modeEleve() ? libelleEmploi(m.code) : '';
       html += '<div class="mat-l">' +
-        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
         '<span class="mat-nom"><b>' + ech(m.code) + '</b> · ' + ech(m.nom) +
           (emploi ? '<span class="mat-emploi">' + ech(emploi) + '</span>' : '') + '</span>' +
-        '<button class="mini" data-act="matiere-editer" data-id="' + m.code + '">\u270E</button>' +
-        '<button class="mini sup" data-act="matiere-suppr" data-id="' + m.code + '">\u2715</button>' +
+        '<button class="mini" data-act="matiere-editer" data-id="' + ech(m.code) + '">\u270E</button>' +
+        '<button class="mini sup" data-act="matiere-suppr" data-id="' + ech(m.code) + '">\u2715</button>' +
       '</div>';
     }
   });
@@ -4368,8 +4855,34 @@ function majApercu(){
   const compte = document.getElementById('apercu-compte');
   if (!zone) return;
   const date = (document.getElementById('f-date') || {}).value;
-  if (!date) { zone.innerHTML = ''; if (compte) compte.textContent = ''; return; }
-  let liste = echeancier(date);
+  if (!dateValide(date)) { zone.innerHTML = ''; if (compte) compte.textContent = ''; return; }
+  let liste = modeEleve() ? echeancierEleve(date) : echeancier(date);
+  if (modeEleve()) {
+    const code = (document.getElementById('f-mat') || {}).value;
+    const joursBrouillon = {};
+    JOURS_ECOLE.forEach(j => {
+      const coche = document.querySelector('[data-emploi-jour="' + j + '"]');
+      if (coche && coche.checked) joursBrouillon[j] = (document.querySelector('[data-emploi-freq="' + j + '"]') || {}).value || 'toutes';
+    });
+    const brouillon = emploiEnEdition === code || !emploiDefini(code);
+    const prochain = depuis => {
+      if (!brouillon) return prochainJourMatiere(code,depuis);
+      for (let i=1;i<=120;i++) {
+        const d = plus(dDe(depuis),i), f = joursBrouillon[d.getDay()];
+        if (f === 'toutes' || f === typeSemaine(d)) return isoDe(d);
+      }
+      return null;
+    };
+    let depuis = date > isoDe(aujourdhui()) ? date : isoDe(aujourdhui());
+    for (let n = 0; n < 2; n++) {
+      const jour = prochain(depuis); if (!jour) break;
+      const cible = jourRevisionAvant(jour);
+      if (cible >= date && !liste.some(e => e.date === cible)) liste.push({date:cible,rang:'Avant cours',ancrage:false});
+      depuis = jour;
+    }
+    liste.forEach(e => { if (estEnVacances(e.date)) e.date = prochainJourEcole(e.date); });
+    liste = liste.filter((e,n,a) => a.findIndex(x => x.date === e.date) === n);
+  }
   if (!DB.reglages.afficherAncrage) liste = liste.filter(e => !e.ancrage);
   if (compte) compte.textContent = liste.length + ' révision' + (liste.length > 1 ? 's' : '');
   let html = '';
@@ -4377,7 +4890,7 @@ function majApercu(){
     html += '<div class="l"><span class="r' + (e.ancrage ? ' ancrage' : '') + '">' +
             ech(libelleRang(e.rang)) + '</span><span class="d">' + libelleJour(e.date) + '</span></div>';
   });
-  zone.innerHTML = html;
+  zone.innerHTML = html + (modeEleve() ? '<p class="aide-champ">Prévision évolutive : les trois derniers cours et le calendrier seront réévalués chaque jour.</p>' : '');
 }
 
 /* --- Paramètres avancés ------------------------------------- */
@@ -4461,7 +4974,7 @@ function blocCalendrierScolaire(){
       '<p class="aide-champ" style="margin-top:10px;font-weight:700">' + ech(v.nom) + '</p>' +
       '<div class="cal-paire">' +
         '<input type="date" data-cal="' + v.cle + '-debut" value="' + ech(p.debut || '') + '"' + ro + '>' +
-        '<span class="cal-au">au</span>' +
+        '<span class="cal-au">au dernier jour inclus</span>' +
         '<input type="date" data-cal="' + v.cle + '-fin" value="' + ech(p.fin || '') + '"' + ro + '>' +
       '</div>';
   });
@@ -4507,14 +5020,14 @@ function enregistrerCalendrier(){
   const cle = anneeCalendrierEditee || libelleAnneeScolaire(aujourdhui());
   const rentree = lire('rentree');
   const fin = lire('finAnnee');
-  if (!rentree || !fin) { toast('Renseigne la rentrée et la fin d\u2019année.'); return; }
+  if (!dateValide(rentree) || !dateValide(fin)) { toast('Renseigne la rentrée et la fin d\u2019année.'); return; }
   if (fin <= rentree) { toast('La fin d\u2019année doit suivre la rentrée.'); return; }
 
   const vacances = {};
   for (let i = 0; i < VACANCES_LIBELLES.length; i++) {
     const v = VACANCES_LIBELLES[i];
     const d = lire(v.cle + '-debut'), f = lire(v.cle + '-fin');
-    if (!d || !f) { toast('Complète les dates : ' + v.nom + '.'); return; }
+    if (!dateValide(d) || !dateValide(f)) { toast('Complète les dates : ' + v.nom + '.'); return; }
     if (f < d) { toast(v.nom + ' : la fin précède le début.'); return; }
     vacances[v.cle] = {debut: d, fin: f};
   }
@@ -4522,6 +5035,7 @@ function enregistrerCalendrier(){
   calendriers()[cle] = {annee: cle, rentree: rentree, finAnnee: fin,
                         vacances: vacances, fige: true};
   anneeCalendrierEditee = cle;
+  entretenirPlanning(true);
   sauver();
   rendre();
   toast('Périodes de ' + cle + ' enregistrées.');
@@ -4554,6 +5068,7 @@ function blocReglagesAvances(){
         'les tâches à contrôler.' +
         (codePinParental() === '0000' ? ' <b>Pense à le changer.</b>' : '') + '</span></div>' +
       blocCalendrierScolaire() +
+      '<button class="bouton discret" data-act="cal-corriger-defaut">Vérifier les dates de reprise de l’ancien calendrier 2026–2027</button>' +
       '<p class="etiquette" style="margin-top:6px">Intitulé des matières disponibles</p>' +
       carteMatieres() +
       '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
@@ -4561,9 +5076,11 @@ function blocReglagesAvances(){
       '<div class="champ" style="margin-top:18px"><label for="f-tolerance">Tolérance de délai de révision (± jours)</label>' +
         '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
         '<span class="aide-champ">Une révision cochée dans cette fenêtre avant ou après sa date prévue ' +
-        'compte comme faite à l\u2019heure dans les statistiques.</span></div>' +
+        'est évaluée par l’ancien indicateur de ponctualité. Ce réglage historique ne change ni la fenêtre actuelle de ±3 jours, ni les statistiques de compréhension.</span></div>' +
+      '<p class="aide-champ">Cagnotte historique : semaines déjà encaissées figées, même après contrôle parental tardif. Les points RPG sont recalculés séparément. Les anciennes dates de réalisation inconnues ne prouvent pas la ponctualité.</p>' +
       '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
       '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
+      '<button class="bouton discret" data-act="recuperation" style="margin-top:8px">Exporter les copies de récupération</button>' +
       '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Importer une sauvegarde</button>' +
       '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
       '<p class="aide-champ" style="margin-top:10px">Restaurer l\u2019appli comme il y a :</p>' +
@@ -4754,7 +5271,8 @@ function scoreTaches(dl, debutISO, finISO){
     const t = (dl.taches || []).find(x => x.id === o.tache);
     if (!t) return;
     if (o.statut === 'faite') {
-      const aLHeure = o.date === o.prevue;
+      if (!o.faitLe) return; // ancienne date inconnue : pas de ponctualité inventée
+      const aLHeure = o.faitLe === o.prevue;
       const validee = !t.controleParent || o.controleFait;
       if (aLHeure && validee) gagnes++;
       else if (!aLHeure) perdus++;
@@ -4799,7 +5317,7 @@ function semaineDebloquee(dl, debutISO, finISO){
 
 /* Encaissement : dès qu'une semaine close a vu son programme de
    révisions bouclé, son solde de points bascule une fois pour toutes
-   dans la cagnotte, qui alimentera le singe Cabosse. Idempotent : une
+   dans la cagnotte historique, distincte des niveaux RPG. Idempotent : une
    semaine déjà encaissée n'est jamais recomptée. Rattrapage possible :
    une semaine terminée en retard est encaissée au moment où la
    dernière révision manquante est enfin cochée. */
@@ -4851,16 +5369,20 @@ function lancerMinuteur(idOcc){
   minuteurActif = {
     occurrence: idOcc,
     restant: Math.max(1, parseInt(t.duree, 10) || 1) * 60,
+    fin: Date.now() + Math.max(1, parseInt(t.duree, 10) || 1) * 60000,
+    notifie: false,
     tick: null
   };
   minuteurActif.tick = setInterval(() => {
-    minuteurActif.restant--;
+    if (!minuteurActif) return;
+    minuteurActif.restant = Math.max(0, Math.ceil((minuteurActif.fin - Date.now()) / 1000));
     const el = document.getElementById('minuteur-affichage');
     if (el) {
       el.textContent = formatChrono(minuteurActif.restant);
       el.classList.toggle('fini', minuteurActif.restant <= 0);
     }
-    if (minuteurActif.restant === 0) {
+    if (minuteurActif.restant === 0 && !minuteurActif.notifie) {
+      minuteurActif.notifie = true;
       notifier('Cabosse', 'Tâche terminée : ' + t.intitule, {tag: 'tache-' + idOcc});
       toast('Temps écoulé — ' + t.intitule);
     }
@@ -4912,7 +5434,7 @@ function graphiqueBenchmark(lignes){
     const pq = Math.round(l.quizz / maxVal * 100);
     const pp = Math.round(l.pasCompris / maxVal * 100);
     html += '<div class="bench-l">' +
-      '<div class="bench-nom"><i class="puce" style="background:' + l.c + '"></i>' +
+      '<div class="bench-nom"><i class="puce" style="background:' + couleurSure(l.c) + '"></i>' +
         ech(l.nom) + '</div>' +
       '<div class="bench-barres">' +
         '<div class="bench-b"><i style="width:' + pq + '%;background:var(--accent)"></i>' +
@@ -5186,23 +5708,32 @@ function vueChat(){
   return html;
 }
 
+const envoisChat = new Set(), brouillonsChat = {};
 async function envoyerMessageChat(){
   const nom = (DB.reglages.prenom || '').trim();
   if (!nom) { ouvrirChatNom(); return; }
   const champ = document.getElementById('chat-texte');
-  if (!champ) return;
-  const texte = champ.value.trim();
-  if (!texte) return;
   const code = codeFamille();
-  if (!code) return;
-  champ.value = '';
-  champ.disabled = true;
-  const ok = await window.SabosseSync.envoyerMessage(code, {
-    texte: texte.slice(0, 300), auteur: nom, quand: Date.now()
-  });
-  champ.disabled = false;
-  champ.focus();
-  if (!ok) toast('Message non envoyé, réessaie.');
+  if (!champ || !code || envoisChat.has(code) || !champ.value.trim()) return;
+  const texte = champ.value;
+  brouillonsChat[code] = texte; champ.disabled = true; envoisChat.add(code);
+  let ok = false;
+  try {
+    ok = !!(window.SabosseSync && await window.SabosseSync.envoyerMessage(code,{
+      texte:texte.trim().slice(0,300), auteur:nom, quand:Date.now()
+    }));
+  } catch (e) { ok = false; }
+  finally { envoisChat.delete(code); champ.disabled = false; }
+  if (ok) {
+    if (brouillonsChat[code] === texte) delete brouillonsChat[code];
+    if (codeFamille() === code && champ === document.getElementById('chat-texte') && champ.value === texte) champ.value = '';
+  } else {
+    toast('Message non envoyé : brouillon conservé.');
+    if (codeFamille() === code) {
+      const actuel = document.getElementById('chat-texte');
+      if (actuel && !actuel.value) actuel.value = brouillonsChat[code] || texte;
+    }
+  }
 }
 
 const chatnomVoile = document.getElementById('chatnom-voile');
@@ -5335,7 +5866,7 @@ function vueStats(){
     let essais = 0;
     ids.forEach(id => { essais += quizzEtat(id).essais || 0; });
     const pasCompris = dl.revisions.filter(r =>
-      ids.indexOf(r.cours) !== -1 && estRenfort(r)).length;
+      ids.indexOf(r.cours) !== -1 && r.statut === 'faite' && r.comprehension === 'partiel').length;
     if (essais || pasCompris) bench.push({nom: m.nom, c: m.c, quizz: essais, pasCompris: pasCompris});
   });
   if (bench.length) {
@@ -5356,14 +5887,15 @@ function vueStats(){
     const faites = revs.filter(r => r.statut === 'faite');
     /* « Pas encore tout compris » se déduit de la présence d'un
        renfort, créé exactement dans ce cas. */
-    const pasCompris = revs.filter(r => estRenfort(r)).length;
-    const toutCompris = Math.max(0, faites.length - pasCompris);
+    const pasCompris = faites.filter(r => r.comprehension === 'partiel').length;
+    const toutCompris = faites.filter(r => r.comprehension === 'reussi').length;
+    const inconnus = faites.length - pasCompris - toutCompris;
     let essais = 0, reussites = 0;
     ids.forEach(id => { const e = quizzEtat(id); essais += e.essais || 0; reussites += e.reussites || 0; });
     const quizzMoy = essais ? Math.round(reussites / essais * 100) : -1;
 
     html += '<div class="carte mat-stats">' +
-      '<div class="mat-stats-entete"><i class="puce" style="background:' + m.c + '"></i>' +
+      '<div class="mat-stats-entete"><i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
       '<b>' + ech(m.nom) + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Cours encodés</span><b>' + cours.length + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Révisions réalisées</span><b>' + faites.length + '</b></div>' +
@@ -5371,6 +5903,7 @@ function vueStats(){
       '<div class="mat-stats-ligne"><span>Annulations</span><b>' + revs.filter(r => r.statut === 'annulee').length + '</b></div>' +
       '<div class="mat-stats-ligne"><span>« J\u2019ai tout retenu »</span><b>' + toutCompris + '</b></div>' +
       '<div class="mat-stats-ligne"><span>« Pas encore tout compris »</span><b>' + pasCompris + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Compréhension non renseignée (historique)</span><b>' + inconnus + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Quizz réalisés</span><b>' + essais + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Réussite moyenne au Quizz</span><b>' +
         (quizzMoy < 0 ? '—' : quizzMoy + ' %') + '</b></div>' +
@@ -5390,7 +5923,7 @@ function vueStats(){
       action: r.statut === 'faite' ? 'Faite'
               : (r.statut === 'reportee' ? 'Reportée' : 'Annulée'),
       detail: r.statut === 'faite'
-        ? (estRenfort(r) ? '' : ((c.commentaire || '').trim() ? 'Pas tout compris' : 'Tout compris'))
+        ? (r.comprehension === 'partiel' ? 'Pas tout compris' : r.comprehension === 'reussi' ? 'Tout compris' : 'Compréhension non renseignée')
         : ''
     });
   });
@@ -5400,7 +5933,7 @@ function vueStats(){
     if (!e.essais || !e.dernierEssai) return;
     activites.push({
       quand: e.dernierEssai, cours: c, r: null, type: 'Quizz',
-      action: e.reussites ? 'Réussi' : 'Raté',
+      action: e.dernierResultat === 'reussi' ? 'Réussi' : e.dernierResultat === 'rate' ? 'Raté' : 'Résultat non renseigné',
       detail: e.reussites + ' / ' + e.essais
     });
   });
@@ -5413,7 +5946,7 @@ function vueStats(){
     activites.slice(0, 200).forEach(a => {
       const m = matiereDe(a.cours.code);
       html += '<div class="act-l">' +
-        '<i class="puce" style="background:' + m.c + '"></i>' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
         '<div class="act-txt">' +
           '<b>' + ech(m.nom) + ' – ' + ech(refCours(a.cours)) +
             (a.cours.annee ? ' – ' + ech(a.cours.annee) : '') + '</b>' +
@@ -5422,7 +5955,8 @@ function vueStats(){
         '</div>' +
         '<span class="act-date">' + libelleCourt(a.quand) + '</span>' +
         (modeLecture() || !a.r ? '' :
-          '<button class="sup" data-act="suppr-revision" data-id="' + a.r.id + '">✕</button>') +
+          (a.r.statut === 'annulee' ? '<button class="bouton discret" data-act="reactiver" data-id="' + ech(a.r.id) + '">Réactiver</button>' : '') +
+          '<button class="sup" data-act="suppr-revision" data-id="' + ech(a.r.id) + '">✕</button>') +
       '</div>';
     });
     if (activites.length > 200) {
@@ -5484,7 +6018,7 @@ function majListeValidationPin(){
     const t = trouverTache(o.tache);
     if (!t) return;
     html += '<label class="check-ligne pin-l">' +
-      '<input type="checkbox" data-pin-tache="' + o.id + '"' +
+      '<input type="checkbox" data-pin-tache="' + ech(o.id) + '"' +
         (pinSelection[o.id] ? ' checked' : '') + '>' +
       '<span><b>' + ech(t.intitule) + '</b>' +
         '<em>' + libelleCourt(o.date) + '</em></span></label>';
@@ -5669,6 +6203,7 @@ function activerPartage(){
 function regenererCodePartage(){
   if (!confirm('Générer un nouveau code de partage ?\n\nCeux qui te suivent devront rescanner ton QR code.')) return;
   if (window.SabosseSync) { window.SabosseSync.arreterChat(); }
+  codeEmpreintes = ''; empreintesSync = {racine:null,annees:{}};
   DB.reglages.codePartage = nouveauCode();
   DB.reglages.role = 'source';
   echecsSyncConsecutifs = 0;
@@ -5687,7 +6222,7 @@ function regenererCodePartage(){
    fois, chacun avec son propre miroir et sa propre écoute. */
 function ajouterSuivi(code){
   code = (code || '').trim();
-  if (!code) { toast('Code manquant.'); return; }
+  if (!/^[A-Za-z0-9_-]{8,128}$/.test(code)) { toast('Code de partage invalide.'); return; }
   if (DB.suivis.some(s => s.code === code)) { toast('Cet enfant est déjà suivi.'); return; }
   if (DB.suivis.length >= 6) { toast('Trop d\u2019enfants suivis sur un même appareil.'); return; }
   DB.reglages.role = 'suivi';
@@ -5706,14 +6241,21 @@ function demarrerEcouteSuivi(code){
      n'apportent rien à l'affichage du parent et coûteraient des
      lectures Firestore à chaque ouverture. */
   window.SabosseSync.suivre(code, (donnees, erreur) => {
-    if (erreur) { toast('Connexion au suivi interrompue.'); return; }
+    const suivi = DB.suivis.find(x => x.code === code);
+    if (erreur) {
+      if (suivi) suivi.erreur = erreur.code === 'not-found' ? 'Partage absent ou supprimé.' : 'Suivi non actualisé : lecture interrompue.';
+      toast(suivi ? suivi.erreur : 'Connexion au suivi interrompue.'); rendre(); return;
+    }
     if (!donnees) return;
+    try { validerBase(donnees); }
+    catch (e) { if (suivi) suivi.erreur = 'Données reçues invalides : ancien miroir conservé.'; toast('Données de suivi refusées.'); rendre(); return; }
     const s = DB.suivis.find(x => x.code === code);
     if (!s) return; // suivi retiré entre-temps
     /* Écrit dans le miroir séparé de cet enfant, jamais dans les
        données personnelles de cet appareil ni dans celles d'un autre
        enfant : un arrivage Firestore ne doit jamais rien écraser
        d'autre que ce qu'il concerne. */
+    s.erreur = ''; s.taches = donnees.taches || []; s.occurrences = donnees.occurrences || [];
     s.cours = donnees.cours || [];
     s.revisions = donnees.revisions || [];
     s.matieres = (donnees.matieres && donnees.matieres.length) ? donnees.matieres : MATIERES_DEFAUT.slice();
@@ -5821,11 +6363,16 @@ async function forcerMiseAJour(){
   try {
     if ('serviceWorker' in navigator) {
       const regs = await navigator.serviceWorker.getRegistrations();
-      for (const r of regs) await r.unregister();
+      const cible = new URL('sw.js',location.href).href;
+      for (const r of regs) {
+        const worker = r.active || r.waiting || r.installing;
+        if (worker && worker.scriptURL === cible) await r.unregister();
+      }
     }
     if ('caches' in window) {
       const cles = await caches.keys();
-      for (const c of cles) await caches.delete(c);
+      const prefixe = 'cabosse-' + encodeURIComponent(new URL('./',location.href).href) + '-';
+      for (const c of cles) if (c.startsWith(prefixe) || /^sabosse-v[0-9]+$/.test(c)) await caches.delete(c);
     }
   } catch (e) { /* on recharge quand même */ }
   location.reload();
@@ -5907,65 +6454,38 @@ function proposerExportHebdo(){
 
 function importerSauvegarde(fichier){
   const lecteur = new FileReader();
+  lecteur.onerror = () => toast('Lecture du fichier impossible.');
   lecteur.onload = () => {
-    let o;
-    try { o = JSON.parse(lecteur.result); }
-    catch (e) { toast('Fichier illisible.'); return; }
-    if (!o || !Array.isArray(o.cours) || !Array.isArray(o.revisions)) {
-      toast('Fichier invalide.'); return;
-    }
-    if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
-    /* On ne restaure JAMAIS l'identité de synchronisation depuis un
-       fichier : le code de partage est verrouillé côté Firestore à
-       l'appareil qui l'a créé. Restaurer le code d'un autre appareil
-       (ou d'une ancienne installation) rendait toutes les écritures
-       silencieusement refusées — c'était la cause du suivi figé.
-       Les réglages de synchro de CET appareil sont donc préservés. */
-    const syncActuelle = {
-      role: DB.reglages.role,
-      codePartage: DB.reglages.codePartage,
+    let candidate;
+    try { candidate = Store.lire(JSON.parse(lecteur.result)); }
+    catch (e) { toast('Import refusé : ' + e.message); return; }
+    if (!confirm('Remplacer les données par cette sauvegarde validée ? Une copie de sécurité sera conservée.')) return;
+    const courant = localStorage.getItem(CLE);
+    if (!Store.sauvegarderOriginal(courant, 'Avant import')) { toast(Store.erreur); return; }
+    candidate.reglages = Object.assign(candidate.reglages, {
+      role: DB.reglages.role, codePartage: DB.reglages.codePartage,
       affichage: DB.reglages.affichage
-    };
-    const suivisActuels = DB.suivis;
-    DB = {
-      cours: o.cours,
-      revisions: o.revisions,
-      matieres: (o.matieres && o.matieres.length) ? o.matieres : MATIERES_DEFAUT.slice(),
-      suivis: suivisActuels,
-      /* Tâches bonus et leurs occurrences : absentes des sauvegardes
-         antérieures à la v29, d'où le repli sur un tableau vide. */
-      taches: Array.isArray(o.taches) ? o.taches : [],
-      occurrences: Array.isArray(o.occurrences) ? o.occurrences : [],
-      quizz: (o.quizz && typeof o.quizz === 'object') ? o.quizz : {},
-      reglages: Object.assign(
-        {afficherAncrage: true, prenom: '', email: '', typeCompte: '', tolerance: 3,
-         derniereAnnee: '', chatVuJusquePar: {}, cagnotte: 0, semainesEncaissees: {},
-         exportHebdo: true, dernierePropositionExport: '', gamification: gamificationVierge()},
-        o.reglages || {},
-        syncActuelle,          // écrase toute valeur de synchro venue du fichier
-        {afficherAncrage: true}
-      )
-    };
-    /* Une sauvegarde d'avant la v30 n'a pas de bloc gamification :
-       on le crée, puis on recalcule tout depuis l'historique importé
-       pour que le niveau soit juste immédiatement. Silencieux : pas
-       de pluie d'animations au moment d'une restauration. */
-    if (!DB.reglages.gamification) DB.reglages.gamification = gamificationVierge();
-    sauver();
-    completerTaches();
+    });
+    candidate.suivis = DB.suivis;
+    Store.bloque = false; Store.brutLu = courant;
+    if (!Store.ecrire(candidate)) return;
+    DB = candidate;
+    entretenirPlanning(true);
     rafraichirGamification(true);
-    demarrerToutesLesEcoutesSuivi();
-    demarrerEcouteChat();
-    rendre();
+    demarrerToutesLesEcoutesSuivi(); demarrerEcouteChat(); rendre();
     toast('Sauvegarde restaurée.');
   };
   lecteur.readAsText(fichier);
 }
 
-function marquer(id, statut){
+function marquer(id, statut, resultat){
+  if (modeLecture()) return false;
   const r = DB.revisions.find(x => x.id === id);
-  if (!r) return;
+  if (!r || r.statut === statut || !['aFaire','reportee'].includes(r.statut)) return false;
+  if (statut === 'faite' && !estValidable(r.date)) { toast('Cette révision est hors de la fenêtre de validation : reporte-la.'); return false; }
   r.statut = statut;
+  if (statut === 'faite') r.comprehension = resultat || 'reussi';
+  else { delete r.faitLe; delete r.comprehension; }
   /* Date réelle du clic, distincte de la date prévue : c'est elle qui
      permet de savoir si la révision a été faite dans les temps. */
   if (statut === 'faite') r.faitLe = isoDe(aujourdhui());
@@ -6031,7 +6551,7 @@ function annulerSerie(id){
 function ajouterMatiere(code, nom, couleur){
   code = code.toUpperCase().trim();
   nom = nom.trim();
-  if (!code || !nom) { toast('Code et nom requis.'); return; }
+  if (!/^[A-Z]{3,4}$/.test(code) || !nom || !couleurValide(couleur)) { toast('Code : 3 à 4 lettres ; nom et couleur valides requis.'); return; }
   if (DB.matieres.some(m => m.code === code)) { toast('Ce code existe déjà.'); return; }
   DB.matieres.push({code: code, nom: nom, c: couleur});
   sauver();
@@ -6043,7 +6563,7 @@ function modifierMatiere(code, nom, couleur){
   const m = DB.matieres.find(x => x.code === code);
   if (!m) return;
   nom = nom.trim();
-  if (!nom) { toast('Le nom ne peut pas être vide.'); return; }
+  if (!nom || !couleurValide(couleur)) { toast('Nom et couleur valides requis.'); return; }
   const idsCours = DB.cours.filter(c => c.code === code).map(c => c.id);
   const nbRevisions = DB.revisions.filter(r => idsCours.indexOf(r.cours) !== -1).length;
   if (nbRevisions > 0 && !confirm('ATTENTION : vous allez modifier ' + nbRevisions +
@@ -6102,14 +6622,14 @@ document.getElementById('voile-annuler').addEventListener('click', fermerReport)
 voile.addEventListener('click', e => { if (e.target === voile) fermerReport(); });
 document.getElementById('voile-ok').addEventListener('click', () => {
   const d = document.getElementById('voile-date').value;
-  if (!d) return;
+  if (modeLecture() || !dateValide(d)) { toast('Date de report invalide.'); return; }
   if (reportTacheEnCours) {
     const o = DB.occurrences.find(x => x.id === reportTacheEnCours);
-    if (o) { o.date = d; o.statut = 'reportee'; sauver(); }
+    if (o) { o.date = d; o.statut = 'reportee'; delete o.faitLe; o.controleFait = false; reconcilierOccurrences(); sauver(); }
   } else if (reportEnCours) {
     const r = DB.revisions.find(x => x.id === reportEnCours);
     if (r) {
-      r.date = d; r.statut = 'reportee'; sauver();
+      r.date = d; r.statut = 'reportee'; delete r.faitLe; delete r.comprehension; reconcilierOccurrences(); sauver();
       /* Jamais culpabilisant : ton doux, pas de rouge, pas de son
          d'échec. Cabosse retrouvera son rythme. */
       jouerSonCabosse('reported');
@@ -6148,7 +6668,7 @@ document.getElementById('note-ok').addEventListener('click', () => {
   const c = trouverCours(noteEnCours);
   if (c) {
     c.commentaire = document.getElementById('note-texte').value.trim();
-    completerRappels(); // la note change la cadence des rappels : annuelle ↔ trimestrielle
+    completerRappels(); // la note change la cadence des rappels : activée ou désactivée selon la note
     sauver(); rendre(); toast('Note enregistrée.');
   }
   fermerNote();
@@ -6200,8 +6720,12 @@ confirmVoile.addEventListener('click', e => {
   /* Le bonus de quizz n'est pas rattaché à une révision : il doit
      être traité avant le garde sur actionEnCours, qui est null ici. */
   if (b.dataset.confirm === 'quizz-bonus') {
+    if (modeLecture() || !bonusQuizzActif || b.dataset.id !== bonusQuizzActif.id) return;
+    const etat = quizzEtat(bonusQuizzActif.id);
+    if (etat.bonusEnAttente !== bonusQuizzActif.essai || etat.bonusConsomme === bonusQuizzActif.essai) return;
     const carac = CARACTERISTIQUES.find(c => c.cle === b.dataset.carac);
     if (carac) {
+      etat.bonusConsomme = bonusQuizzActif.essai; delete etat.bonusEnAttente; bonusQuizzActif = null;
       const g = gamif();
       /* Les bonus de quizz ne se déduisent d'aucun historique de
          cours ou de tâche : ils sont comptabilisés à part, et
@@ -6220,6 +6744,11 @@ confirmVoile.addEventListener('click', e => {
   }
   if (!actionEnCours) return;
   const type = b.dataset.confirm;
+  const revisionCible = DB.revisions.find(r => r.id === actionEnCours.id);
+  if (modeLecture() || !revisionCible || !['aFaire','reportee'].includes(revisionCible.statut)) { fermerConfirmation(); return; }
+  if ((type === 'reussi' || type === 'a-revoir-confirmer') && !estValidable(revisionCible.date)) {
+    toast('Date de session dépassée : reporte cette révision.'); fermerConfirmation(); rendre(); return;
+  }
 
   if (type === 'reussi') {
     /* Tout retenu du premier coup : on valide directement, sans
@@ -6244,7 +6773,7 @@ confirmVoile.addEventListener('click', e => {
        comme tout n'est pas retenu, un renfort à J+7 est programmé
        d'office (sauf s'il en existe déjà un ce jour-là). */
     if (r) assurerRenfortJ7(r.cours, r.date);
-    marquer(actionEnCours.id, 'faite');
+    marquer(actionEnCours.id, 'faite', 'partiel');
     fermerConfirmation();
   }
   else if (type === 'annulee-une') { marquer(actionEnCours.id, 'annulee'); fermerConfirmation(); }
@@ -6260,7 +6789,7 @@ vue.addEventListener('click', e => {
   else if (act === 'note') { if (!modeLecture()) ouvrirNote(id); }
   else if (act === 'reactiver') {
     const r = DB.revisions.find(x => x.id === id);
-    if (r) { r.statut = 'aFaire'; sauver(); rendre(); toast('Révision remise en attente.'); }
+    if (r && !modeLecture()) { r.statut = 'aFaire'; delete r.faitLe; delete r.comprehension; sauver(); rendre(); toast('Révision remise en attente.'); }
   }
   else if (act === 'suppr-revision') {
     if (confirm('Supprimer définitivement cette révision ? Cette action est irréversible.')) supprimerRevision(id);
@@ -6273,6 +6802,7 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'export') exporterSauvegarde();
+  else if (act === 'recuperation') document.getElementById('stockage-recuperer').click();
   else if (act === 'export-mail') envoyerSauvegardeParMail();
   else if (act === 'importDeclencheur') {
     const f = document.getElementById('fichier-import');
@@ -6288,8 +6818,8 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'tache-faite') {
     const o = DB.occurrences.find(x => x.id === id);
-    if (o) {
-      o.statut = 'faite';
+    if (o && !modeLecture() && ['aFaire','reportee'].includes(o.statut)) {
+      o.statut = 'faite'; o.faitLe = isoDe(aujourdhui());
       arreterMinuteur(false);
       sauver();
       /* Les tâches conditionnent elles aussi le déblocage de la
@@ -6315,7 +6845,7 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'tache-reactiver') {
     const o = DB.occurrences.find(x => x.id === id);
-    if (o) { o.statut = 'aFaire'; o.controleFait = false; sauver(); rendre(); toast('Tâche remise en attente.'); }
+    if (o) { o.statut = 'aFaire'; o.controleFait = false; delete o.faitLe; sauver(); rendre(); toast('Tâche remise en attente.'); }
   }
   else if (act === 'tache-reporter') ouvrirReportTache(id);
   else if (act === 'tache-suppr') {
@@ -6328,15 +6858,12 @@ vue.addEventListener('click', e => {
   else if (act === 'cabosse-evoluer') monterNiveauCabosse();
   else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
   else if (act === 'emploi-modifier') {
-    /* On efface la définition : le bloc de saisie réapparaît aussitôt,
-       avec la matière toujours sélectionnée. */
     const code = b.dataset.code;
     if (code && emploiDuTemps()[code]) {
-      delete emploiDuTemps()[code];
-      sauver();
+      emploiEnEdition = code;
       const zone = document.getElementById('f-emploi');
       if (zone) zone.innerHTML = contenuEmploiMatiere(code);
-      toast('Redéfinis l\u2019emploi du temps de cette matière.');
+      toast('Brouillon : les changements seront enregistrés avec le cours.');
     }
   }
   else if (act === 'cabosse-plein-ecran') {
@@ -6347,16 +6874,16 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'stats-periode') { statsPeriode = b.dataset.periode; rendre(); }
   else if (act === 'valider-pin') ouvrirValidationPin();
-  else if (act === 'quizz-repondre') { quizzOuverte = b.dataset.id; rendre(); }
+  else if (act === 'quizz-repondre') { if (quizzEtat(id).bonusEnAttente) { ouvrirBonusQuizz(id); return; } quizzOuverte = id; rendre(); }
   else if (act === 'quizz-reussi') {
     /* Règle 3 : réussite → un point de caractéristique au choix.
        On enregistre l'essai d'abord, le bonus sera crédité au choix. */
-    enregistrerEssaiQuizz(b.dataset.id, true);
+    if (quizzOuverte !== id || !enregistrerEssaiQuizz(id, true)) return;
     quizzOuverte = null;
     ouvrirBonusQuizz(b.dataset.id);
   }
   else if (act === 'quizz-rate') {
-    enregistrerEssaiQuizz(b.dataset.id, false);
+    if (quizzOuverte !== id || !enregistrerEssaiQuizz(id, false)) return;
     quizzOuverte = null;
     rendre();
     toast('Pas grave — tu pourras réessayer demain.');
@@ -6383,6 +6910,7 @@ vue.addEventListener('click', e => {
     rendre();
     toast('Question remise dans le suivi.');
   }
+  else if (act === 'cal-corriger-defaut') corrigerCalendrierHistorique();
   else if (act === 'cal-enregistrer') enregistrerCalendrier();
   else if (act === 'cal-modifier') {
     if (modeLecture()) { toast('Lecture seule : modifie depuis l\u2019appareil suivi.'); return; }
@@ -6561,14 +7089,17 @@ vue.addEventListener('change', e => {
        saisie en cours (année, numéro, date). */
     const zone = document.getElementById('f-emploi');
     if (zone) zone.innerHTML = contenuEmploiMatiere(e.target.value);
+    majApercu();
     return;
   }
   /* Cocher un jour active son sélecteur de fréquence. */
   if (e.target.dataset && e.target.dataset.emploiJour) {
     const sel = document.querySelector('[data-emploi-freq="' + e.target.dataset.emploiJour + '"]');
     if (sel) sel.disabled = !e.target.checked;
+    majApercu();
     return;
   }
+  if (e.target.dataset && e.target.dataset.emploiFreq) { majApercu(); return; }
   /* Formulaire de tâche : on n'affiche que les options utiles au
      type de récurrence choisi. */
   if (e.target.id === 't-type') {
@@ -6609,17 +7140,19 @@ vue.addEventListener('change', e => {
 vue.addEventListener('click', e => {
   if (e.target.id !== 't-ok') return;
   const intitule = (document.getElementById('t-intitule').value || '').trim();
-  const duree = parseInt(document.getElementById('t-duree').value, 10);
+  const duree = Number(document.getElementById('t-duree').value);
   const debut = document.getElementById('t-debut').value;
   const heure = document.getElementById('t-heure').value || '';
   const type = document.getElementById('t-type').value;
-  const intervalle = parseInt(document.getElementById('t-intervalle').value, 10) || 1;
+  const intervalle = Number(document.getElementById('t-intervalle').value || 1);
   const fin = (document.getElementById('t-fin') || {}).value || '';
   const chControle = document.getElementById('t-controle');
 
   if (!intitule) { toast('Donne un intitulé à la tâche.'); return; }
   if (!duree || duree < 1) { toast('Indique une durée en minutes.'); return; }
-  if (!debut) { toast('Indique une date de début.'); return; }
+  if (!dateValide(debut) || (fin && (!dateValide(fin) || fin < debut))) { toast('La fin doit être une date valide après le début.'); return; }
+  if (!Number.isInteger(duree) || duree > 480 || !Number.isInteger(intervalle) || intervalle < 1 || intervalle > 52) { toast('Durée : 1–480 minutes ; intervalle : 1–52.'); return; }
+  if (!['aucune','jour','semaine','mois','an'].includes(type) || (heure && !/^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(heure))) { toast('Récurrence ou heure invalide.'); return; }
 
   const recur = {type: type, intervalle: intervalle, finLe: fin};
   if (type === 'semaine') {
@@ -6660,13 +7193,14 @@ vue.addEventListener('click', e => {
   if (!annee) { toast('Choisis une année scolaire.'); return; }
   if (!code) { toast('Choisis une matière.'); return; }
   if (!num)  { toast('Indique le numéro du cours.'); return; }
-  if (!date) { toast('Indique la date du cours.'); return; }
+  if (!dateValide(date)) { toast('Indique une date de cours valide.'); return; }
+  if (DB.cours.some(c => c.id === idCours(code,num.padStart(3,'0'),date))) { toast('Ce cours est déjà enregistré.'); return; }
   num = num.padStart(3, '0');
 
   /* Mode ÉLÈVE : l'emploi du temps de la matière est obligatoire.
      S'il n'est pas encore défini, il doit être saisi ici même —
      c'est la seule occasion, ensuite il est repris tout seul. */
-  if (modeEleve() && !emploiDefini(code)) {
+  if (modeEleve() && (!emploiDefini(code) || emploiEnEdition === code)) {
     const jours = {};
     JOURS_ECOLE.forEach(j => {
       const coche = document.querySelector('[data-emploi-jour="' + j + '"]');
@@ -6680,6 +7214,7 @@ vue.addEventListener('click', e => {
       return;
     }
     emploiDuTemps()[code] = {jours: jours, defini: true};
+    emploiEnEdition = null;
     sauver();
   }
 
@@ -6709,6 +7244,60 @@ document.getElementById('bascule-profil').addEventListener('click', e => {
   rendre();
 });
 
+entretenirPlanning(true);
+document.getElementById('stockage-export').addEventListener('click',exporterSauvegarde);
+document.getElementById('stockage-recuperer').addEventListener('click', () => {
+  const copies = [{raison:'Dernière base enregistrée',brut:localStorage.getItem(CLE)}];
+  for (let i=0;i<localStorage.length;i++) {
+    const cle = localStorage.key(i);
+    if (cle && cle.startsWith(CLE + '-recuperation-')) {
+      try { copies.push(JSON.parse(localStorage.getItem(cle))); } catch (e) { /* original conservé */ }
+    }
+  }
+  copies.push({raison:'Instantanés conservés, y compris anciens formats',brut:localStorage.getItem(CLE_INSTANTANES)});
+  const url = URL.createObjectURL(new Blob([JSON.stringify(copies)],{type:'application/json'}));
+  const lien = document.createElement('a'); lien.href=url; lien.download='cabosse-recuperation.json'; lien.click();
+  setTimeout(() => URL.revokeObjectURL(url),2000);
+});
+document.addEventListener('click', e => {
+  if (!Store.bloque && (!navigator.locks || Store.verrouAcquis || Store.verrouEtat === 'attente')) return;
+  const b = e.target.closest && e.target.closest('button');
+  if (!b || b.id === 'stockage-export' || b.id === 'stockage-recuperer' ||
+      b.dataset.vue || ['export','export-mail','importDeclencheur','parametres-deverrouiller'].includes(b.dataset.act) ||
+      /annuler|fermer|non/.test(b.id)) return;
+  e.preventDefault(); e.stopImmediatePropagation(); signalerStockage();
+},true);
+
+/* C24 : sémantique, focus contenu dans la modale et retour au déclencheur. */
+if (typeof MutationObserver !== 'undefined') {
+  const fermetures = {'voile':fermerReport,'confirm-voile':fermerConfirmation,'note-voile':fermerNote,
+    'pin-voile':fermerValidationPin,'motdepasse-voile':fermerMotDePasse,'chatnom-voile':fermerChatNom,
+    'scan-voile':fermerScanner,'galerie-voile':fermerGalerieCabosse};
+  const retours = new WeakMap();
+  const selection = () => [...document.querySelectorAll('[role="dialog"]')].filter(d => d.classList.contains('on')).pop();
+  const focusables = d => [...d.querySelectorAll('button,input,select,textarea,[href],[tabindex]')]
+    .filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+  document.querySelectorAll('[role="dialog"]').forEach(d => {
+    let ouvert = false;
+    new MutationObserver(() => {
+      const present = d.classList.contains('on');
+      if (present && !ouvert) { retours.set(d,document.activeElement); (focusables(d)[0] || d).focus(); }
+      if (!present && ouvert) { const retour = retours.get(d); if (retour && retour.isConnected) retour.focus(); }
+      ouvert = present;
+    }).observe(d,{attributes:true,attributeFilter:['class']});
+  });
+  document.addEventListener('keydown', e => {
+    const d = selection(); if (!d) return;
+    if (e.key === 'Escape') { e.preventDefault(); if (fermetures[d.id]) fermetures[d.id](); }
+    if (e.key === 'Tab') {
+      const liste = focusables(d);
+      if (!liste.length) { e.preventDefault(); d.focus(); return; }
+      const premier = liste[0], dernier = liste[liste.length-1];
+      if (e.shiftKey && (document.activeElement === premier || !d.contains(document.activeElement))) { e.preventDefault(); dernier.focus(); }
+      else if (!e.shiftKey && (document.activeElement === dernier || !d.contains(document.activeElement))) { e.preventDefault(); premier.focus(); }
+    }
+  });
+}
 completerRappels(); // étend l'horizon des rappels à long terme
 completerTaches();  // matérialise les occurrences de tâches sur l'horizon glissant
 encaisserSemaines(); // bascule dans la cagnotte les semaines de tâches désormais closes
@@ -6754,10 +7343,13 @@ window.addEventListener('online', () => {
    uniquement de la reconnexion interne du SDK. */
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  if (entretenirPlanning(false)) rendre(); // A7 : pas de re-rendu (ni perte de saisie) sans changement de jour
   if (DB.reglages.role === 'source') sauver();
   else if (DB.reglages.role === 'suivi') demarrerToutesLesEcoutesSuivi();
   demarrerEcouteChat();
 });
+
+setInterval(() => { if (isoDe(aujourdhui()) !== dernierJourPlanning) { entretenirPlanning(false); rendre(); } }, 30000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
