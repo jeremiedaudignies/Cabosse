@@ -411,9 +411,10 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 :root{--xp:#F2A104; --xp-doux:rgba(242,161,4,.14)}
 .cabosse-avatar{position:relative;flex:0 0 auto;
   display:flex;align-items:center;justify-content:center}
-.cabosse-avatar.grand{width:104px;height:104px;margin:0 auto}
+/* Vue Cabosse : singe agrandi de 50 % (104 → 156 px). */
+.cabosse-avatar.grand{width:156px;height:156px;margin:0 auto}
 .cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
-.cabosse-avatar.grand .cabosse-repli{font-size:76px}
+.cabosse-avatar.grand .cabosse-repli{font-size:114px}
 .cabosse-avatar.avec-image .cabosse-repli{display:none}
 .cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .cc-barre{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
@@ -508,6 +509,22 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .rev .rang.attente{color:var(--reportee);background:rgba(242,161,4,.14)}
 .rev .cmds button.ok.force{background:#F2A104;box-shadow:0 2px 10px rgba(242,161,4,.35)}
 
+/* Statistiques : filtres de période et indicateurs. */
+.stats-filtres{display:flex;gap:7px;margin-bottom:14px}
+.stats-f{flex:1;padding:10px 4px;border-radius:99px;border:1px solid var(--filet);
+  background:var(--surface);font-size:12.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
+.stats-f.actif{background:var(--accent);border-color:var(--accent);color:#fff}
+.stats-kpi{display:flex;align-items:baseline;gap:9px;margin-bottom:8px}
+.stats-kpi b{font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stats-kpi span{font-size:12.5px;color:var(--texte-2);font-weight:600}
+.act-l{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--filet)}
+.act-l:last-child{border-bottom:0}
+.act-txt{flex:1;min-width:0}
+.act-txt b{display:block;font-size:12.5px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-txt span{display:block;font-size:11px;color:var(--texte-3);margin-top:1px}
+.act-date{flex:0 0 auto;font-size:10.5px;color:var(--texte-3);font-family:var(--mono)}
+
 /* Contrôle parental par code PIN. */
 .pin-appel{display:flex;align-items:center;gap:11px;width:100%;text-align:left;
   padding:12px 14px;margin-bottom:12px;border-radius:var(--r-m);
@@ -580,8 +597,23 @@ button.gal-case:active{transform:scale(.97)}
   color:var(--texte-2);overflow-wrap:anywhere}
 
 /* Vue détail plein écran d'une évolution. */
-.gal-detail{display:flex;flex-direction:column;align-items:center;text-align:center;
-  padding:24px 8px}
+/* Plein écran : le singe sur son paysage, navigable latéralement. */
+.gal-detail{position:relative;min-height:100%;display:flex;flex-direction:column;
+  align-items:center;text-align:center;padding:24px 8px;
+  background-size:cover;background-position:center;border-radius:var(--r-m)}
+.gal-detail-voile{position:absolute;inset:0;border-radius:var(--r-m);
+  background:linear-gradient(180deg,rgba(255,255,255,.25) 0%,rgba(255,255,255,.82) 55%)}
+.gal-detail-corps{position:relative;width:100%;display:flex;flex-direction:column;
+  align-items:center}
+.gal-fleche{position:absolute;top:34%;z-index:2;width:40px;height:40px;border-radius:50%;
+  border:0;background:rgba(255,255,255,.9);box-shadow:0 2px 10px rgba(20,23,28,.18);
+  font-size:26px;line-height:1;color:var(--texte-2);cursor:pointer}
+.gal-fleche.g{left:6px}
+.gal-fleche.d{right:6px}
+.gal-paysages{display:flex;gap:8px;margin-top:20px}
+.gal-paysage{padding:9px 16px;border-radius:99px;border:1px solid var(--filet);
+  background:var(--surface);font-size:12.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
+.gal-paysage.actif{border-color:var(--accent);background:var(--accent-doux);color:var(--accent)}
 .gal-detail .cabosse-avatar.grand{width:510px;height:510px;max-width:100%}
 .gal-detail .cabosse-avatar.grand .cabosse-repli{font-size:min(38vw,228px)}
 .gal-detail-niveau{margin-top:16px;font-size:13px;font-weight:700;color:var(--texte-3);
@@ -952,7 +984,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v51 · 8 septembre 2026';
+const VERSION = 'v52 · 8 septembre 2026';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2401,7 +2433,9 @@ const Store = {
                     remiseAZeroProgressionV3: true,
                     /* Code PIN du contrôle parental — voir codePinParental().
                        Saisi par le parent sur le téléphone de l'élève. */
-                    codePin: '0000'};
+                    codePin: '0000',
+                    /* Décor choisi pour l'affichage plein écran du singe. */
+                    paysageCabosse: 'bibliotheque'};
     const defaut = {cours:[], revisions:[], matieres: MATIERES_DEFAUT.slice(), suivis: [],
                     taches:[], occurrences:[], quizz:{},
                     reglages: Object.assign({}, REGLAGES_DEFAUT)};
@@ -3385,19 +3419,27 @@ function carteDimancheCabosse(){
   const dispo = pointsDisponibles(g);
   const restants = coursRestantsSemaine();
   const fond = auRepos ? CABOSSE_ASSETS.fonds.plage : CABOSSE_ASSETS.fonds.bibliotheque;
+  /* Le nombre affiché doit correspondre à celui de la vue Cabosse :
+     ce n'est pas le solde brut mais ce qu'il reste à gagner avant la
+     prochaine évolution. */
+  const cout = coutNiveauSuivant(g.niveauGlobal);
+  const avantEvolution = g.niveauGlobal >= NIVEAU_MAX ? 0 : Math.max(0, cout - dispo);
 
-  return '<button type="button" class="cd-carte" data-act="ouvrir-cabosse" ' +
-    'style="background-image:url(\'' + fond + '\')" ' +
-    'aria-label="Cabosse, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
+  /* Deux zones cliquables distinctes : l'illustration ouvre le singe
+     en plein écran, les chiffres mènent à la vue Cabosse. Le
+     <div> englobant ne peut donc plus être un <button> (imbrication
+     interdite). */
+  return '<div class="cd-carte" style="background-image:url(\'' + fond + '\')">' +
     '<div class="cd-voile"></div>' +
-    '<div class="cd-avatar">' + avatarCabosse() + '</div>' +
-    '<div class="cd-stats">' +
-      '<div class="cd-stat"><b>' + (pts > 0 ? '+' : '') + pts + '</b><span>point' +
-        (Math.abs(pts) > 1 ? 's' : '') + ' cette semaine</span></div>' +
-      '<div class="cd-stat"><b>' + dispo + '</b><span>point' +
-        (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
-      '<div class="cd-stat"><b>' + restants + '</b><span>cours à réviser</span></div>' +
-    '</div></button>';
+    '<button type="button" class="cd-avatar" data-act="cabosse-plein-ecran" ' +
+      'aria-label="Voir Cabosse en grand, niveau ' + g.niveauGlobal + ', ' + ech(g.rangLabel) + '">' +
+      avatarCabosse() + '</button>' +
+    '<button type="button" class="cd-stats" data-act="ouvrir-cabosse" ' +
+      'aria-label="Ouvrir la vue Cabosse">' +
+      '<div class="cd-stat"><b>' + (pts > 0 ? '+' : '') + pts + '</b><span>Points gagnés !</span></div>' +
+      '<div class="cd-stat"><b>' + avantEvolution + '</b><span>Points avant évolution</span></div>' +
+      '<div class="cd-stat"><b>' + restants + '</b><span>Cours à réviser</span></div>' +
+    '</button></div>';
 }
 
 /* --- Vue détaillée de progression ---------------------------- */
@@ -3509,16 +3551,47 @@ function vueGalerieCabosse(){
    associé (un par niveau, voir DICTONS_CABOSSE). */
 function vueDetailRangCabosse(n){
   const dicton = DICTONS_CABOSSE[n - 1] || '';
-  return '<div class="gal-detail">' +
-    '<div class="cabosse-avatar grand">' +
-      '<span class="cabosse-repli">🐒</span>' +
-      '<img class="cabosse-base" alt="' + ech(RANGS_CABOSSE[n-1]) + '" src="' + fichierRang(n) + '" ' +
-        'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+  const g = gamif();
+  const max = g.niveauGlobal;
+  /* Navigation latérale entre les niveaux déjà débloqués : on ne
+     propose jamais un niveau non atteint. */
+  const flecheG = n > 1
+    ? '<button type="button" class="gal-fleche g" data-act="rang-precedent" ' +
+      'data-niveau="' + (n - 1) + '" aria-label="Niveau précédent">‹</button>' : '';
+  const flecheD = n < max
+    ? '<button type="button" class="gal-fleche d" data-act="rang-suivant" ' +
+      'data-niveau="' + (n + 1) + '" aria-label="Niveau suivant">›</button>' : '';
+
+  return '<div class="gal-detail" style="background-image:url(\'' + paysageCabosse() + '\')">' +
+    '<div class="gal-detail-voile"></div>' +
+    flecheG + flecheD +
+    '<div class="gal-detail-corps">' +
+      '<div class="cabosse-avatar grand">' +
+        '<span class="cabosse-repli">🐒</span>' +
+        '<img class="cabosse-base" alt="' + ech(RANGS_CABOSSE[n-1]) + '" src="' + fichierRang(n) + '" ' +
+          'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+      '</div>' +
+      '<div class="gal-detail-niveau">Niveau ' + n + ' sur ' + NIVEAU_MAX + '</div>' +
+      '<div class="gal-detail-nom">' + ech(RANGS_CABOSSE[n-1]) + '</div>' +
+      (dicton ? '<p class="gal-detail-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
+      /* Choix du décor : les deux paysages livrés par défaut. */
+      '<div class="gal-paysages">' +
+        boutonPaysage('bibliotheque', '📚 Bureau') +
+        boutonPaysage('plage', '🌴 Plage') +
+      '</div>' +
     '</div>' +
-    '<div class="gal-detail-niveau">Niveau ' + n + ' sur ' + NIVEAU_MAX + '</div>' +
-    '<div class="gal-detail-nom">' + ech(RANGS_CABOSSE[n-1]) + '</div>' +
-    (dicton ? '<p class="gal-detail-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
   '</div>';
+}
+
+/* Paysage retenu pour l'affichage plein écran du singe. */
+function paysageCabosse(){
+  const p = DB.reglages.paysageCabosse;
+  return CABOSSE_ASSETS.fonds[p] ? CABOSSE_ASSETS.fonds[p] : CABOSSE_ASSETS.fonds.bibliotheque;
+}
+function boutonPaysage(cle, libelle){
+  const actif = (DB.reglages.paysageCabosse || 'bibliotheque') === cle;
+  return '<button type="button" class="gal-paysage' + (actif ? ' actif' : '') + '" ' +
+    'data-act="choisir-paysage" data-paysage="' + cle + '">' + libelle + '</button>';
 }
 
 /* Ouverte en overlay plein écran (voir #galerie-voile dans le HTML),
@@ -3570,6 +3643,15 @@ document.getElementById('galerie-voile').addEventListener('click', e => {
     return;
   }
   if (e.target.closest('[data-act="cabosse-galerie-retour"]')) { retourGrilleGalerie(); return; }
+  const nav = e.target.closest('[data-act="rang-precedent"],[data-act="rang-suivant"]');
+  if (nav) { ouvrirDetailRangCabosse(parseInt(nav.dataset.niveau, 10)); return; }
+  const pays = e.target.closest('[data-act="choisir-paysage"]');
+  if (pays) {
+    DB.reglages.paysageCabosse = pays.dataset.paysage;
+    sauver();
+    rafraichirGalerie();
+    return;
+  }
   const carte = e.target.closest('[data-act="cabosse-rang-detail"]');
   if (carte) ouvrirDetailRangCabosse(parseInt(carte.dataset.niveau, 10));
 });
@@ -4593,16 +4675,7 @@ function libelleAxe(iso){
   return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
 }
 
-/* Cinq paliers, du plus favorable au moins favorable — évalués dans
-   cet ordre pour que « inférieur à 30 % » prenne le dessus sur
-   « inférieur à 50 % » quand les deux s'appliquent. */
-function smileyTaux(pct){
-  if (pct > 90) return '😍';
-  if (pct >= 80) return '🙂';
-  if (pct >= 50) return '😐';
-  if (pct >= 30) return '🙁';
-  return '🤮';
-}
+
 
 /* Quatre indicateurs, semaine par semaine, calés sur la date de
    révision (r.date) — celle qui compte aujourd'hui, y compris après
@@ -4800,60 +4873,9 @@ function limitesAnneeScolaire(decalage){
 }
 const LIMITES_PAR_UNITE = {semaine: limitesSemaine, mois: limitesMois, annee: limitesAnneeScolaire};
 
-/* Historique des scores d'une unité de temps donnée, du plus ancien
-   au plus récent — sert à la fois aux graphiques et à la détection
-   de record. */
-function historiqueScores(dl, unite, nbPeriodes){
-  const limites = LIMITES_PAR_UNITE[unite];
-  const sortie = [];
-  for (let i = nbPeriodes - 1; i >= 0; i--) {
-    const p = limites(i);
-    sortie.push(Object.assign({}, p, calculerScore(dl, p.debut, p.fin)));
-  }
-  return sortie;
-}
 
-/* Record : le score de la période en cours égale-t-il ou dépasse-t-il
-   tout ce qu'on peut voir dans la fenêtre affichée par les graphiques ?
-   Une vraie mémoire de tous les temps demanderait de stocker chaque
-   score au fil des semaines, ce que l'app ne fait pas — cette
-   comparaison reste donc bornée à l'historique visible. */
-function estRecord(historique){
-  if (historique.length < 2) return false;
-  const actuel = historique[historique.length - 1].score;
-  if (actuel <= 0) return false;
-  return historique.slice(0, -1).every(p => actuel > p.score);
-}
 
-function calculerSemaines(){
-  const dl = donneesLecture();
-  if (!dl.cours.length) return {semaines:[], nouveaux:[], revises:[], pourcentages:[], annules:[]};
-  const lundiCourant = lundiDe(aujourdhui());
-  const premiereISO = dl.cours.map(c => isoDe(lundiDe(dDe(c.date))))
-    .reduce((a, b) => a < b ? a : b);
-  let debut = dDe(premiereISO);
-  const limite = plus(lundiCourant, -11 * 7);
-  if (debut < limite) debut = limite;
 
-  const semaines = [];
-  for (let d = debut; d <= lundiCourant; d = plus(d, 7)) semaines.push(isoDe(d));
-
-  const nouveaux = [], revises = [], pourcentages = [], annules = [];
-  semaines.forEach(lundiISO => {
-    const dimISO = isoDe(plus(dDe(lundiISO), 6));
-    const nC = dl.cours.filter(c => c.date >= lundiISO && c.date <= dimISO).length;
-    const revsSemaine = dl.revisions.filter(r => r.date >= lundiISO && r.date <= dimISO);
-    const nRevisees = revsSemaine.filter(r => r.statut === 'faite').length;
-    const nAnnulees = revsSemaine.filter(r => r.statut === 'annulee').length;
-    const planifiees = revsSemaine.length;
-    nouveaux.push(nC);
-    revises.push(nRevisees);
-    annules.push(nAnnulees);
-    pourcentages.push(planifiees ? Math.round(nRevisees / planifiees * 100) : 0);
-  });
-  return {semaines: semaines, nouveaux: nouveaux, revises: revises,
-          pourcentages: pourcentages, annules: annules};
-}
 
 /* Petit histogramme SVG autonome, sans bibliothèque : une barre par
    semaine, sa valeur au-dessus, l'étiquette de semaine en dessous. */
@@ -4887,40 +4909,7 @@ function graphiqueBarres(labels, valeurs, options){
     '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
 }
 
-/* Variante pour des valeurs qui peuvent être négatives (le score peut
-   descendre sous zéro) : une ligne de zéro au milieu, les barres
-   montent au-dessus en vert, descendent en dessous en rouge. */
-function graphiqueScores(labels, valeurs){
-  const larg = 640, haut = 140, margeHaut = 20, margeBas = 26;
-  const zoneH = haut - margeHaut - margeBas;
-  const n = Math.max(valeurs.length, 1);
-  const pas = larg / n;
-  const largBarre = Math.min(30, pas * 0.55);
-  const maxV = Math.max(1, Math.max.apply(null, valeurs));
-  const minV = Math.min(0, Math.min.apply(null, valeurs));
-  const etendue = (maxV - minV) || 1;
-  const yZero = margeHaut + zoneH * (maxV / etendue);
-  let barres = '';
-  valeurs.forEach((v, i) => {
-    const x = i * pas + (pas - largBarre) / 2;
-    const yValeur = margeHaut + zoneH * (maxV - v) / etendue;
-    const y = v >= 0 ? yValeur : yZero;
-    const h = Math.abs(yZero - yValeur);
-    const couleur = v > 0 ? 'var(--faite)' : (v < 0 ? 'var(--annulee)' : 'var(--texte-3)');
-    barres += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + largBarre.toFixed(1) +
-      '" height="' + h.toFixed(1) + '" rx="3" fill="' + couleur + '"></rect>';
-    const yTexte = v >= 0 ? y - 6 : y + h + 13;
-    barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + yTexte.toFixed(1) +
-      '" text-anchor="middle" font-size="13" font-weight="700" font-family="var(--mono)" fill="var(--texte-2)">' +
-      v + '</text>';
-    barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (haut - 6) +
-      '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--texte-3)">' +
-      ech(labels[i]) + '</text>';
-  });
-  return '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
-    '<line x1="0" y1="' + yZero.toFixed(1) + '" x2="' + larg + '" y2="' + yZero.toFixed(1) +
-    '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
-}
+
 
 /* --- Chat ---------------------------------------------------- */
 
@@ -5185,6 +5174,64 @@ document.getElementById('chatnom-ok').addEventListener('click', () => {
 });
 
 /* --- Statistiques ------------------------------------------ */
+/* ============================================================
+   STATISTIQUES
+
+   Un filtre unique (semaine / mois / année) pilote l'ensemble des
+   indicateurs et de leurs courbes de tendance. Les anciens « scores »
+   hebdo/mensuel/annuel ont été retirés : cette logique de calcul
+   n'est plus utilisée nulle part.
+   ============================================================ */
+let statsPeriode = 'semaine';
+
+/* Bornes des N dernières périodes, de la plus ancienne à la plus
+   récente. Chaque entrée porte son libellé d'axe. */
+function periodesStats(type, nb){
+  const out = [];
+  const auj = aujourdhui();
+  for (let i = nb - 1; i >= 0; i--) {
+    if (type === 'semaine') {
+      const l = plus(lundiDe(auj), -7 * i);
+      out.push({debut: isoDe(l), fin: isoDe(plus(l, 6)),
+                label: libelleCourt(isoDe(l)).slice(0, 5)});
+    } else if (type === 'mois') {
+      const d = new Date(auj.getFullYear(), auj.getMonth() - i, 1, 12, 0, 0, 0);
+      const fin = new Date(d.getFullYear(), d.getMonth() + 1, 0, 12, 0, 0, 0);
+      out.push({debut: isoDe(d), fin: isoDe(fin),
+                label: ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][d.getMonth()]});
+    } else {
+      /* Année scolaire : septembre → août. */
+      const base = auj.getMonth() >= 8 ? auj.getFullYear() : auj.getFullYear() - 1;
+      const a = base - i;
+      out.push({debut: a + '-09-01', fin: (a + 1) + '-08-31',
+                label: String(a).slice(2) + '/' + String(a + 1).slice(2)});
+    }
+  }
+  return out;
+}
+
+/* Indicateurs d'une période : révisions traitées et taux. */
+function mesuresPeriode(dl, p){
+  const dans = r => {
+    const q = r.faitLe || r.date;
+    return q >= p.debut && q <= p.fin;
+  };
+  const prevues = dl.revisions.filter(r => r.date >= p.debut && r.date <= p.fin);
+  const faites = dl.revisions.filter(r => r.statut === 'faite' && dans(r));
+  const reportees = prevues.filter(r => r.statut === 'reportee');
+  const annulees = prevues.filter(r => r.statut === 'annulee');
+  /* « Le jour prévu » : la date de validation égale la date prévue. */
+  const aLheure = faites.filter(r => (r.faitLe || r.date) === r.prevue);
+  const base = prevues.length;
+  return {
+    revises: faites.length,
+    pctJourPrevu: faites.length ? Math.round(aLheure.length / faites.length * 100) : 0,
+    pctReport: base ? Math.round(reportees.length / base * 100) : 0,
+    pctAnnule: base ? Math.round(annulees.length / base * 100) : 0,
+    nbReport: reportees.length, nbAnnule: annulees.length, base: base
+  };
+}
+
 function vueStats(){
   const dl = donneesLecture();
   if (!dl.revisions.length) {
@@ -5192,149 +5239,127 @@ function vueStats(){
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
       '<p>Les statistiques arrivent avec le premier cours.</p></div>';
   }
-  const n = s => dl.revisions.filter(r => r.statut === s).length;
-  const faites = n('faite'), reportees = n('reportee'),
-        annulees = n('annulee'), venir = n('aFaire');
 
-  /* Réalisation : bornée à la semaine en cours (lundi-dimanche),
-     rien au-delà du dimanche. Le dénominateur compte tout ce qui est
-     prévu cette semaine, fait ou non — pas seulement le traité. */
-  const lundiSemaine = lundiDe(aujourdhui());
-  const dimancheISO = isoDe(plus(lundiSemaine, 6));
-  const lundiISO = isoDe(lundiSemaine);
-  const semaineActuelle = dl.revisions.filter(r => r.date >= lundiISO && r.date <= dimancheISO);
-  const planifieesSemaine = semaineActuelle.length;
-  const aLheureSemaine = semaineActuelle.filter(dansLesTemps).length;
-  const tauxSemaine = planifieesSemaine ? Math.round(aLheureSemaine / planifieesSemaine * 100) : 0;
-  const tol = toleranceJours();
+  const type = statsPeriode;
+  const nb = type === 'semaine' ? 8 : (type === 'mois' ? 6 : 4);
+  const periodes = periodesStats(type, nb);
+  const mesures = periodes.map(p => mesuresPeriode(dl, p));
+  const labels = periodes.map(p => p.label);
+  const courante = mesures[mesures.length - 1];
+  const motPeriode = type === 'semaine' ? 'cette semaine'
+                   : (type === 'mois' ? 'ce mois' : 'cette année');
 
-  const blocRealisation = !planifieesSemaine
-    ? '<div class="carte" style="margin-bottom:20px">' +
-        '<p style="margin:0;font-size:13px;color:var(--texte-2)">Aucune révision prévue cette semaine.</p></div>'
-    : '<div class="carte" style="margin-bottom:20px">' +
-        '<div style="display:flex;align-items:baseline;gap:10px">' +
-        '<b style="font-size:30px;font-weight:800;letter-spacing:-.03em;' +
-        'font-variant-numeric:tabular-nums;color:var(--faite)">' + tauxSemaine + '&nbsp;%</b>' +
-        '<span style="font-size:13px;color:var(--texte-2)">des révisions prévues cette semaine ont été ' +
-        'réalisées à \u00b1 ' + tol + ' jour' + (tol > 1 ? 's' : '') + ' <span class="emo">' +
-        smileyTaux(tauxSemaine) + '</span></span></div></div>';
-
-  let html =
-    '<div class="tuiles">' +
-      '<div class="tuile faite"><b>' + faites + '</b><span>Cours révisés <span class="emo">😎</span></span></div>' +
-      '<div class="tuile reportee"><b>' + reportees + '</b><span>Cours reportés <span class="emo">😳</span></span></div>' +
-      '<div class="tuile annulee"><b>' + annulees + '</b><span>Cours annulés <span class="emo">🫣</span></span></div>' +
-      '<div class="tuile venir"><b>' + venir + '</b><span>À venir <span class="emo">🗓️</span></span></div>' +
-    '</div>' +
-    '<p class="etiquette">Réalisation</p>' + blocRealisation;
-
-  const s7 = calculerSemaines();
-  if (s7.semaines.length) {
-    const labels = s7.semaines.map(libelleAxe);
-    html += '<p class="etiquette">Évolution hebdomadaire</p>' +
-      '<div class="carte graf"><p class="graf-titre">Nombre de nouveaux cours enregistrés</p>' +
-        graphiqueBarres(labels, s7.nouveaux, {couleur: 'var(--accent)'}) + '</div>' +
-      '<div class="carte graf"><p class="graf-titre">Cours révisés</p>' +
-        graphiqueBarres(labels, s7.revises, {couleur: 'var(--faite)'}) + '</div>' +
-      '<div class="carte graf"><p class="graf-titre">Taux de cours révisés sur le planifié</p>' +
-        graphiqueBarres(labels, s7.pourcentages, {couleur: 'var(--faite)', suffixe: '%', max: 100}) + '</div>' +
-      '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Nombre de cours annulés</p>' +
-        graphiqueBarres(labels, s7.annules, {couleur: 'var(--annulee)'}) + '</div>';
-  }
-
-  const histoSemStats = historiqueScores(dl, 'semaine', 8);
-  const histoMoisStats = historiqueScores(dl, 'mois', 6);
-  const histoAnStats = historiqueScores(dl, 'annee', 4);
-  html += '<p class="etiquette" style="margin-top:20px">Score</p>' +
-    '<div class="carte graf"><p class="graf-titre">Score hebdomadaire</p>' +
-      graphiqueScores(histoSemStats.map(p => p.label), histoSemStats.map(p => p.score)) + '</div>' +
-    '<div class="carte graf"><p class="graf-titre">Score mensuel</p>' +
-      graphiqueScores(histoMoisStats.map(p => p.label), histoMoisStats.map(p => p.score)) + '</div>' +
-    '<div class="carte graf" style="margin-bottom:20px"><p class="graf-titre">Score par année scolaire</p>' +
-      graphiqueScores(histoAnStats.map(p => p.label), histoAnStats.map(p => p.score)) + '</div>';
-
-  const lignes = [];
-  dl.matieres.forEach(m => {
-    const ids = dl.cours.filter(c => c.code === m.code).map(c => c.id);
-    if (!ids.length) return;
-    const revs = dl.revisions.filter(r => ids.indexOf(r.cours) !== -1);
-    lignes.push({
-      m: m,
-      cours: ids.length,
-      faites: revs.filter(r => r.statut === 'faite').length,
-      reportees: revs.filter(r => r.statut === 'reportee').length,
-      annulees: revs.filter(r => r.statut === 'annulee').length
-    });
+  /* Filtres de période. */
+  let html = '<div class="stats-filtres">';
+  [['semaine','Semaine'],['mois','Mois'],['annee','Année']].forEach(([cle, nom]) => {
+    html += '<button type="button" class="stats-f' + (type === cle ? ' actif' : '') + '" ' +
+      'data-act="stats-periode" data-periode="' + cle + '">' + nom + '</button>';
   });
+  html += '</div>';
 
-  /* Fiches empilées plutôt qu'un tableau : les intitulés demandés
-     sont trop longs pour tenir en colonnes sur un écran de téléphone. */
-  html += '<p class="etiquette">Par matière</p>';
-  lignes.forEach(l => {
-    html += '<div class="carte mat-stats">' +
-      '<div class="mat-stats-entete"><i class="puce" style="background:' + l.m.c + '"></i>' +
-      '<b>' + ech(l.m.nom) + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>Nb de cours</span><b>' + l.cours + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>Nb de révisions réalisées</span><b>' + l.faites + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>Nb de cours reportés</span><b>' + l.reportees + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>Nb de cours annulés</span><b>' + l.annulees + '</b></div>' +
+  /* Quatre indicateurs, chacun avec sa courbe de tendance. */
+  const blocs = [
+    {titre: 'Cours révisés ' + motPeriode, valeur: courante.revises, suffixe: '',
+     serie: mesures.map(m => m.revises), couleur: 'var(--faite)', max: null},
+    {titre: 'Révisés le jour prévu', valeur: courante.pctJourPrevu, suffixe: ' %',
+     serie: mesures.map(m => m.pctJourPrevu), couleur: 'var(--accent)', max: 100},
+    {titre: 'Reports sur cours à réviser', valeur: courante.pctReport, suffixe: ' %',
+     serie: mesures.map(m => m.pctReport), couleur: 'var(--reportee)', max: 100},
+    {titre: 'Annulations sur cours à réviser', valeur: courante.pctAnnule, suffixe: ' %',
+     serie: mesures.map(m => m.pctAnnule), couleur: 'var(--annulee)', max: 100}
+  ];
+  blocs.forEach(b => {
+    html += '<div class="carte graf">' +
+      '<div class="stats-kpi"><b style="color:' + b.couleur + '">' + b.valeur + b.suffixe + '</b>' +
+        '<span>' + b.titre + '</span></div>' +
+      graphiqueBarres(labels, b.serie,
+        {couleur: b.couleur, suffixe: b.suffixe.trim(), max: b.max}) +
     '</div>';
   });
 
-  const notesParMatiere = [];
+  /* --- Par matière : bilan complet, quizz compris ------------- */
+  html += '<p class="etiquette" style="margin-top:20px">Par matière</p>';
   dl.matieres.forEach(m => {
-    const coursAvecNote = dl.cours.filter(c => c.code === m.code && (c.commentaire || '').trim());
-    if (coursAvecNote.length) notesParMatiere.push({m: m, cours: coursAvecNote});
+    const cours = dl.cours.filter(c => c.code === m.code);
+    if (!cours.length) return;
+    const ids = cours.map(c => c.id);
+    const revs = dl.revisions.filter(r => ids.indexOf(r.cours) !== -1);
+    const faites = revs.filter(r => r.statut === 'faite');
+    /* « Pas encore tout compris » se déduit de la présence d'un
+       renfort, créé exactement dans ce cas. */
+    const pasCompris = revs.filter(r => estRenfort(r)).length;
+    const toutCompris = Math.max(0, faites.length - pasCompris);
+    let essais = 0, reussites = 0;
+    ids.forEach(id => { const e = quizzEtat(id); essais += e.essais || 0; reussites += e.reussites || 0; });
+    const quizzMoy = essais ? Math.round(reussites / essais * 100) : -1;
+
+    html += '<div class="carte mat-stats">' +
+      '<div class="mat-stats-entete"><i class="puce" style="background:' + m.c + '"></i>' +
+      '<b>' + ech(m.nom) + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Cours encodés</span><b>' + cours.length + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Révisions réalisées</span><b>' + faites.length + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Reports</span><b>' + revs.filter(r => r.statut === 'reportee').length + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Annulations</span><b>' + revs.filter(r => r.statut === 'annulee').length + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>« J\u2019ai tout retenu »</span><b>' + toutCompris + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>« Pas encore tout compris »</span><b>' + pasCompris + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Quizz réalisés</span><b>' + essais + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Réussite moyenne au Quizz</span><b>' +
+        (quizzMoy < 0 ? '—' : quizzMoy + ' %') + '</b></div>' +
+    '</div>';
   });
-  if (notesParMatiere.length) {
-    html += '<p class="etiquette" style="margin-top:20px">Notes par matière</p>';
-    notesParMatiere.forEach(g => {
-      html += '<div class="carte mat-stats">' +
-        '<div class="mat-stats-entete"><i class="puce" style="background:' + g.m.c + '"></i>' +
-        '<b>' + ech(g.m.nom) + '</b></div>';
-      g.cours.forEach(c => {
-        html += '<div class="note-ligne"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
-          '<span>' + ech(c.commentaire.trim()) + '</span></div>';
-      });
-      html += '</div>';
-    });
-  }
 
-  const historique = dl.revisions
-    .filter(r => r.statut === 'faite' || r.statut === 'annulee')
-    .sort((a, b) => a.date < b.date ? 1 : -1);
-  if (historique.length) {
-    const groupes = [];
-    historique.forEach(r => {
-      const c = trouverCours(r.cours);
-      if (!c) return;
-      let g = groupes.find(x => x.cours.id === c.id);
-      if (!g) { g = {cours: c, items: []}; groupes.push(g); }
-      g.items.push(r);
+  /* --- Historique des activités ------------------------------- */
+  const activites = [];
+  dl.revisions.forEach(r => {
+    if (r.statut === 'aFaire') return;
+    const c = dl.cours.find(x => x.id === r.cours);
+    if (!c) return;
+    activites.push({
+      quand: r.faitLe || r.date, cours: c, r: r,
+      type: estEncodage(r) ? 'Nouvel encodage'
+            : (estRenfort(r) ? 'Renfort' : libelleRevision(r, dl)),
+      action: r.statut === 'faite' ? 'Faite'
+              : (r.statut === 'reportee' ? 'Reportée' : 'Annulée'),
+      detail: r.statut === 'faite'
+        ? (estRenfort(r) ? '' : ((c.commentaire || '').trim() ? 'Pas tout compris' : 'Tout compris'))
+        : ''
     });
+  });
+  /* Les essais de quizz rejoignent la même chronologie. */
+  dl.cours.forEach(c => {
+    const e = quizzEtat(c.id);
+    if (!e.essais || !e.dernierEssai) return;
+    activites.push({
+      quand: e.dernierEssai, cours: c, r: null, type: 'Quizz',
+      action: e.reussites ? 'Réussi' : 'Raté',
+      detail: e.reussites + ' / ' + e.essais
+    });
+  });
+  activites.sort((a, b) => a.quand < b.quand ? 1 : -1);
 
+  if (activites.length) {
     html += '<details class="pliable" data-cle="historique"' + ouvert('historique') + ' style="margin-top:20px">' +
-      '<summary>Historique<span class="compte">' + historique.length + '</span></summary>' +
+      '<summary>Historique des activités<span class="compte">' + activites.length + '</span></summary>' +
       '<div class="contenu-pliable">';
-    groupes.forEach(g => {
-      const m = matiereDe(g.cours.code);
-      html += '<div class="hist-groupe"><div class="hist-entete">' +
+    activites.slice(0, 200).forEach(a => {
+      const m = matiereDe(a.cours.code);
+      html += '<div class="act-l">' +
         '<i class="puce" style="background:' + m.c + '"></i>' +
-        '<span>' + ech(refCours(g.cours)) + ' · ' + ech(m.nom) + '</span>' +
-        (modeLecture() ? '' :
-          '<button class="hist-suppr-serie" data-act="suppr-serie-hist" data-id="' + g.cours.id + '">Supprimer la série</button>') +
-        '</div><div class="carte" style="padding:5px 15px">';
-      g.items.forEach(r => {
-        html += '<div class="hist-l">' +
-          '<div class="txt"><b>' + ech(libelleRang(r.rang)) + '</b>' +
-          '<span>' + libelleCourt(r.date) + ' · ' + (r.statut === 'faite' ? 'Faite' : 'Annulée') + '</span></div>' +
-          (modeLecture() ? '' :
-            '<button data-act="reactiver" data-id="' + r.id + '">Réactiver</button>' +
-            '<button class="sup" data-act="suppr-revision" data-id="' + r.id + '">✕</button>') +
-          '</div>';
-      });
-      html += '</div></div>';
+        '<div class="act-txt">' +
+          '<b>' + ech(m.nom) + ' – ' + ech(refCours(a.cours)) +
+            (a.cours.annee ? ' – ' + ech(a.cours.annee) : '') + '</b>' +
+          '<span>' + ech(a.type) + ' · ' + ech(a.action) +
+            (a.detail ? ' · ' + ech(a.detail) : '') + '</span>' +
+        '</div>' +
+        '<span class="act-date">' + libelleCourt(a.quand) + '</span>' +
+        (modeLecture() || !a.r ? '' :
+          '<button class="sup" data-act="suppr-revision" data-id="' + a.r.id + '">✕</button>') +
+      '</div>';
     });
+    if (activites.length > 200) {
+      html += '<p class="aide-champ" style="text-align:center">' +
+        'Les 200 activités les plus récentes.</p>';
+    }
     html += '</div></details>';
   }
 
@@ -6245,6 +6270,13 @@ vue.addEventListener('click', e => {
       toast('Redéfinis l\u2019emploi du temps de cette matière.');
     }
   }
+  else if (act === 'cabosse-plein-ecran') {
+    /* Ouvre directement le niveau atteint en plein écran, avec le
+       décor choisi — même vue que depuis la galerie. */
+    ouvrirGalerieCabosse();
+    ouvrirDetailRangCabosse(gamif().niveauGlobal);
+  }
+  else if (act === 'stats-periode') { statsPeriode = b.dataset.periode; rendre(); }
   else if (act === 'valider-pin') ouvrirValidationPin();
   else if (act === 'quizz-repondre') { quizzOuverte = b.dataset.id; rendre(); }
   else if (act === 'quizz-reussi') {
