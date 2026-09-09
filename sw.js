@@ -2,7 +2,15 @@
    Même principe que RHABDO : on sert le cache d'abord pour que
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
-const CACHE = 'sabosse-v54';
+const PREFIXE = 'cabosse-' + encodeURIComponent(self.registration.scope) + '-';
+const CACHE = PREFIXE + 'v56.1';
+const EXTERNES = [
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js',
+  'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',
+  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
+];
 
 /* Deux listes distinctes, volontairement.
    FICHIERS : le strict nécessaire pour que l'app démarre hors ligne.
@@ -44,7 +52,7 @@ self.addEventListener('install', e => {
       c.addAll(FICHIERS).then(() =>
         /* Chaque asset optionnel est tenté isolément : un échec est
            avalé, les autres sont quand même mis en cache. */
-        Promise.all(ASSETS_OPTIONNELS.map(u =>
+        Promise.all(ASSETS_OPTIONNELS.concat(EXTERNES).map(u =>
           c.add(u).catch(() => null)))
       )
     ).then(() => self.skipWaiting())
@@ -54,25 +62,33 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(cles => Promise.all(cles.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(cles => Promise.all(cles.filter(k => k !== CACHE && (k.startsWith(PREFIXE) || /^sabosse-v[0-9]+$/.test(k))).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cache => {
-      const reseau = fetch(e.request).then(rep => {
-        if (rep && rep.status === 200 && rep.type === 'basic') {
-          const copie = rep.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copie));
-        }
-        return rep;
-      }).catch(() => cache);
-      return cache || reseau;
-    })
-  );
+  const url = new URL(e.request.url), scope = new URL(self.registration.scope);
+  const locale = url.origin === scope.origin && url.pathname.startsWith(scope.pathname);
+  if (!locale && !EXTERNES.includes(url.href)) return;
+  const cache = caches.open(CACHE);
+  const ancien = cache.then(c => c.match(e.request));
+  const reseau = cache.then(async c => {
+    const rep = await fetch(e.request);
+    if (rep && rep.status === 200 && ['basic','cors','default'].includes(rep.type)) {
+      await c.put(e.request, rep.clone());
+    }
+    return rep;
+  });
+  e.waitUntil(reseau.catch(() => undefined));
+  e.respondWith(ancien.then(rep => rep || reseau.catch(async () => {
+    if (e.request.mode === 'navigate' && locale) {
+      const c = await cache, accueil = await c.match(new URL('index.html',scope).href);
+      if (accueil) return accueil;
+    }
+    return Response.error();
+  })));
 });
 
 /* Un tap sur la notification ramène à l'app plutôt que de l'ouvrir
@@ -81,7 +97,7 @@ self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
     self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(liste => {
-      for (const c of liste) { if ('focus' in c) return c.focus(); }
+      for (const c of liste) { if (c.url && c.url.startsWith(self.registration.scope) && 'focus' in c) return c.focus(); }
       if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
