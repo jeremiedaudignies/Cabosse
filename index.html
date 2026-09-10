@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.2 — v56.1 +
+D1 L'onglet Réglages quitte la barre du bas pour un bouton ⚙️ dans l'en-tête
+   (à droite du titre) : la barre du bas repasse de 8 à 7 entrées, plus lisible.
+D2 Cartes de révision (agenda et tâches d'un même jour) triées par matière
+   (ordre alphabétique du nom), puis par code, puis par numéro croissant.
+
 Cabosse v56 — v55 + deux demandes :
 B1 Cartes de révision : le code du cours passe sur une ligne sous l'intitulé de la matière.
 B2 Réglages avancés › « Maintenance des données » : remise à zéro des statistiques,
@@ -144,6 +150,11 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--accent);font-weight:600}
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Réglages : bouton d'en-tête (déplacé depuis la barre du bas). */
+#btn-reglages-entete{flex:0 0 auto;width:40px;height:40px;border-radius:50%;font-size:21px;
+  background:var(--surface-2);color:var(--texte-2);display:flex;align-items:center;justify-content:center;
+  transition:background .15s,color .15s}
+#btn-reglages-entete[aria-current="page"]{background:var(--accent-doux);color:var(--accent)}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
   border-bottom:1px solid var(--filet);overflow-x:auto}
@@ -753,6 +764,7 @@ button.gal-case:active{transform:scale(.97)}
       <div class="eyebrow">Réactivation mémorielle</div>
       <h1>Cabosse</h1>
     </div>
+    <button type="button" id="btn-reglages-entete" data-vue="reglages" aria-label="Réglages" title="Réglages">⚙️</button>
   </header>
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
@@ -764,7 +776,6 @@ button.gal-case:active{transform:scale(.97)}
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
     <button data-vue="stats"><span class="ic">📊</span><span class="lb">Stats</span></button>
-    <button data-vue="reglages"><span class="ic">⚙️</span><span class="lb">Réglages</span></button>
   </nav>
 </div>
 <div id="recompenses" aria-live="polite"></div>
@@ -1147,7 +1158,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.1 · chat limité à 20 messages';
+const VERSION = 'v56.2 · Réglages dans l’en-tête, agenda trié';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3505,7 +3516,7 @@ function rendre(){
   if (ongletChat) ongletChat.style.display = peutVoir('chat') ? '' : 'none';
   if (vueActive === 'chat' && !peutVoir('chat')) vueActive = 'agenda';
 
-  document.querySelectorAll('#barre button').forEach(b => {
+  document.querySelectorAll('#barre button, #btn-reglages-entete').forEach(b => {
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
@@ -3854,7 +3865,35 @@ function tachesDuJour(iso){
 /* Une section de jour, pour l'Agenda : révisions seules, en pleine
    largeur. Les tâches ont leur propre onglet (voir sectionJourTaches
    ci-dessous) — les mélanger ici encombrait la vue générale. */
+/* Ordre d'affichage à l'intérieur d'un jour : matière (nom, ordre
+   alphabétique), puis code, puis numéro de cours croissant. Ainsi
+   « Anglais ANG-001, Anglais ANG-002, Français FRA-002, … ». Le tri
+   se fait sur une copie : l'ordre des données sous-jacentes n'est
+   jamais modifié. */
+function ordonnerParMatiere(items){
+  const dl = donneesLecture();
+  const cle = ref => {
+    const relation = ref.cours !== undefined ? 'cours' : 'tache';
+    if (relation === 'tache') return null; // les tâches n'ont pas de matière
+    const c = dl.cours.find(x => x.id === ref.cours);
+    if (!c) return {nom:'\uffff', code:'\uffff', num:Number.MAX_SAFE_INTEGER};
+    const m = dl.matieres.find(x => x.code === c.code);
+    return {nom:(m ? m.nom : c.code), code:c.code, num:parseInt(c.numero, 10) || 0};
+  };
+  return items.map((r, i) => ({r, i, k:cle(r)}))
+    .sort((a, b) => {
+      if (!a.k || !b.k) return a.i - b.i; // pas de matière : ordre d'origine
+      const pn = a.k.nom.localeCompare(b.k.nom, 'fr', {sensitivity:'base'});
+      if (pn) return pn;
+      if (a.k.code !== b.k.code) return a.k.code < b.k.code ? -1 : 1;
+      if (a.k.num !== b.k.num) return a.k.num - b.k.num;
+      return a.i - b.i;
+    })
+    .map(o => o.r);
+}
+
 function sectionJour(titre, revisions, iso, classe, estAujourdhui){
+  revisions = ordonnerParMatiere(revisions);
   const compte = revisions.length;
   let html = '<section class="jour' + (classe ? ' ' + classe : '') + '"><h2>' + titre +
     (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>';
@@ -4229,11 +4268,8 @@ function vueAgenda(){
      l'élève peut tout valider quand il veut. */
   const vac = modeEleve() ? vacancesPour(ajISO) : null;
   if (vac) {
-    const cahier = enAttente.filter(r => r.rang === 'Cahier' && r.prevue === vac.debut)
-      .sort((a, b) => {
-        const ca = dl.cours.find(x => x.id === a.cours), cb = dl.cours.find(x => x.id === b.cours);
-        return (ca ? ca.date : '') < (cb ? cb.date : '') ? -1 : 1;
-      });
+    const cahier = ordonnerParMatiere(
+      enAttente.filter(r => r.rang === 'Cahier' && r.prevue === vac.debut));
     const total = dl.revisions.filter(r => r.rang === 'Cahier' && r.prevue === vac.debut).length;
     const restants = cahier.length;
 
@@ -7413,12 +7449,14 @@ vue.addEventListener('click', e => {
   toast(code + '-' + num + ' planifié.');
 });
 
-document.getElementById('barre').addEventListener('click', e => {
+function ouvrirVueDepuisBouton(e){
   const b = e.target.closest('button[data-vue]');
   if (!b) return;
   vueActive = b.dataset.vue;
   rendre();
-});
+}
+document.getElementById('barre').addEventListener('click', ouvrirVueDepuisBouton);
+document.getElementById('btn-reglages-entete').addEventListener('click', ouvrirVueDepuisBouton);
 
 document.getElementById('bascule-profil').addEventListener('click', e => {
   const b = e.target.closest('button[data-act="profil"]');
