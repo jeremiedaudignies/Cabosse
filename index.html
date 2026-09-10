@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.3 — v56.2 +
+E1 L'onglet Stats rejoint l'en-tête (bouton 📊 à gauche de ⚙️) ;
+   la barre du bas passe de 7 à 6 entrées.
+E2 Barre du bas resserrée en hauteur (icônes et libellés plus compacts).
+
 Cabosse v56.2 — v56.1 +
 D1 L'onglet Réglages quitte la barre du bas pour un bouton ⚙️ dans l'en-tête
    (à droite du titre) : la barre du bas repasse de 8 à 7 entrées, plus lisible.
@@ -150,11 +155,12 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   color:var(--accent);font-weight:600}
 #entete h1{margin:0;font-weight:800;font-size:19px;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* Réglages : bouton d'en-tête (déplacé depuis la barre du bas). */
-#btn-reglages-entete{flex:0 0 auto;width:40px;height:40px;border-radius:50%;font-size:21px;
+/* Stats et Réglages : boutons d'en-tête (déplacés depuis la barre du bas). */
+.btn-entete{flex:0 0 auto;width:40px;height:40px;border-radius:50%;font-size:20px;
   background:var(--surface-2);color:var(--texte-2);display:flex;align-items:center;justify-content:center;
   transition:background .15s,color .15s}
-#btn-reglages-entete[aria-current="page"]{background:var(--accent-doux);color:var(--accent)}
+#entete .btn-entete + .btn-entete{margin-left:6px}
+.btn-entete[aria-current="page"]{background:var(--accent-doux);color:var(--accent)}
 #impression{display:none}
 #bascule-profil{flex:0 0 auto;display:flex;gap:4px;padding:8px 16px;background:var(--surface);
   border-bottom:1px solid var(--filet);overflow-x:auto}
@@ -168,17 +174,17 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 #barre{flex:0 0 auto;display:flex;background:var(--surface);
   border-top:1px solid var(--filet);padding-bottom:var(--safe-b)}
 #barre button{position:relative;flex:1 1 0;min-width:0;
-  padding:7px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:4px 0 3px;display:flex;flex-direction:column;align-items:center;gap:1px;
   color:var(--texte-3);transition:color .15s}
-#barre button .ic{font-size:19px;line-height:1;filter:grayscale(1) opacity(.55);
+#barre button .ic{font-size:17px;line-height:1;filter:grayscale(1) opacity(.55);
   display:inline-flex;align-items:center;justify-content:center;
-  width:25px;height:25px;border-radius:50%}
-#barre button .lb{font-size:10px;font-weight:600;text-align:center;line-height:1.2;
+  width:22px;height:22px;border-radius:50%}
+#barre button .lb{font-size:9.5px;font-weight:600;text-align:center;line-height:1.15;
   padding:0 1px;max-width:100%;overflow-wrap:anywhere;white-space:normal}
 /* Écrans étroits (iPhone SE et similaires) : on resserre encore. */
 @media (max-width:400px){
-  #barre button .ic{font-size:17px;width:23px;height:23px}
-  #barre button .lb{font-size:10px;white-space:normal;line-height:1.2}
+  #barre button .ic{font-size:16px;width:20px;height:20px}
+  #barre button .lb{font-size:9px;white-space:normal;line-height:1.15}
 }
 #barre button[aria-current="page"]{color:var(--accent)}
 #barre button[aria-current="page"] .ic{filter:none}
@@ -418,7 +424,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .note-apercu{margin-top:6px;font-size:12px;color:var(--texte-2);background:var(--surface-2);
   border-radius:var(--r-s);padding:7px 9px;line-height:1.35}
 .note-ajouter{margin-top:6px;font-size:11.5px;font-weight:600;color:var(--accent)}
-#toast{position:fixed;left:50%;bottom:calc(78px + var(--safe-b));transform:translateX(-50%);
+#toast{position:fixed;left:50%;bottom:calc(66px + var(--safe-b));transform:translateX(-50%);
   background:var(--texte);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;
   border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;white-space:nowrap}
 #toast.on{opacity:1}
@@ -764,7 +770,8 @@ button.gal-case:active{transform:scale(.97)}
       <div class="eyebrow">Réactivation mémorielle</div>
       <h1>Cabosse</h1>
     </div>
-    <button type="button" id="btn-reglages-entete" data-vue="reglages" aria-label="Réglages" title="Réglages">⚙️</button>
+    <button type="button" class="btn-entete" id="btn-stats-entete" data-vue="stats" aria-label="Statistiques" title="Statistiques">📊</button>
+    <button type="button" class="btn-entete" id="btn-reglages-entete" data-vue="reglages" aria-label="Réglages" title="Réglages">⚙️</button>
   </header>
   <div id="bascule-profil" style="display:none"></div>
   <main id="vue"></main>
@@ -775,7 +782,6 @@ button.gal-case:active{transform:scale(.97)}
     <button data-vue="ajout"><span class="ic">➕</span><span class="lb">Ajouter</span></button>
     <button id="btn-tab-chat" data-vue="chat"><span class="ic">💬</span><span class="badge-non-lu" id="badge-chat"></span><span class="lb">Chat</span></button>
     <button id="btn-tab-cabosse" data-vue="cabosse"><span class="ic">🐒</span><span class="lb">Cabosse</span></button>
-    <button data-vue="stats"><span class="ic">📊</span><span class="lb">Stats</span></button>
   </nav>
 </div>
 <div id="recompenses" aria-live="polite"></div>
@@ -1158,7 +1164,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.2 · Réglages dans l’en-tête, agenda trié';
+const VERSION = 'v56.3 · Stats dans l’en-tête, barre resserrée';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3516,7 +3522,7 @@ function rendre(){
   if (ongletChat) ongletChat.style.display = peutVoir('chat') ? '' : 'none';
   if (vueActive === 'chat' && !peutVoir('chat')) vueActive = 'agenda';
 
-  document.querySelectorAll('#barre button, #btn-reglages-entete').forEach(b => {
+  document.querySelectorAll('#barre button, #entete .btn-entete').forEach(b => {
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
@@ -7456,7 +7462,7 @@ function ouvrirVueDepuisBouton(e){
   rendre();
 }
 document.getElementById('barre').addEventListener('click', ouvrirVueDepuisBouton);
-document.getElementById('btn-reglages-entete').addEventListener('click', ouvrirVueDepuisBouton);
+document.querySelectorAll('#entete .btn-entete').forEach(b => b.addEventListener('click', ouvrirVueDepuisBouton));
 
 document.getElementById('bascule-profil').addEventListener('click', e => {
   const b = e.target.closest('button[data-act="profil"]');
