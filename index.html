@@ -1,5 +1,16 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.7 — v56.6 +
+I1 Correctif : le champ de saisie du chat pouvait rester bloqué (grisé) après un
+   envoi. Cause : un message peut revenir très vite (accusé de réception local de
+   Firebase, avant confirmation serveur) pendant l'envoi, ce qui reconstruit la
+   vue — et donc le champ de texte, un nouvel élément — avant la fin de l'envoi.
+   La réactivation, elle, visait l'ancien champ, déjà remplacé : le nouveau
+   restait grisé indéfiniment. On agit désormais toujours sur le champ affiché
+   à l'instant présent, jamais sur une référence capturée avant l'envoi.
+   Bonus lié : si un message arrive pendant que tu tapes une réponse non encore
+   envoyée, ce texte n'est plus perdu au re-rendu.
+
 Cabosse v56.6 — v56.5 +
 H1 Réglages avancés › « Correction des statistiques » : un sélecteur de date
    permet d'exclure du calcul les annulations dont la date est antérieure à la
@@ -1187,7 +1198,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.6 · exclusion d’annulations des stats';
+const VERSION = 'v56.7 · correctif champ de chat bloqué';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3583,6 +3594,12 @@ function rendre(){
     if (b.dataset.vue === vueActive) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
+  /* Le chat peut se reconstruire à tout moment (message reçu, y
+     compris l'écho de notre propre envoi) : on garde ce que
+     l'utilisateur est en train de taper, même s'il ne l'a pas
+     encore envoyé, pour ne pas lui faire perdre sa phrase. */
+  const champChatAvant = (vueActive === 'chat') ? document.getElementById('chat-texte') : null;
+  const brouillonVivant = (champChatAvant && document.activeElement === champChatAvant) ? champChatAvant.value : null;
   if (vueActive === 'agenda') vue.innerHTML = vueAgenda();
   else if (vueActive === 'taches') vue.innerHTML = vueTaches();
   else if (vueActive === 'quizz') vue.innerHTML = vueQuizz();
@@ -3593,8 +3610,10 @@ function rendre(){
   else vue.innerHTML = vueStats();
   if (vueActive === 'chat') {
     const champ = document.getElementById('chat-texte'), code = codeFamille();
-    if (champ && brouillonsChat[code]) champ.value = brouillonsChat[code];
+    if (champ && brouillonVivant !== null) champ.value = brouillonVivant;
+    else if (champ && brouillonsChat[code]) champ.value = brouillonsChat[code];
     if (champ) champ.disabled = envoisChat.has(code);
+    if (champ && brouillonVivant !== null) champ.focus();
   }
   const suivi = suiviActif();
   if (suivi && (!suivi.recuLe || suivi.erreur)) {
@@ -5862,30 +5881,36 @@ function vueChat(){
 }
 
 const envoisChat = new Set(), brouillonsChat = {};
+/* Réactive (ou grise) le champ de saisie tel qu'il est affiché À CET
+   INSTANT — jamais via une référence capturée avant l'envoi, qui peut
+   avoir été remplacée entre-temps par un re-rendu (message reçu
+   pendant l'attente, y compris l'écho de notre propre envoi). */
+function syncChampChat(code){
+  const champ = document.getElementById('chat-texte');
+  if (champ && codeFamille() === code) champ.disabled = envoisChat.has(code);
+}
 async function envoyerMessageChat(){
   const nom = (DB.reglages.prenom || '').trim();
   if (!nom) { ouvrirChatNom(); return; }
-  const champ = document.getElementById('chat-texte');
+  const champInitial = document.getElementById('chat-texte');
   const code = codeFamille();
-  if (!champ || !code || envoisChat.has(code) || !champ.value.trim()) return;
-  const texte = champ.value;
-  brouillonsChat[code] = texte; champ.disabled = true; envoisChat.add(code);
+  if (!champInitial || !code || envoisChat.has(code) || !champInitial.value.trim()) return;
+  const texte = champInitial.value;
+  brouillonsChat[code] = texte; envoisChat.add(code); syncChampChat(code);
   let ok = false;
   try {
     ok = !!(window.SabosseSync && await window.SabosseSync.envoyerMessage(code,{
       texte:texte.trim().slice(0,300), auteur:nom, quand:Date.now()
     }));
   } catch (e) { ok = false; }
-  finally { envoisChat.delete(code); champ.disabled = false; }
+  finally { envoisChat.delete(code); syncChampChat(code); }
+  const actuel = document.getElementById('chat-texte');
   if (ok) {
     if (brouillonsChat[code] === texte) delete brouillonsChat[code];
-    if (codeFamille() === code && champ === document.getElementById('chat-texte') && champ.value === texte) champ.value = '';
+    if (codeFamille() === code && actuel && actuel.value === texte) actuel.value = '';
   } else {
     toast('Message non envoyé : brouillon conservé.');
-    if (codeFamille() === code) {
-      const actuel = document.getElementById('chat-texte');
-      if (actuel && !actuel.value) actuel.value = brouillonsChat[code] || texte;
-    }
+    if (codeFamille() === code && actuel && !actuel.value) actuel.value = brouillonsChat[code] || texte;
   }
 }
 
