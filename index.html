@@ -1,5 +1,28 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.6 — v56.5 +
+H1 Réglages avancés › « Correction des statistiques » : un sélecteur de date
+   permet d'exclure du calcul les annulations dont la date est antérieure à la
+   date choisie (annulations en masse dues à une réinitialisation, par ex.).
+   Elles disparaissent complètement des statistiques (courbe, « Par matière »,
+   historique) sans être supprimées ni réactivées : la planification n'est pas
+   touchée, et « Tout réafficher » annule la correction. Le seuil voyage avec la
+   synchronisation, donc un parent qui suit l'enfant voit la même correction.
+
+Cabosse v56.5 — v56.4 +
+G1 Correctif : un clic qui re-rend la vue courante (« Répondre à la question »,
+   boutons des réglages avancés…) ne renvoie plus en haut de page. Le retour en
+   haut n'a lieu que lors d'un vrai changement d'onglet.
+
+Cabosse v56.4 — v56.3 +
+F1 Correctif : « points à dépenser » restait bloqué à 0 quand le total de points
+   passait sous le total déjà dépensé en niveaux (après une remise à zéro des
+   statistiques ou une suppression de cours). On rétablit désormais l'invariant
+   « points dépensés ≤ points gagnés » à chaque recalcul : le niveau et les
+   accessoires acquis sont conservés, mais les points gagnés ensuite
+   réaugmentent immédiatement le solde à dépenser. Les comptes déjà bloqués se
+   réparent seuls au prochain lancement.
+
 Cabosse v56.3 — v56.2 +
 E1 L'onglet Stats rejoint l'en-tête (bouton 📊 à gauche de ⚙️) ;
    la barre du bas passe de 7 à 6 entrées.
@@ -1164,7 +1187,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.3 · Stats dans l’en-tête, barre resserrée';
+const VERSION = 'v56.6 · exclusion d’annulations des stats';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -1686,6 +1709,19 @@ function calculerGamification(dl, penalites, bonusQuizz, ajustements){
 
 /* Points gagnés mais pas encore dépensés : c'est ce que l'enfant
    peut convertir en niveaux depuis la vue Cabosse, via le « + ». */
+/* Invariant : on ne peut pas avoir dépensé plus de points qu'on n'en
+   a gagnés. Certaines actions font baisser le total (remise à zéro
+   des statistiques, suppression de cours) sans toucher aux niveaux
+   déjà achetés ni aux points déjà dépensés ; sans garde-fou, le
+   « solde à dépenser » resterait figé à 0 le temps de re-gagner cette
+   dette fantôme, et les points semblaient ne plus monter. On ramène
+   donc les points dépensés au total réel : le niveau et les
+   accessoires restent acquis, et chaque point gagné ensuite compte
+   aussitôt. Renvoie true si une correction a eu lieu. */
+function corrigerDettePoints(g){
+  if ((g.pointsDepenses || 0) > (g.pointsTotaux || 0)) { g.pointsDepenses = g.pointsTotaux || 0; return true; }
+  return false;
+}
 function pointsDisponibles(g){
   return Math.max(0, (g.pointsTotaux || 0) - (g.pointsDepenses || 0));
 }
@@ -1751,6 +1787,7 @@ function rafraichirGamification(silencieux){
 
   g.pointsTotaux = calc.pointsTotaux;
   CARACTERISTIQUES.forEach(c => { g.jauges[c.cle] = calc.jauges[c.cle]; });
+  corrigerDettePoints(g);
   /* Le niveau ne suit plus automatiquement les points : il ne monte
      que lorsque l'enfant dépense ses points via le « + » de la vue
      Cabosse (voir monterNiveauCabosse). On se contente de garder le
@@ -2967,6 +3004,9 @@ function validerBase(o){
   for (const cle of ['prenom','email','role','codePartage','affichage','typeCompte']) {
     if (reg[cle] !== undefined && typeof reg[cle] !== 'string') { rapport.push('réglage ' + cle); delete reg[cle]; }
   }
+  if (reg.annulationsExcluesAvant !== undefined && !(reg.annulationsExcluesAvant === '' || dateValide(reg.annulationsExcluesAvant))) {
+    rapport.push('réglage annulationsExcluesAvant'); delete reg.annulationsExcluesAvant;
+  }
   for (const cle of ['calendrier','emploiDuTemps','gamification','semainesEncaissees']) {
     if (reg[cle] !== undefined && !objet(reg[cle])) { rapport.push('réglage ' + cle); delete reg[cle]; }
   }
@@ -3078,12 +3118,20 @@ function suiviActif(){
   return DB.suivis.find(s => s.code === DB.reglages.affichage) || null;
 }
 
+/* Une annulation est « exclue des statistiques » si sa date est
+   antérieure au seuil choisi dans les réglages avancés. Non
+   destructif : la révision reste annulée et hors agenda, elle est
+   seulement ignorée des mesures. */
+function annulationExclueStats(r, seuil){
+  return r.statut === 'annulee' && seuil && dateValide(seuil) && (r.date || r.prevue || '') < seuil;
+}
 function donneesLecture(){
   const s = suiviActif();
   if (s) {
     return {
       cours: s.cours || [],
       revisions: s.revisions || [],
+      annulationsExcluesAvant: (s.reglages && s.reglages.annulationsExcluesAvant) || '',
       matieres: (s.matieres && s.matieres.length) ? s.matieres : MATIERES_DEFAUT,
       taches: s.taches || [],
       occurrences: s.occurrences || [],
@@ -3096,6 +3144,7 @@ function donneesLecture(){
   return {
     cours: DB.cours, revisions: DB.revisions, matieres: DB.matieres,
     taches: DB.taches, occurrences: DB.occurrences,
+    annulationsExcluesAvant: DB.reglages.annulationsExcluesAvant || '',
     afficherAncrage: DB.reglages.afficherAncrage, prenom: DB.reglages.prenom
   };
 }
@@ -3175,7 +3224,8 @@ function chargesSync(){
                   singe, mais l'historique reste la source de vérité : un
                   appareil suivi ne fait que l'afficher, jamais le recalculer
                   ni le réécrire (rafraichirGamification sort si modeLecture). */
-               gamification: DB.reglages.gamification},
+               gamification: DB.reglages.gamification,
+               annulationsExcluesAvant: DB.reglages.annulationsExcluesAvant || ''},
     anneeCourante: anneeCouranteCle(),
     anneesDisponibles: []
   };
@@ -3253,6 +3303,7 @@ function sauver(){
     const g = DB.reglages.gamification;
     const calc = calculerGamification(donneesLecture(), g.penalites, g.bonusQuizz, g.ajustements);
     g.pointsTotaux = calc.pointsTotaux; g.jauges = calc.jauges;
+    corrigerDettePoints(g);
   }
   if (!Store.ecrire(DB)) return false;
   if (!modeLecture()) enregistrerInstantane(); // jamais pour un profil suivi : ce n'est pas nos données
@@ -3513,9 +3564,15 @@ function ech(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+let derniereVueRendue = null;
 function rendre(){
   entretenirPlanning(false);
   signalerStockage();
+  /* Position de défilement à préserver : seul un changement d'onglet
+     doit ramener en haut. Un re-rendu de la même vue (ouverture des
+     boutons d'un quizz, action dans les réglages…) garde la position. */
+  const memeVue = derniereVueRendue === vueActive;
+  const scrollAvant = (memeVue && vue) ? vue.scrollTop : 0;
   /* Un compte ÉTUDIANT n'a pas de chat familial : on retire l'onglet
      et on quitte la vue si elle était affichée. */
   const ongletChat = document.getElementById('btn-tab-chat');
@@ -3546,7 +3603,10 @@ function rendre(){
   if (Store.alerteInstantane && vueActive === 'reglages') {
     vue.insertAdjacentHTML('afterbegin','<p role="status" class="carte">' + ech(Store.alerteInstantane) + '</p>');
   }
-  if (vueActive !== 'chat') vue.scrollTop = 0;
+  if (vueActive === 'chat') { /* déjà positionné en bas ci-dessus */ }
+  else if (memeVue) vue.scrollTop = scrollAvant;
+  else vue.scrollTop = 0;
+  derniereVueRendue = vueActive;
   majBascule();
   majIconeAgenda();
   majBadgeAgenda();
@@ -5182,6 +5242,16 @@ function blocReglagesAvances(){
       '<button class="bouton discret" data-act="maint-revisions" style="margin-top:14px">Supprimer toutes les séries de révisions</button>' +
       '<button class="bouton discret" data-act="maint-taches" style="margin-top:8px">Supprimer toutes les tâches</button>' +
       '<button class="bouton discret" data-act="maint-quizz" style="margin-top:8px">Supprimer tous les quizz</button>' +
+      '<p class="etiquette" style="margin-top:18px">Correction des statistiques</p>' +
+      '<p class="aide-champ">Exclut du calcul les annulations dont la date est antérieure à la date choisie ' +
+        '(utile après une réinitialisation qui a annulé beaucoup de révisions d’un coup). ' +
+        'Elles disparaissent des statistiques sans être supprimées ni réactivées.</p>' +
+      (DB.reglages.annulationsExcluesAvant ? '<p class="aide-champ"><b>Actuellement :</b> annulations avant le ' +
+        ech(libelleCourt(DB.reglages.annulationsExcluesAvant)) + ' exclues (' + nbAnnulationsExclues() + ').</p>' : '') +
+      '<label class="champ" style="margin-top:8px"><span class="aide-champ">Exclure les annulations avant le :</span>' +
+        '<input type="date" id="f-annul-seuil" value="' + ech(DB.reglages.annulationsExcluesAvant || isoDe(aujourdhui())) + '"></label>' +
+      '<button class="bouton discret" data-act="stats-exclure-annul" style="margin-top:8px">Appliquer</button>' +
+      (DB.reglages.annulationsExcluesAvant ? '<button class="bouton discret" data-act="stats-reafficher-annul" style="margin-top:8px">Tout réafficher</button>' : '') +
       '<p class="etiquette" style="margin-top:18px">Cabosse</p>' +
       '<label class="check-ligne">' +
         '<input type="checkbox" id="f-sons-cabosse"' +
@@ -5898,6 +5968,11 @@ function mesuresPeriode(dl, p){
 
 function vueStats(){
   const dl = donneesLecture();
+  /* Un seul point d'application : on retire ici les annulations exclues,
+     toutes les mesures en aval (mesuresPeriode, « Par matière »,
+     historique) travaillent donc sur la liste corrigée. DB.revisions
+     n'est pas modifié — c'est une copie filtrée locale à cette vue. */
+  dl.revisions = dl.revisions.filter(r => !annulationExclueStats(r, dl.annulationsExcluesAvant));
   if (!dl.revisions.length) {
     return '<div class="vide"><div class="gros">📊</div>' +
       '<p><b>Rien à mesurer pour l\'instant.</b></p>' +
@@ -6629,6 +6704,32 @@ function annulerSerie(id){
   toast(n + ' révision' + (n > 1 ? 's' : '') + ' annulée' + (n > 1 ? 's' : '') + '.');
 }
 
+/* Nombre d'annulations actuellement exclues des statistiques, pour
+   l'affichage dans les réglages avancés. */
+function nbAnnulationsExclues(){
+  const seuil = DB.reglages.annulationsExcluesAvant;
+  if (!seuil) return 0;
+  return DB.revisions.filter(r => annulationExclueStats(r, seuil)).length;
+}
+
+function exclureAnnulationsAvant(){
+  if (modeLecture()) { toast('Lecture seule : impossible depuis un profil suivi.'); return; }
+  const champ = document.getElementById('f-annul-seuil');
+  const seuil = champ ? champ.value : '';
+  if (!dateValide(seuil)) { toast('Choisis une date valide.'); return; }
+  DB.reglages.annulationsExcluesAvant = seuil;
+  const nb = nbAnnulationsExclues();
+  sauver(); rendre();
+  toast(nb + ' annulation(s) exclue(s) des statistiques.');
+}
+
+function reafficherAnnulations(){
+  if (modeLecture()) { toast('Lecture seule : impossible depuis un profil suivi.'); return; }
+  DB.reglages.annulationsExcluesAvant = '';
+  sauver(); rendre();
+  toast('Toutes les annulations sont de nouveau comptées.');
+}
+
 /* ============================================================
    Maintenance des données (Réglages avancés)
    Cinq actions destructives, volontairement regroupées et toutes
@@ -6656,7 +6757,8 @@ function reinitialiserStatistiques(){
       traitees + ' échéance(s) déjà traitée(s) (faites, reportées, annulées) repassent « à faire ».\n' +
       'Les dates de révision, les cours, les tâches et les quizz sont conservés.\n' +
       'La cagnotte et les semaines encaissées sont remises à zéro.\n' +
-      'Les points de Cabosse sont recalculés ; les niveaux déjà atteints et les accessoires débloqués restent acquis.')) return;
+      'Les points de Cabosse sont recalculés ; les niveaux déjà atteints et les accessoires débloqués restent acquis, ' +
+      'et le solde de points à dépenser repart de zéro.')) return;
   if (!maintenanceAutorisee('Avant remise à zéro des statistiques')) return;
   DB.revisions.forEach(r => {
     r.statut = 'aFaire'; r.date = r.prevue || r.date;
@@ -7141,6 +7243,8 @@ vue.addEventListener('click', e => {
   else if (act === 'maint-revisions') supprimerToutesRevisions();
   else if (act === 'maint-taches') supprimerToutesTaches();
   else if (act === 'maint-quizz') supprimerTousQuizz();
+  else if (act === 'stats-exclure-annul') exclureAnnulationsAvant();
+  else if (act === 'stats-reafficher-annul') reafficherAnnulations();
   else if (act === 'cal-corriger-defaut') corrigerCalendrierHistorique();
   else if (act === 'cal-enregistrer') enregistrerCalendrier();
   else if (act === 'cal-modifier') {
