@@ -1,5 +1,18 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.8 — v56.7 +
+J1 Statistiques : filtre « Jour » ajouté à gauche de Semaine / Mois / Année.
+J2 Cours : titre facultatif saisissable à la création, rappelé dans la carte.
+J3 Cartes de révision : « Réactivation n°X » → « RX » (bulle « Xᵉ révision »).
+   Les cours d'une même matière à réviser le même jour sont regroupés dans une
+   seule carte (un bloc par cours, chacun avec ses boutons).
+J4 Agenda : le samedi devient « Révisions du weekend » ; le titre du dimanche
+   (bilan Cabosse) est masqué.
+J5 Bloc « Cette semaine, tu as appris » : une ligne par matière listant ses
+   codes, avec ✅ (tout compris) ou 🧩 (question encore active) par cours.
+J6 La question d'un cours est précédée de la pièce de puzzle 🧩 (icône de
+   l'onglet Quizz) au lieu du 📝.
+
 Cabosse v56.7 — v56.6 +
 I1 Correctif : le champ de saisie du chat pouvait rester bloqué (grisé) après un
    envoi. Cause : un message peut revenir très vite (accusé de réception local de
@@ -280,6 +293,22 @@ span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-
 .rev .rang.ancrage{color:var(--accent);background:var(--accent-doux)}
 .rev .rang.nouveau{color:var(--accent);background:var(--accent-doux)}
 .rev .rang.renfort{color:var(--reportee);background:rgba(242,161,4,.14)}
+/* Carte regroupant plusieurs cours d'une même matière. */
+.rev-matiere-tete{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.rev-matiere-tete .matiere{font-size:14.5px;font-weight:700;color:var(--texte)}
+.cours-bloc{padding:10px 0 2px;border-top:1px solid var(--filet)}
+.cours-bloc:first-of-type{border-top:none;padding-top:2px}
+.cours-bloc-tete{display:flex;align-items:center;gap:8px}
+.cours-bloc-tete .code{font-family:var(--mono);font-weight:700;font-size:12.5px;color:var(--texte-3)}
+.cours-bloc-tete .refs{margin-left:auto;display:flex;align-items:center;gap:5px}
+.cours-titre{font-size:12.5px;color:var(--texte-2);margin-top:3px;font-style:italic}
+/* Bloc « appris » : matière puis ses codes. */
+.bilan-corps{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bilan-mat{font-weight:700;font-size:12.5px}
+.bilan-codes{display:flex;flex-wrap:wrap;align-items:center;gap:2px;color:var(--texte-3);font-size:12px}
+.bilan-code{display:inline-flex;align-items:center;gap:3px}
+.bilan-code b{font-family:var(--mono);font-weight:700}
+.bilan-virgule{color:var(--texte-3);margin-right:2px}
 .rev .note{font-size:11.5px;color:var(--reportee);font-weight:600;margin-top:6px}
 .rev .cmds{display:flex;gap:6px;margin-top:11px}
 .rev .cmds button{flex:1;padding:9px 4px;border-radius:99px;background:var(--surface-2);
@@ -1198,7 +1227,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.7 · correctif champ de chat bloqué';
+const VERSION = 'v56.8 · agenda regroupé, titres de cours';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2973,7 +3002,8 @@ function validerBase(o){
   const ids = new Set();
   o.cours = garder(o.cours, c => {
     if (!objet(c) || !identifiantValide(c.id) || !identifiantValide(c.code) || !dateValide(c.date) ||
-        (c.commentaire !== undefined && typeof c.commentaire !== 'string') || ids.has(c.id)) return false;
+        (c.commentaire !== undefined && typeof c.commentaire !== 'string') ||
+        (c.titre !== undefined && typeof c.titre !== 'string') || ids.has(c.id)) return false;
     ids.add(c.id); return true;
   }, 'cours');
   const echeanceValide = (r, relation) => {
@@ -3424,11 +3454,11 @@ function prochainNumero(code){
   return String(max + 1).padStart(3, '0');
 }
 
-function ajouterCours(code, numero, dateISO, annee){
+function ajouterCours(code, numero, dateISO, annee, titre){
   if (modeLecture() || !identifiantValide(code) || !/^\d+$/.test(String(numero)) || !dateValide(dateISO)) return false;
   const id = idCours(code, numero, dateISO);
   if (DB.cours.some(c => c.id === id)) return false;
-  DB.cours.push({id, code, numero, date: dateISO, annee: annee || '', commentaire: ''});
+  DB.cours.push({id, code, numero, date: dateISO, annee: annee || '', titre: (titre || '').trim().slice(0, 80), commentaire: ''});
 
   if (modeEleve()) {
     /* Mode ÉLÈVE : échéances de base, puis la règle des 3 derniers
@@ -3766,6 +3796,77 @@ function libelleRang(rang){
   return (rang || '').replace(/J\+(\d+)/g, 'Réactivation');
 }
 
+/* Pastille courte pour les cartes : « RX » (bulle « Xᵉ révision »),
+   « Nouveau ! » à l'encodage, « Renfort » pour un rappel ajouté. Le
+   libellé long (« Réactivation n°X ») reste utilisé ailleurs
+   (historique, statistiques, aperçu d'échéancier). */
+function pastilleRevisionCarte(r, dl){
+  if (estEncodage(r)) return {texte: 'Nouveau !', bulle: 'Jour d\u2019encodage'};
+  if (estRenfort(r))  return {texte: 'Renfort', bulle: 'Rappel ajouté après « pas encore retenu »'};
+  const num = numeroReactivation(r, dl);
+  if (!num) return {texte: ech(r.rang || ''), bulle: ''};
+  return {texte: 'R' + num, bulle: (num === 1 ? '1re' : num + 'e') + ' révision'};
+}
+
+/* Bloc d'un seul cours à l'intérieur d'une carte (mono- ou
+   multi-cours) : code, pastille RX, éventuelle note/question, et les
+   commandes. La matière n'est PAS répétée ici — elle coiffe la carte. */
+function blocCoursRevision(r, dl){
+  const c = trouverCours(r.cours);
+  if (!c) return '';
+  const validable = estValidable(r.date);
+  const p = pastilleRevisionCarte(r, dl);
+  const nouveau = estEncodage(r), renfort = estRenfort(r);
+  const classeRang = (nouveau ? ' nouveau' : '') + (renfort ? ' renfort' : '');
+  const boutonFaite = validable
+    ? '<button class="ok" data-act="faite" data-id="' + ech(r.id) + '">J\u2019ai révisé <span class="emo">😎</span></button>'
+    : '<button class="verrou" disabled>J\u2019ai révisé <span class="emo">😎</span></button>';
+  const cmds = modeLecture() ? '' :
+    '<div class="cmds">' + boutonFaite +
+      '<button data-act="reporter" data-id="' + ech(r.id) + '">Reporter <span class="emo">😳</span></button>' +
+      '<button data-act="annuler" data-id="' + ech(r.id) + '">Annuler <span class="emo">🫣</span></button>' +
+    '</div>';
+  const commentaire = (c.commentaire || '').trim();
+  const texteNote = ech(commentaire.length > 90 ? commentaire.slice(0, 90) + '…' : commentaire);
+  const attrsNote = modeLecture() ? ' style="cursor:default"' : (' data-act="note" data-id="' + ech(c.id) + '"');
+  const zoneNote = commentaire
+    ? '<button type="button" class="note-apercu"' + attrsNote + '><span class="emo">🧩</span> ' + texteNote + '</button>'
+    : (modeLecture() ? '' : '<button class="note-ajouter" data-act="note" data-id="' + ech(c.id) + '">Ajouter un Quizz ?</button>');
+  let messageFenetre = '';
+  if (!validable && !modeLecture()) {
+    messageFenetre = joursAvant(r.date) > 0
+      ? '<div class="note" style="color:var(--texte-3)">Validable à partir du ' +
+        libelleCourt(isoDe(plus(dDe(r.date), -FENETRE_VALIDATION_JOURS))) + '</div>'
+      : '<div class="note" style="color:var(--texte-3)">Trop tardif pour valider directement — ' +
+        'reporte-la ou annule-la.</div>';
+  }
+  const titre = (c.titre || '').trim();
+  return '<div class="cours-bloc">' +
+    '<div class="cours-bloc-tete">' +
+      '<b class="code">' + ech(refCours(c)) + '</b>' +
+      '<span class="refs">' + pastilleAnnee(c) +
+        '<span class="rang' + classeRang + '" title="' + ech(p.bulle) + '">' + p.texte + '</span></span>' +
+    '</div>' +
+    (titre ? '<div class="cours-titre">' + ech(titre) + '</div>' : '') +
+    (r.statut === 'reportee' ? '<div class="note">Reportée du ' + libelleCourt(r.prevue) + '</div>' : '') +
+    messageFenetre + zoneNote + cmds +
+  '</div>';
+}
+
+/* Carte regroupant tous les cours d'une même matière à réviser le
+   même jour : titre de matière affiché une seule fois, puis un bloc
+   par cours (séparés visuellement), chacun avec ses commandes. */
+function carteMatiere(m, revisions, aujourdhuiCarte, dl){
+  const blocs = revisions.map(r => blocCoursRevision(r, dl)).filter(Boolean).join('');
+  if (!blocs) return '';
+  return '<article class="rev rev-matiere' + (aujourdhuiCarte ? ' rev-jour' : '') + '">' +
+    '<div class="rev-matiere-tete">' +
+      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+      '<span class="matiere">' + ech(m.nom) + '</span>' +
+    '</div>' + blocs +
+  '</article>';
+}
+
 /* Une carte de révision, réutilisée pour les retards, la semaine
    en cours, la semaine prochaine et le repli « Semaines suivantes ». */
 function carteRevision(r, aujourdhuiCarte){
@@ -3857,17 +3958,43 @@ function coursEncodesSemaine(dl, lundiISO, samediISO){
     .sort((a, b) => a.date < b.date ? -1 : 1);
 }
 
+/* Un cours du bilan porte ✅ s'il est « tout compris » (dernière
+   compréhension d'une révision faite = reussi) et 🧩 s'il a encore
+   une question active (commentaire non vide). Les deux peuvent
+   coexister : compris mais quizz encore posé. */
+function signauxBilanCours(c, dl){
+  const revs = (dl.revisions || []).filter(r => r.cours === c.id && r.statut === 'faite' && r.faitLe)
+    .sort((a, b) => (a.faitLe < b.faitLe ? -1 : 1));
+  const derniere = revs[revs.length - 1];
+  const compris = derniere && derniere.comprehension === 'reussi';
+  const question = !!(c.commentaire || '').trim();
+  return (compris ? '<span class="emo" title="Tout récité sans regarder">✅</span>' : '') +
+         (question ? '<span class="emo" title="Question de quizz encore active">🧩</span>' : '');
+}
 function carteBilanSemaine(samediISO){
   const dl = donneesLecture();
   const lundi = isoDe(plus(dDe(samediISO), -5));
   const liste = coursEncodesSemaine(dl, lundi, samediISO);
   if (!liste.length) return '';
-  let lignes = '';
+  /* Regroupement par matière : une ligne « Matière : code, code… ». */
+  const parMatiere = [];
   liste.forEach(c => {
-    const m = matiereDe(c.code);
+    let e = parMatiere.find(x => x.code === c.code);
+    if (!e) { e = {code: c.code, cours: []}; parMatiere.push(e); }
+    e.cours.push(c);
+  });
+  parMatiere.sort((a, b) => matiereDe(a.code).nom.localeCompare(matiereDe(b.code).nom, 'fr', {sensitivity:'base'}));
+  let lignes = '';
+  parMatiere.forEach(g => {
+    const m = matiereDe(g.code);
+    g.cours.sort((a, b) => (parseInt(a.numero,10)||0) - (parseInt(b.numero,10)||0));
+    const codes = g.cours.map(c =>
+      '<span class="bilan-code"><b>' + ech(refCours(c)) + '</b>' + signauxBilanCours(c, dl) + '</span>'
+    ).join('<span class="bilan-virgule">, </span>');
     lignes += '<div class="bilan-ligne">' +
       '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
-      '<b>' + ech(refCours(c)) + '</b><span>' + ech(m.nom) + '</span></div>';
+      '<div class="bilan-corps"><span class="bilan-mat">' + ech(m.nom) + '</span>' +
+      '<span class="bilan-codes">' + codes + '</span></div></div>';
   });
   return '<div class="carte bilan-semaine">' +
     '<div class="bilan-titre"><span class="emo">🗓️</span> Cette semaine, tu as appris</div>' +
@@ -3980,9 +4107,27 @@ function ordonnerParMatiere(items){
 function sectionJour(titre, revisions, iso, classe, estAujourdhui){
   revisions = ordonnerParMatiere(revisions);
   const compte = revisions.length;
-  let html = '<section class="jour' + (classe ? ' ' + classe : '') + '"><h2>' + titre +
-    (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>';
-  revisions.forEach(r => html += carteRevision(r, estAujourdhui));
+  const masquerTitre = classe && classe.indexOf('sans-titre') !== -1;
+  let html = '<section class="jour' + (classe ? ' ' + classe : '') + '">' +
+    (masquerTitre ? '' : '<h2>' + titre +
+      (compte ? '<span class="compte">' + compte + '</span>' : '') + '</h2>');
+  /* Regroupement par matière : les révisions sont déjà triées par
+     matière puis code, on agrège les blocs contigus de même code
+     matière en une seule carte. */
+  const dl = donneesLecture();
+  let i = 0;
+  while (i < revisions.length) {
+    const c0 = trouverCours(revisions[i].cours);
+    const code = c0 ? c0.code : null;
+    const groupe = [];
+    while (i < revisions.length) {
+      const ci = trouverCours(revisions[i].cours);
+      if (!ci || ci.code !== code) break;
+      groupe.push(revisions[i]); i++;
+    }
+    if (!code) { i++; continue; }
+    html += carteMatiere(matiereDe(code), groupe, estAujourdhui, dl);
+  }
   return {html: html, compte: compte};
 }
 
@@ -4307,6 +4452,15 @@ document.getElementById('galerie-voile').addEventListener('click', e => {
 
 /* --- Carte Cabosse compacte fin ------------------------------ */
 
+/* Titre d'une section de jour dans l'Agenda : « Aujourd'hui »,
+   « Révisions du weekend » pour un samedi (règle J4), sinon le jour
+   daté. Utilisé pour la semaine en cours ET les semaines suivantes,
+   afin que le renommage du samedi soit cohérent partout. */
+function titreJourAgenda(iso, estAujourdhui){
+  if (estAujourdhui) return "Aujourd'hui";
+  if (dDe(iso).getDay() === 6) return 'Révisions du weekend';
+  return libelleJour(iso);
+}
 function grouperParDate(liste){
   const g = [];
   liste.forEach(r => {
@@ -4418,8 +4572,13 @@ function vueAgenda(){
 
   grProches.forEach(g => {
     const estAujourdhui = g.date === ajISO;
-    const titre = estAujourdhui ? "Aujourd'hui" : libelleJour(g.date);
-    html += sectionJour(titre, g.items, g.date, '', estAujourdhui).html + bilanDuJour(g.date);
+    const jourNum = dDe(g.date).getDay();
+    const estDimanche = jourNum === 0;
+    const titre = titreJourAgenda(g.date, estAujourdhui);
+    /* Le dimanche ne porte que le bilan Cabosse : sa section n'a
+       pas de titre propre (règle J4). */
+    const classe = (estDimanche && !estAujourdhui) ? 'sans-titre' : '';
+    html += sectionJour(titre, g.items, g.date, classe, estAujourdhui).html + bilanDuJour(g.date);
     if (g.date === dimActuel) html += carteDimancheCabosse();
     html += '</section>';
   });
@@ -4429,7 +4588,7 @@ function vueAgenda(){
       '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
       '<div class="contenu-pliable">';
     grouperParDate(plusTard).forEach(g => {
-      html += sectionJour(libelleJour(g.date), g.items, g.date, '', false).html +
+      html += sectionJour(titreJourAgenda(g.date, false), g.items, g.date, '', false).html +
         bilanDuJour(g.date) + '</section>';
     });
     html += '</div></details>';
@@ -4812,6 +4971,8 @@ function vueAjout(){
         '<select id="f-annee">' + optsAnnee + '</select></div>' +
       '<div class="champ"><label for="f-mat">Matière</label>' +
         '<select id="f-mat">' + opts + '</select></div>' +
+      '<div class="champ"><label for="f-titre">Titre du cours (facultatif)</label>' +
+        '<input type="text" id="f-titre" maxlength="80" placeholder="Ex. Les fractions, sécurité au travail…"></div>' +
       '<div class="champ"><label for="f-num">Numéro du cours</label>' +
         '<input type="text" id="f-num" inputmode="numeric" maxlength="3" placeholder="001"></div>' +
       '<div class="champ" style="margin-bottom:0"><label for="f-date">Date du cours</label>' +
@@ -5949,7 +6110,11 @@ function periodesStats(type, nb){
   const out = [];
   const auj = aujourdhui();
   for (let i = nb - 1; i >= 0; i--) {
-    if (type === 'semaine') {
+    if (type === 'jour') {
+      const d = plus(auj, -i);
+      out.push({debut: isoDe(d), fin: isoDe(d),
+                label: String(dDe(isoDe(d)).getDate()).padStart(2,'0') + '/' + String(dDe(isoDe(d)).getMonth()+1).padStart(2,'0')});
+    } else if (type === 'semaine') {
       const l = plus(lundiDe(auj), -7 * i);
       out.push({debut: isoDe(l), fin: isoDe(plus(l, 6)),
                 label: libelleCourt(isoDe(l)).slice(0, 5)});
@@ -6005,17 +6170,18 @@ function vueStats(){
   }
 
   const type = statsPeriode;
-  const nb = type === 'semaine' ? 8 : (type === 'mois' ? 6 : 4);
+  const nb = type === 'jour' ? 14 : (type === 'semaine' ? 8 : (type === 'mois' ? 6 : 4));
   const periodes = periodesStats(type, nb);
   const mesures = periodes.map(p => mesuresPeriode(dl, p));
   const labels = periodes.map(p => p.label);
   const courante = mesures[mesures.length - 1];
-  const motPeriode = type === 'semaine' ? 'cette semaine'
-                   : (type === 'mois' ? 'ce mois' : 'cette année');
+  const motPeriode = type === 'jour' ? 'aujourd\u2019hui'
+                   : (type === 'semaine' ? 'cette semaine'
+                   : (type === 'mois' ? 'ce mois' : 'cette année'));
 
   /* Filtres de période. */
   let html = '<div class="stats-filtres">';
-  [['semaine','Semaine'],['mois','Mois'],['annee','Année']].forEach(([cle, nom]) => {
+  [['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['annee','Année']].forEach(([cle, nom]) => {
     html += '<button type="button" class="stats-f' + (type === cle ? ' actif' : '') + '" ' +
       'data-act="stats-periode" data-periode="' + cle + '">' + nom + '</button>';
   });
@@ -7550,6 +7716,7 @@ vue.addEventListener('click', e => {
   const code = document.getElementById('f-mat').value;
   let num = document.getElementById('f-num').value.replace(/\D/g, '');
   const date = document.getElementById('f-date').value;
+  const titreCours = (document.getElementById('f-titre') || {}).value || '';
   if (!annee) { toast('Choisis une année scolaire.'); return; }
   if (!code) { toast('Choisis une matière.'); return; }
   if (!num)  { toast('Indique le numéro du cours.'); return; }
@@ -7578,7 +7745,7 @@ vue.addEventListener('click', e => {
     sauver();
   }
 
-  if (!ajouterCours(code, num, date, annee)) { toast('Ce cours est déjà enregistré.'); return; }
+  if (!ajouterCours(code, num, date, annee, titreCours)) { toast('Ce cours est déjà enregistré.'); return; }
   vueActive = 'agenda';
   rendre();
   toast(code + '-' + num + ' planifié.');
