@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.9 — v56.8 +
+K1 Correctif de performance : « Imprimer mon planning » mettait des dizaines de
+   secondes avant d'afficher l'aperçu. Le CSS d'impression masquait l'app avec
+   visibility:hidden, qui garde TOUT dans la mise en page : le moteur
+   d'impression devait disposer et paginer l'application entière (tout l'agenda,
+   les images de fond du singe…) avant d'afficher le planning. On retire
+   désormais l'app de l'arbre d'impression avec display:none — seul le tableau
+   du planning est mis en page. La génération du HTML, elle, était déjà
+   instantanée : le temps perdu était entièrement dans cette mise en page.
+
 Cabosse v56.8 — v56.7 +
 J1 Statistiques : filtre « Jour » ajouté à gauche de Semaine / Mois / Année.
 J2 Cours : titre facultatif saisissable à la création, rappelé dans la carte.
@@ -494,9 +504,16 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 
 /* --- feuille imprimable --- */
 @media print{
-  body *{visibility:hidden}
-  #impression, #impression *{visibility:visible}
-  #impression{display:block;position:absolute;left:0;top:0;width:100%;background:#fff}
+  /* display:none (et non visibility:hidden) : les éléments masqués
+     sont RETIRÉS de l'arbre de mise en page d'impression, au lieu
+     d'y rester (invisibles mais toujours disposés et paginés).
+     Sans cela, le moteur d'impression disposait toute l'application
+     — des centaines de cartes, les grandes images de fond — avant
+     d'afficher l'aperçu, d'où le délai de plusieurs dizaines de
+     secondes sur téléphone. #impression est un enfant direct de
+     <body>, donc ce sélecteur laisse bien le planning visible. */
+  body > *:not(#impression){display:none !important}
+  #impression{display:block;position:static;width:100%;background:#fff}
   body{background:#fff}
   @page{size:A4;margin:10mm}
 }
@@ -1227,7 +1244,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.8 · agenda regroupé, titres de cours';
+const VERSION = 'v56.9 · impression accélérée';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
