@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <!--
+Cabosse v56.10 — v56.9 +
+K2 Impression toujours lente (24-35 s) : le correctif CSS de la v56.9 n'a pas
+   suffi, donc le coût n'est pas la mise en page de l'app mais window.print()
+   sur le document entier (iOS PWA), avec deux aggravants : l'image du bandeau
+   (icône relative que le moteur d'impression peut attendre) et toute la CSS de
+   l'app à résoudre. On imprime désormais le planning dans un IFRAME isolé
+   contenant un document minimal et autonome (CSS embarquée, AUCUNE image
+   externe) : le moteur n'a plus que le tableau à traiter. Repli automatique sur
+   l'ancienne méthode si l'iframe échoue.
+
 Cabosse v56.9 — v56.8 +
 K1 Correctif de performance : « Imprimer mon planning » mettait des dizaines de
    secondes avant d'afficher l'aperçu. Le CSS d'impression masquait l'app avec
@@ -1244,7 +1254,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.9 · impression accélérée';
+const VERSION = 'v56.10 · impression via iframe isolé';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -6455,11 +6465,15 @@ function toast(txt){
 }
 
 /* --- Impression du planning à 2 semaines -------------------- */
+/* Feuille de style autonome injectée dans l'iframe d'impression :
+   ne dépend d'aucune variable CSS ni d'aucune police externe de
+   l'app, pour que le document imprimé se compose instantanément. */
+const CSS_IMPRESSION = "html,body{margin:0;padding:0;background:#fff}@page{size:A4;margin:10mm}.pr-page{font-family:\"Inter\",-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;color:#000;background:#fff;font-size:8px;line-height:1.3;\n  -webkit-print-color-adjust:exact;print-color-adjust:exact}\n.pr-entete{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;\n  border-bottom:2px solid #094639}\n.pr-logo{width:28px;height:28px;flex:0 0 auto;border-radius:6px;object-fit:cover;display:block}\n.pr-titres{flex:1;min-width:0}\n.pr-titres .pr-nom{font-size:13px;font-weight:800;letter-spacing:-.02em;line-height:1.1}\n.pr-titres .pr-periode{font-size:8.5px;color:#555;margin-top:1px}\n.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}\n.pr-col{min-width:0}\n.pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}\n.pr-table th,.pr-table td{border:1px solid #bbb;padding:3px 4px;vertical-align:middle;\n  overflow-wrap:anywhere;word-break:break-word;white-space:normal}\n.pr-table thead th{background:#094639;color:#fff;font-size:6.5px;text-transform:uppercase;\n  letter-spacing:.03em;font-weight:800;text-align:center;border-color:#094639}\n.pr-table th:nth-child(1){width:17%}\n.pr-table th:nth-child(2){width:39%}\n.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:11%}\n.pr-table th:nth-child(5){width:22%}\n.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#eaf1ee;line-height:1.25}\n.pr-cours-cel{font-size:7.8px;font-weight:700}\n.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:6.8px}\n.pr-vide-cel{color:#aaa;text-align:center;font-size:8px;font-style:italic}\n.pr-case-cel,.pr-report-cel{text-align:center}\n.pr-case{display:inline-block;width:9px;height:9px;border:1.2px solid #666;border-radius:2px}\n.pr-report-cel .pr-ligne-date{display:block;border-bottom:1px dotted #999;height:7px;margin-top:1px}\n.pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}\n.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:6.8px;color:#888;\n  display:flex;justify-content:space-between}";
 
 /* Une colonne par semaine, du lundi au dimanche, en partant du
    lundi de la semaine en cours — y compris les jours déjà passés
    cette semaine, puisqu'une révision en retard reste à cocher. */
-function planningImpression(){
+function planningImpression(sansLogo){
   const dl = donneesLecture();
   const debut = lundiDe(aujourdhui());
   const jours = [];
@@ -6508,7 +6522,7 @@ function planningImpression(){
   const titre = 'Cabosse' + (modeLecture() && dl.prenom ? ' · ' + ech(dl.prenom) : '');
   return '<div class="pr-page">' +
     '<div class="pr-entete">' +
-      '<img class="pr-logo" src="icone-180.png" alt="">' +
+      (sansLogo ? '' : '<img class="pr-logo" src="icone-180.png" alt="">') +
       '<div class="pr-titres">' +
         '<div class="pr-nom">' + titre + '</div>' +
         '<div class="pr-periode">Planning de révision du ' + libelleCourt(jours[0]) +
@@ -6531,15 +6545,46 @@ function planningImpression(){
 /* Le bouton d'en-tête a été retiré : l'impression se déclenche
    désormais depuis les Réglages de base, qui passent leur propre
    bouton pour afficher le sablier pendant que window.print() bloque. */
+function imprimerPlanningAncienneMethode(){
+  document.getElementById('impression').innerHTML = planningImpression();
+  requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+}
 function imprimerPlanning(bouton){
   const btn = bouton || null;
-  document.getElementById('impression').innerHTML = planningImpression();
   const texteOriginal = btn ? btn.textContent : '';
+  const finir = () => { if (btn) { btn.textContent = texteOriginal; btn.disabled = false; } };
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    try { window.print(); }
-    finally { if (btn) { btn.textContent = texteOriginal; btn.disabled = false; } }
-  }));
+  let ifr = null;
+  try {
+    const doc = '<!doctype html><html lang="fr"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>Planning Cabosse</title><style>' + CSS_IMPRESSION + '</style></head>' +
+      '<body>' + planningImpression(true) + '</body></html>';
+    const ancien = document.getElementById('impression-iframe');
+    if (ancien) ancien.remove();
+    ifr = document.createElement('iframe');
+    ifr.id = 'impression-iframe';
+    ifr.setAttribute('aria-hidden', 'true');
+    ifr.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none';
+    let fait = false;
+    const lancer = () => {
+      if (fait) return; fait = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        try { ifr.contentWindow.focus(); ifr.contentWindow.print(); }
+        catch (e) { imprimerPlanningAncienneMethode(); }
+        finally { finir(); setTimeout(() => { if (ifr && ifr.parentNode) ifr.remove(); }, 2000); }
+      }));
+    };
+    ifr.onload = lancer;
+    document.body.appendChild(ifr);
+    const d = ifr.contentWindow.document;
+    d.open(); d.write(doc); d.close();
+    setTimeout(lancer, 150); // filet : about:blank peut ne pas émettre onload
+  } catch (e) {
+    if (ifr && ifr.parentNode) ifr.remove();
+    imprimerPlanningAncienneMethode();
+    finir();
+  }
 }
 
 /* --- Synchronisation entre appareils ------------------------- */
