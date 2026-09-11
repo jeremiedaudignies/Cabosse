@@ -962,6 +962,35 @@ button.gal-case:active{transform:scale(.97)}
   .tache-carte .minuteur{font-size:1rem;line-height:1.3;margin:3px 0}
   details.bilan-semaine summary{margin:0}
 }
+
+/* Quizz — même densité et mêmes commandes que les cartes compactes. */
+@media screen {
+  .quizz-filtres{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin-bottom:8px}
+  .quizz-filtres select{min-width:0;min-height:36px;padding:6px 32px 6px 10px;
+    font-size:1rem;line-height:1.3;border-radius:10px;background-position:right 9px center}
+  .quizz-c.rev{padding:8px 12px;margin-bottom:7px;border-radius:15px}
+  .quizz-c .titre-cours{gap:1px}
+  .quizz-c .haut .puce{margin-top:0}
+  .quizz-c .quizz-q{margin-top:4px;font-size:1rem;line-height:1.3;font-weight:650;
+    color:var(--texte);white-space:pre-wrap;overflow-wrap:anywhere}
+  .quizz-c .quizz-meta{margin-top:3px;font-size:.75rem;line-height:1.3;color:var(--texte-2);
+    overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+  .quizz-c .bouton{min-height:30px;padding:5px 8px;border-radius:10px;
+    font-size:.8125rem;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+  .quizz-c > .bouton[data-act="quizz-repondre"]{margin-top:4px!important;
+    background:var(--accent);border:1px solid var(--accent);color:#fff;font-weight:700}
+  .quizz-c .quizz-choix{gap:5px;margin-top:4px}
+  .quizz-c .quizz-choix .principal{box-shadow:none}
+  .quizz-c .quizz-choix .discret{background:var(--surface-2);color:var(--texte-2)}
+  .quizz-c .quizz-acquis{margin-top:4px;min-height:28px;padding:4px 8px;
+    font-size:.75rem;line-height:1.3;color:var(--texte-2);border-width:1px}
+  .quizz-c .quizz-bloque{margin-top:4px;padding:4px 8px;border-radius:8px;
+    font-size:.75rem;line-height:1.3;color:#805600;background:#FFF1CE}
+  .quizz-c.archivee{opacity:1;background:var(--surface-2);box-shadow:none}
+  .quizz-c.archivee .rang{background:var(--surface)}
+  .quizz-c.archivee .quizz-acquis{background:var(--surface)}
+  @media (min-width:560px){.quizz-filtres{grid-template-columns:repeat(2,minmax(0,1fr))}}
+}
 </style>
 </head>
 <body>
