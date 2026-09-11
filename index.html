@@ -527,7 +527,7 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   body{background:#fff}
   @page{size:A4;margin:10mm}
 }
-.pr-page{font-family:var(--corps);color:#000;background:#fff;font-size:8px;line-height:1.3;
+.pr-page{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.8px;line-height:1.3;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pr-entete{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;
   border-bottom:2px solid #094639}
@@ -535,27 +535,36 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .pr-titres{flex:1;min-width:0}
 .pr-titres .pr-nom{font-size:13px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .pr-titres .pr-periode{font-size:8.5px;color:#555;margin-top:1px}
-.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}
+.pr-grille{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px}
 .pr-col{min-width:0}
 .pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}
 .pr-table th,.pr-table td{border:1px solid #bbb;padding:3px 4px;vertical-align:middle;
-  overflow-wrap:anywhere;word-break:break-word;white-space:normal}
-.pr-table thead th{background:#094639;color:#fff;font-size:6.5px;text-transform:uppercase;
-  letter-spacing:.03em;font-weight:800;text-align:center;border-color:#094639}
-.pr-table th:nth-child(1){width:17%}
-.pr-table th:nth-child(2){width:39%}
-.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:11%}
-.pr-table th:nth-child(5){width:22%}
-.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#eaf1ee;line-height:1.25}
-.pr-cours-cel{font-size:7.8px;font-weight:700}
-.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:6.8px}
+  overflow-wrap:break-word;word-break:normal;white-space:normal}
+.pr-table thead th{background:#094639;color:#fff;font-size:7px;text-transform:uppercase;
+  letter-spacing:0;font-weight:800;text-align:center;border-color:#094639}
+.pr-table th:nth-child(1){width:20%}
+.pr-table th:nth-child(2){width:34%}
+.pr-table th:nth-child(3){width:10%}
+.pr-table th:nth-child(4){width:13%}
+.pr-table th:nth-child(5){width:23%}
+.pr-jour-cel{font-weight:800;font-size:8.5px;text-align:center;background:#eaf1ee;line-height:1.25}
+.pr-cours-cel{font-size:8.8px;font-weight:700}
+.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:7.6px}
 .pr-vide-cel{color:#aaa;text-align:center;font-size:8px;font-style:italic}
 .pr-case-cel,.pr-report-cel{text-align:center}
 .pr-case{display:inline-block;width:9px;height:9px;border:1.2px solid #666;border-radius:2px}
 .pr-report-cel .pr-ligne-date{display:block;border-bottom:1px dotted #999;height:7px;margin-top:1px}
 .pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}
-.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:6.8px;color:#888;
+.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:7.6px;color:#888;
   display:flex;justify-content:space-between}
+
+/* Dates et en-têtes indivisibles ; le <br> sépare toujours le jour de la date. */
+.pr-table td.pr-jour-cel{white-space:nowrap;overflow-wrap:normal;word-break:normal;
+  font-variant-numeric:tabular-nums;padding-left:2px;padding-right:2px}
+.pr-table thead th{white-space:nowrap;overflow-wrap:normal;word-break:normal;padding-left:2px;padding-right:2px}
+.pr-table tr{break-inside:avoid;page-break-inside:avoid}
+.pr-table thead{display:table-header-group}
+.pr-pied{gap:8px;flex-wrap:wrap}
 
 /* --- Tâches bonus ------------------------------------------- */
 :root{--bonus:#7B3FB8;--bonus-doux:rgba(123,63,184,.12)}
@@ -843,6 +852,80 @@ button.gal-case:active{transform:scale(.97)}
 @media (prefers-reduced-motion: reduce){
   .recompense,.recompense.grande{animation:none!important}
   .cc-barre i{transition:none}
+}
+
+/* Cabosse — retouche exclusivement visuelle, septembre 2026.
+   Vert cacao du logo, intitulés lisibles, confort tactile iOS. */
+@media screen {
+  :root {
+    --fond:#F3F5F3; --surface:#FFFFFF; --surface-2:#EDF1EE; --filet:#DCE3DE;
+    --texte:#192B24; --texte-2:#4D6057; --texte-3:#5E6D64;
+    --accent:#094639; --accent-doux:#E3F0E9; --faite:#08755D;
+    --ombre:0 1px 2px rgba(9,70,57,.04),0 4px 16px rgba(9,70,57,.05);
+    --corps:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  #app{min-height:0}
+  #entete{gap:10px}
+  #entete .eyebrow{font-family:var(--corps);font-size:.6875rem;letter-spacing:.07em;line-height:1.35}
+  #entete h1{font-size:1.375rem;color:var(--accent)}
+  #entete .btn-entete{width:44px;height:44px}
+  #entete .btn-entete + .btn-entete{margin-left:0}
+  #bascule-profil{gap:5px}
+  #bascule-profil .seg{min-height:44px;font-size:.875rem;padding:10px 12px}
+  #bascule-profil .seg.actif{box-shadow:0 2px 5px rgba(9,70,57,.14)}
+  #vue{min-height:0;padding-bottom:32px}
+  #barre button{min-height:54px;padding:6px 1px 5px;gap:4px;color:var(--texte-2)}
+  #barre button .ic{width:24px;height:24px;font-size:20px;filter:grayscale(1) opacity(.8)}
+  #barre button .lb{font-size:.6875rem;line-height:1.2;overflow-wrap:anywhere}
+  #barre button[aria-current="page"] .lb{font-weight:800}
+  .jour{margin-bottom:22px}
+  .jour > h2{font-size:1rem;line-height:1.4;color:var(--texte);flex-wrap:wrap;gap:4px 8px;margin-bottom:10px}
+  .compte{font-size:.8125rem}
+  .rev{padding:15px;border-radius:18px;margin-bottom:10px}
+  .rev.rev-jour{background:#F4F9F5;border-color:#B4CEBF;box-shadow:inset 3px 0 0 #B98528,var(--ombre)}
+  .rev-matiere-tete{gap:9px;margin-bottom:10px;align-items:flex-start}
+  .rev-matiere-tete .puce{margin-top:7px}
+  .rev .matiere,.rev-matiere-tete .matiere{font-size:1.0625rem;font-weight:750;line-height:1.4;
+    white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+  .cours-bloc{padding:14px 0;border-color:var(--filet)}
+  .cours-bloc:last-child{padding-bottom:0}
+  .cours-bloc-tete,.rev .haut{flex-wrap:wrap;gap:8px;min-width:0}
+  .rev .code,.cours-bloc-tete .code{font-size:.875rem;color:var(--texte-2);line-height:1.4;
+    white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;min-width:0}
+  .rev .titre-cours{flex-basis:120px}
+  .rev .refs,.cours-bloc-tete .refs{flex-wrap:wrap;max-width:100%;gap:5px}
+  .rev .rang{font-size:.75rem;line-height:1.35;color:var(--texte-2);padding:4px 8px;overflow-wrap:anywhere}
+  .rev .rang.nouveau,.rev .rang.ancrage{color:var(--accent);background:var(--accent-doux)}
+  .rev .rang.renfort{color:#805600;background:#FFF1CE}
+  span.pastille-annee{font-family:var(--corps);font-size:.75rem;padding:4px 7px;line-height:1.35}
+  .cours-titre{font-size:1.0625rem;line-height:1.45;font-style:normal;font-weight:650;color:var(--texte);
+    margin-top:8px;white-space:normal;overflow-wrap:anywhere}
+  .rev .note{font-size:.8125rem;line-height:1.45}
+  .rev .note-ajouter{min-height:44px;text-align:left;font-size:.875rem;margin-top:4px;padding:8px 0}
+  .rev .note-apercu{font-size:.9375rem;line-height:1.45;min-height:44px;max-width:100%;
+    text-align:left;overflow-wrap:anywhere;padding:9px 11px;border-radius:12px}
+  .rev .cmds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+  .rev .cmds button{min-width:0;min-height:44px;padding:10px 4px;border-radius:14px;
+    font-size:.8125rem;line-height:1.3;white-space:normal;overflow-wrap:normal}
+  .rev .cmds button .emo{font-size:1.2em}
+  .rev .cmds button.verrou{opacity:.65}
+  .bouton.principal{box-shadow:0 3px 10px rgba(9,70,57,.16)}
+  .champ label,.check-ligne span{font-size:.875rem;line-height:1.4}
+  .aide-champ,.etiquette{font-size:.75rem;line-height:1.45}
+  .etiquette{letter-spacing:.06em}
+  input,select,textarea,.quizz-filtres select,.mat-edit input[type="text"]{font-size:1rem}
+  .mat-nom,.hist-entete span{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+  .mat-nom,details.pliable summary{font-size:.875rem}
+  button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+  #toast{max-width:calc(100vw - 32px);white-space:normal;text-align:center}
+  @media (max-width:374px){
+    #entete{padding-left:12px;padding-right:12px;gap:8px}
+    #entete .eyebrow{font-size:.625rem;letter-spacing:.025em}
+    #vue{padding-left:12px;padding-right:12px}
+    #bascule-profil{padding-left:12px;padding-right:12px}
+    .rev .cmds{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .rev .cmds button:first-child{grid-column:1 / -1}
+  }
 }
 </style>
 </head>
@@ -6468,7 +6551,7 @@ function toast(txt){
 /* Feuille de style autonome injectée dans l'iframe d'impression :
    ne dépend d'aucune variable CSS ni d'aucune police externe de
    l'app, pour que le document imprimé se compose instantanément. */
-const CSS_IMPRESSION = "html,body{margin:0;padding:0;background:#fff}@page{size:A4;margin:10mm}.pr-page{font-family:\"Inter\",-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;color:#000;background:#fff;font-size:8px;line-height:1.3;\n  -webkit-print-color-adjust:exact;print-color-adjust:exact}\n.pr-entete{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;\n  border-bottom:2px solid #094639}\n.pr-logo{width:28px;height:28px;flex:0 0 auto;border-radius:6px;object-fit:cover;display:block}\n.pr-titres{flex:1;min-width:0}\n.pr-titres .pr-nom{font-size:13px;font-weight:800;letter-spacing:-.02em;line-height:1.1}\n.pr-titres .pr-periode{font-size:8.5px;color:#555;margin-top:1px}\n.pr-grille{display:grid;grid-template-columns:1fr 1fr;column-gap:12px}\n.pr-col{min-width:0}\n.pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}\n.pr-table th,.pr-table td{border:1px solid #bbb;padding:3px 4px;vertical-align:middle;\n  overflow-wrap:anywhere;word-break:break-word;white-space:normal}\n.pr-table thead th{background:#094639;color:#fff;font-size:6.5px;text-transform:uppercase;\n  letter-spacing:.03em;font-weight:800;text-align:center;border-color:#094639}\n.pr-table th:nth-child(1){width:17%}\n.pr-table th:nth-child(2){width:39%}\n.pr-table th:nth-child(3),.pr-table th:nth-child(4){width:11%}\n.pr-table th:nth-child(5){width:22%}\n.pr-jour-cel{font-weight:800;font-size:7.5px;text-align:center;background:#eaf1ee;line-height:1.25}\n.pr-cours-cel{font-size:7.8px;font-weight:700}\n.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:6.8px}\n.pr-vide-cel{color:#aaa;text-align:center;font-size:8px;font-style:italic}\n.pr-case-cel,.pr-report-cel{text-align:center}\n.pr-case{display:inline-block;width:9px;height:9px;border:1.2px solid #666;border-radius:2px}\n.pr-report-cel .pr-ligne-date{display:block;border-bottom:1px dotted #999;height:7px;margin-top:1px}\n.pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}\n.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:6.8px;color:#888;\n  display:flex;justify-content:space-between}";
+const CSS_IMPRESSION = "html,body{margin:0;padding:0;background:#fff}*{box-sizing:border-box}@page{size:A4;margin:10mm}.pr-page{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.8px;line-height:1.3;\n  -webkit-print-color-adjust:exact;print-color-adjust:exact}\n.pr-entete{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-bottom:6px;\n  border-bottom:2px solid #094639}\n.pr-logo{width:28px;height:28px;flex:0 0 auto;border-radius:6px;object-fit:cover;display:block}\n.pr-titres{flex:1;min-width:0}\n.pr-titres .pr-nom{font-size:13px;font-weight:800;letter-spacing:-.02em;line-height:1.1}\n.pr-titres .pr-periode{font-size:8.5px;color:#555;margin-top:1px}\n.pr-grille{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px}\n.pr-col{min-width:0}\n.pr-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:2px}\n.pr-table th,.pr-table td{border:1px solid #bbb;padding:3px 4px;vertical-align:middle;\n  overflow-wrap:break-word;word-break:normal;white-space:normal}\n.pr-table thead th{background:#094639;color:#fff;font-size:7px;text-transform:uppercase;\n  letter-spacing:0;font-weight:800;text-align:center;border-color:#094639}\n.pr-table th:nth-child(1){width:20%}\n.pr-table th:nth-child(2){width:34%}\n.pr-table th:nth-child(3){width:10%}\n.pr-table th:nth-child(4){width:13%}\n.pr-table th:nth-child(5){width:23%}\n.pr-jour-cel{font-weight:800;font-size:8.5px;text-align:center;background:#eaf1ee;line-height:1.25}\n.pr-cours-cel{font-size:8.8px;font-weight:700}\n.pr-cours-cel .pr-mat,.pr-cours-cel .pr-rang{display:block;font-weight:400;color:#555;font-size:7.6px}\n.pr-vide-cel{color:#aaa;text-align:center;font-size:8px;font-style:italic}\n.pr-case-cel,.pr-report-cel{text-align:center}\n.pr-case{display:inline-block;width:9px;height:9px;border:1.2px solid #666;border-radius:2px}\n.pr-report-cel .pr-ligne-date{display:block;border-bottom:1px dotted #999;height:7px;margin-top:1px}\n.pr-nouveau-cel{color:#666;font-style:italic;font-size:7px;background:#fafafa}\n.pr-pied{margin-top:7px;padding-top:4px;border-top:1px solid #ddd;font-size:7.6px;color:#888;\n  display:flex;justify-content:space-between}\n\n/* Dates et en-têtes indivisibles ; le <br> sépare toujours le jour de la date. */\n.pr-table td.pr-jour-cel{white-space:nowrap;overflow-wrap:normal;word-break:normal;\n  font-variant-numeric:tabular-nums;padding-left:2px;padding-right:2px}\n.pr-table thead th{white-space:nowrap;overflow-wrap:normal;word-break:normal;padding-left:2px;padding-right:2px}\n.pr-table tr{break-inside:avoid;page-break-inside:avoid}\n.pr-table thead{display:table-header-group}\n.pr-pied{gap:8px;flex-wrap:wrap}\n\n";
 
 /* Une colonne par semaine, du lundi au dimanche, en partant du
    lundi de la semaine en cours — y compris les jours déjà passés
