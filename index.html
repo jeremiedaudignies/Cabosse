@@ -300,28 +300,29 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev .code{display:block;font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:-.01em;
   color:var(--texte-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbs-avatar-btn{background:none;border:0;padding:0;cursor:pointer;display:block;width:100%}
-/* ===== Onglet Cabosse redessiné (v56.13) ===== */
+/* ===== Onglet Cabosse redessiné (v56.14) ===== */
 .cbs-hero{position:relative;border-radius:var(--r-l);overflow:hidden;background-size:cover;
-  background-position:center;min-height:300px;display:flex;align-items:flex-end;
+  background-position:center;min-height:330px;display:flex;flex-direction:column;
   box-shadow:var(--ombre)}
-.cbs-hero-voile{position:absolute;inset:0;background:linear-gradient(180deg,
-  rgba(255,255,255,.05) 0%,rgba(255,255,255,.55) 55%,rgba(255,255,255,.92) 100%)}
-.cbs-hero-statut{position:absolute;top:12px;left:12px;z-index:2;background:rgba(255,255,255,.9);
-  color:var(--texte);font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:99px;
-  box-shadow:var(--ombre)}
-.cbs-hero-fleche{position:absolute;top:50%;right:10px;transform:translateY(-50%);z-index:2;
-  width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--accent);
+/* Niveau + nom EN HAUT, sur une plaque lisible (le fond reste net). */
+.cbs-hero-haut{position:relative;z-index:2;margin:14px auto 0;padding:8px 16px;
+  background:rgba(255,255,255,.86);border-radius:var(--r-m);text-align:center;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.cbs-hero-niv{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--texte-2)}
+.cbs-hero-rang{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--texte);margin-top:1px}
+.cbs-hero-apercu{font-size:10.5px;font-weight:700;color:var(--accent);margin-top:2px}
+/* Le singe est poussé vers le bas et posé sur le sol du décor. */
+.cbs-hero-singe{position:relative;z-index:1;margin-top:auto;display:flex;justify-content:center;
+  align-items:flex-end}
+.cbs-hero .cabosse-avatar.grand{width:172px;height:172px;margin:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}
+.cbs-hero-dicton{position:relative;z-index:2;font-size:12.5px;font-style:italic;color:var(--texte-2);
+  margin:0 12px 12px;text-align:center;background:rgba(255,255,255,.9);padding:9px 14px;
+  border-radius:var(--r-m);box-shadow:var(--ombre)}
+.cbs-hero-fleche{position:absolute;top:46%;transform:translateY(-50%);z-index:3;
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--accent);
   font-size:24px;font-weight:800;line-height:1;box-shadow:var(--ombre);border:0}
-.cbs-hero-corps{position:relative;z-index:1;width:100%;text-align:center;padding:14px 16px 16px}
-.cbs-hero .cabosse-avatar.grand{width:150px;height:150px;margin:0 auto 6px}
-.cbs-hero-niv{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--texte-2)}
-.cbs-hero-rang{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--texte);margin-top:2px}
-.cbs-hero-dicton{font-size:12.5px;font-style:italic;color:var(--texte-2);margin:8px auto 0;
-  max-width:34ch;background:rgba(255,255,255,.75);padding:8px 12px;border-radius:var(--r-m)}
-.cbs-hero-paysages{display:flex;gap:8px;justify-content:center;margin-top:12px}
-/* réutilise .gal-paysage pour les pastilles Bureau/Plage */
-.cbs-hero-paysages .gal-paysage{background:rgba(255,255,255,.85)}
+.cbs-hero-fleche.g{left:10px}
+.cbs-hero-fleche.d{right:10px}
 .cbs-bandeau{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 15px;
   border:1px solid var(--filet);border-radius:var(--r-m);background:var(--surface)}
 .cbs-bandeau.pret{border-color:var(--xp);background:var(--xp-doux)}
@@ -1478,7 +1479,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.13 · onglet Cabosse redessiné';
+const VERSION = 'v56.14 · hero Cabosse — singe posé, fond auto';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -4533,6 +4534,22 @@ function carteDimancheCabosse(){
    lui qui décide du moment, ce qui rend la récompense plus concrète.
    La jauge montre le solde disponible rapporté au coût du prochain
    palier ; elle se vide visiblement à chaque dépense. */
+/* Décor du hero, choisi automatiquement :
+   - pendant les vacances : fond spécifique à la période s'il a été
+     fourni (clé « vacances-<cle> » dans CABOSSE_ASSETS.fonds), sinon
+     repli sur la plage ;
+   - sinon, « travail terminé » (plage) si plus aucune révision n'est
+     due aujourd'hui, « encore du travail » (bibliothèque) s'il en
+     reste. Aucune bascule manuelle. */
+function fondCabosseAuto(){
+  const dl = donneesLecture();
+  const ajISO = isoDe(aujourdhui());
+  const vac = vacancesPour(ajISO);
+  if (vac) return CABOSSE_ASSETS.fonds['vacances-' + vac.cle] || CABOSSE_ASSETS.fonds.plage;
+  const reste = (dl.revisions || []).some(r =>
+    (r.statut === 'aFaire' || r.statut === 'reportee') && r.date <= ajISO);
+  return reste ? CABOSSE_ASSETS.fonds.bibliotheque : CABOSSE_ASSETS.fonds.plage;
+}
 function vueCabosse(){
   const g = gamif();
   const dispo = pointsDisponibles(g);
@@ -4540,30 +4557,40 @@ function vueCabosse(){
   const auMax = g.niveauGlobal >= NIVEAU_MAX;
   const peutMonter = !auMax && dispo >= cout && !modeLecture();
   const pct = auMax ? 100 : Math.min(100, Math.round(dispo / cout * 100));
-  const dicton = DICTONS_CABOSSE[Math.min(g.niveauGlobal - 1, DICTONS_CABOSSE.length - 1)] || '';
   const onglet = cabosseOnglet;
+  /* Niveau affiché dans le hero : par défaut le niveau actuel ;
+     les flèches permettent de prévisualiser les autres (‹ inférieur,
+     › supérieur). Le reste de la vue reflète toujours le niveau réel. */
+  const nApercu = (heroApercuNiveau && heroApercuNiveau >= 1 && heroApercuNiveau <= NIVEAU_MAX)
+    ? heroApercuNiveau : g.niveauGlobal;
+  const dicton = DICTONS_CABOSSE[Math.min(nApercu - 1, DICTONS_CABOSSE.length - 1)] || '';
+  const rangApercu = RANGS_CABOSSE[nApercu - 1] || g.rangLabel;
+  const etatApercu = nApercu < g.niveauGlobal ? 'Palier franchi'
+    : (nApercu === g.niveauGlobal ? 'Niveau actuel' : '🔒 À débloquer');
 
-  /* HERO : le singe sur le décor choisi, niveau et rang en surimpression,
-     un dicton, la bascule Bureau/Plage, et une flèche vers la galerie. */
-  let html = '<div class="cbs-hero" style="background-image:url(\'' + paysageCabosse() + '\')">' +
-    '<div class="cbs-hero-voile"></div>' +
-    '<div class="cbs-hero-statut">' + (peutMonter ? '🎉 Prêt à évoluer' : (auMax ? '👑 Niveau max' : '🐒 Encore du travail')) + '</div>' +
-    (g.niveauGlobal > 1 || !auMax
-      ? '<button type="button" class="cbs-hero-fleche" data-act="cabosse-galerie" aria-label="Voir les évolutions">\u203A</button>' : '') +
-    '<div class="cbs-hero-corps">' +
+  /* HERO : décor plein (sans voile), niveau + nom EN HAUT, le singe
+     posé au bas du décor (plus de lévitation), la citation en pied.
+     Flèches ‹ / › pour prévisualiser les niveaux inférieurs / supérieurs. */
+  const flecheG = nApercu > 1
+    ? '<button type="button" class="cbs-hero-fleche g" data-act="hero-niv-prec" aria-label="Niveau inférieur">\u2039</button>' : '';
+  const flecheD = nApercu < NIVEAU_MAX
+    ? '<button type="button" class="cbs-hero-fleche d" data-act="hero-niv-suiv" aria-label="Niveau supérieur">\u203A</button>' : '';
+  let html = '<div class="cbs-hero" style="background-image:url(\'' + fondCabosseAuto() + '\')">' +
+    flecheG + flecheD +
+    '<div class="cbs-hero-haut">' +
+      '<div class="cbs-hero-niv">Niveau ' + nApercu + ' sur ' + NIVEAU_MAX + '</div>' +
+      '<div class="cbs-hero-rang">' + ech(rangApercu) + '</div>' +
+      (nApercu !== g.niveauGlobal ? '<div class="cbs-hero-apercu">' + etatApercu + '</div>' : '') +
+    '</div>' +
+    '<div class="cbs-hero-singe">' +
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
-        '<img class="cabosse-base" alt="' + ech(g.rangLabel) + '" src="' + fichierRang(g.niveauGlobal) + '" ' +
-          'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
-      '</div>' +
-      '<div class="cbs-hero-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
-      '<div class="cbs-hero-rang">' + ech(g.rangLabel) + '</div>' +
-      (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
-      '<div class="cbs-hero-paysages">' +
-        boutonPaysage('bibliotheque', '📚 Bureau') +
-        boutonPaysage('plage', '🌴 Plage') +
+        '<img class="cabosse-base" alt="' + ech(rangApercu) + '" src="' + fichierRang(nApercu) + '" ' +
+          'onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
+          'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' +
     '</div>' +
+    (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
   '</div>';
 
   /* BANDEAU d'évolution : progression vers le prochain niveau + action. */
@@ -4741,6 +4768,7 @@ function boutonPaysage(cle, libelle){
 let galerieNiveauDetail = null;
 let cabosseOnglet = 'progression'; // onglet actif de la vue Cabosse
 let cabosseAidesVisibles = false;  // « en savoir plus » sur les caractéristiques
+let heroApercuNiveau = null;        // niveau prévisualisé dans le hero (null = actuel)
 
 function rafraichirGalerie(){
   const contenu = document.getElementById('galerie-contenu');
@@ -7937,9 +7965,11 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
+  else if (act === 'hero-niv-prec') { const g = gamif(); const cur = heroApercuNiveau || g.niveauGlobal; heroApercuNiveau = Math.max(1, cur - 1); rendre(); }
+  else if (act === 'hero-niv-suiv') { const g = gamif(); const cur = heroApercuNiveau || g.niveauGlobal; heroApercuNiveau = Math.min(NIVEAU_MAX, cur + 1); rendre(); }
   else if (act === 'cabosse-onglet') { cabosseOnglet = b.dataset.onglet; rendre(); }
   else if (act === 'cabosse-aides') { cabosseAidesVisibles = !cabosseAidesVisibles; rendre(); }
-  else if (act === 'cabosse-evoluer') monterNiveauCabosse();
+  else if (act === 'cabosse-evoluer') { heroApercuNiveau = null; monterNiveauCabosse(); }
   else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
   else if (act === 'emploi-modifier') {
     const code = b.dataset.code;
