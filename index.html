@@ -317,21 +317,30 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .cbs-hero-rang{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--texte);margin-top:1px}
 .cbs-hero-apercu{font-size:10.5px;font-weight:700;color:var(--accent);margin-top:2px}
 /* Le singe est poussé vers le bas et posé sur le sol du décor. */
-.cbs-hero-singe{position:relative;z-index:1;flex:1;min-height:220px;display:flex;justify-content:center;
-  align-items:flex-end;padding-top:8px}
+.cbs-hero-singe{position:relative;z-index:1;flex:1;min-height:230px;display:flex;justify-content:center;
+  align-items:flex-end;padding-top:8px;padding-bottom:15%}
 .cbs-hero .cabosse-avatar.grand{width:172px;height:172px;margin:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}
-.cbs-hero-dicton{font-size:11.5px;font-style:italic;color:var(--texte-2);text-align:right;
-  background:rgba(255,255,255,.9);padding:7px 12px;border-radius:var(--r-m);box-shadow:var(--ombre)}
+.cbs-hero-citation{margin:10px 2px 0;font-size:12.5px;font-style:italic;color:var(--texte-2);
+  text-align:center;background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:10px 14px;box-shadow:var(--ombre)}
 /* Plein écran en mode paysage (uniquement sur l'onglet Cabosse) :
    décor + singe occupent tout l'écran, le reste de l'interface est
    masqué. Revenir en portrait restaure l'affichage normal. */
 @media (orientation: landscape){
-  body.vue-cabosse .cbs-hero{position:fixed;inset:0;z-index:60;width:100vw;height:100vh;
+  /* Plein écran total sur l'onglet Cabosse : on masque l'en-tête, la
+     bascule de profil et la barre du bas ; le hero passe devant tout.
+     Retour en portrait = affichage normal restauré. */
+  body.vue-cabosse #entete,
+  body.vue-cabosse #bascule-profil,
+  body.vue-cabosse #barre{display:none}
+  body.vue-cabosse #vue{padding:0;margin:0}
+  body.vue-cabosse .cbs-hero{position:fixed;inset:0;z-index:200;width:100vw;height:100vh;
     min-height:0;border-radius:0;box-shadow:none}
   body.vue-cabosse .cbs-hero-info,
-  body.vue-cabosse .cbs-hero-fleche{display:none}
-  body.vue-cabosse .cbs-hero-singe{margin:auto;height:100%;align-items:center}
-  body.vue-cabosse .cbs-hero .cabosse-avatar.grand{width:min(96vw,88vh);height:88vh}
+  body.vue-cabosse .cbs-hero-fleche,
+  body.vue-cabosse .cbs-hero-citation{display:none}
+  body.vue-cabosse .cbs-hero-singe{margin:auto;height:100%;align-items:center;padding-bottom:0}
+  body.vue-cabosse .cbs-hero .cabosse-avatar.grand{width:min(96vw,92vh);height:92vh}
 }
 .cbs-hero-fleche{position:absolute;top:46%;transform:translateY(-50%);z-index:3;
   width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.92);color:var(--accent);
@@ -1494,7 +1503,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.17 · fonds ASCII, titre dégage le panneau';
+const VERSION = 'v56.18 · paysage plein écran net, singe posé sur le tapis';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -4593,7 +4602,6 @@ function vueCabosse(){
     Math.max(1, (heroApercuNiveau && heroApercuNiveau >= 1) ? heroApercuNiveau : g.niveauGlobal));
   const dicton = DICTONS_CABOSSE[Math.min(nApercu - 1, DICTONS_CABOSSE.length - 1)] || '';
   const rangApercu = RANGS_CABOSSE[nApercu - 1] || g.rangLabel;
-  const etatApercu = nApercu < g.niveauGlobal ? 'Palier franchi' : 'Niveau actuel';
 
   /* HERO : décor plein (sans voile), niveau + nom EN HAUT, le singe
      posé au bas du décor (plus de lévitation), la citation en pied.
@@ -4608,9 +4616,7 @@ function vueCabosse(){
       '<div class="cbs-hero-haut">' +
         '<div class="cbs-hero-niv">Niveau ' + nApercu + ' sur ' + NIVEAU_MAX + '</div>' +
         '<div class="cbs-hero-rang">' + ech(rangApercu) + '</div>' +
-        (nApercu !== g.niveauGlobal ? '<div class="cbs-hero-apercu">' + etatApercu + '</div>' : '') +
       '</div>' +
-      (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
     '</div>' +
     '<div class="cbs-hero-singe">' +
       '<div class="cabosse-avatar grand">' +
@@ -4620,7 +4626,8 @@ function vueCabosse(){
           'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' +
     '</div>' +
-  '</div>';
+  '</div>' +
+  (dicton ? '<p class="cbs-hero-citation">\u201C' + ech(dicton) + '\u201D</p>' : '');
 
   /* BANDEAU d'évolution : progression vers le prochain niveau + action. */
   if (!auMax) {
