@@ -3,7 +3,7 @@
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
 const PREFIXE = 'cabosse-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIXE + 'v56.11';
+const CACHE = PREFIXE + 'v56.13';
 const EXTERNES = [
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js',

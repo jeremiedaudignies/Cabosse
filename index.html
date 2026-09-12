@@ -300,6 +300,77 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .rev .code{display:block;font-family:var(--mono);font-weight:700;font-size:12.5px;letter-spacing:-.01em;
   color:var(--texte-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbs-avatar-btn{background:none;border:0;padding:0;cursor:pointer;display:block;width:100%}
+/* ===== Onglet Cabosse redessiné (v56.13) ===== */
+.cbs-hero{position:relative;border-radius:var(--r-l);overflow:hidden;background-size:cover;
+  background-position:center;min-height:300px;display:flex;align-items:flex-end;
+  box-shadow:var(--ombre)}
+.cbs-hero-voile{position:absolute;inset:0;background:linear-gradient(180deg,
+  rgba(255,255,255,.05) 0%,rgba(255,255,255,.55) 55%,rgba(255,255,255,.92) 100%)}
+.cbs-hero-statut{position:absolute;top:12px;left:12px;z-index:2;background:rgba(255,255,255,.9);
+  color:var(--texte);font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:99px;
+  box-shadow:var(--ombre)}
+.cbs-hero-fleche{position:absolute;top:50%;right:10px;transform:translateY(-50%);z-index:2;
+  width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.9);color:var(--accent);
+  font-size:24px;font-weight:800;line-height:1;box-shadow:var(--ombre);border:0}
+.cbs-hero-corps{position:relative;z-index:1;width:100%;text-align:center;padding:14px 16px 16px}
+.cbs-hero .cabosse-avatar.grand{width:150px;height:150px;margin:0 auto 6px}
+.cbs-hero-niv{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--texte-2)}
+.cbs-hero-rang{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--texte);margin-top:2px}
+.cbs-hero-dicton{font-size:12.5px;font-style:italic;color:var(--texte-2);margin:8px auto 0;
+  max-width:34ch;background:rgba(255,255,255,.75);padding:8px 12px;border-radius:var(--r-m)}
+.cbs-hero-paysages{display:flex;gap:8px;justify-content:center;margin-top:12px}
+/* réutilise .gal-paysage pour les pastilles Bureau/Plage */
+.cbs-hero-paysages .gal-paysage{background:rgba(255,255,255,.85)}
+.cbs-bandeau{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 15px;
+  border:1px solid var(--filet);border-radius:var(--r-m);background:var(--surface)}
+.cbs-bandeau.pret{border-color:var(--xp);background:var(--xp-doux)}
+.cbs-bandeau-ico{font-size:22px;flex:0 0 auto}
+.cbs-bandeau-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.cbs-bandeau-txt b{font-size:13.5px;font-weight:800}
+.cbs-bandeau-txt span{font-size:11.5px;color:var(--texte-2);margin-top:2px}
+.cbs-bandeau-plus{flex:0 0 auto;width:44px;height:44px;border-radius:50%;font-size:26px;
+  font-weight:800;line-height:1;border:0;background:var(--accent);color:#fff;box-shadow:var(--ombre)}
+.cbs-bandeau-plus.pas-assez{background:var(--surface-2);color:var(--texte-3);box-shadow:none}
+.cbs-segments{display:flex;gap:4px;margin-top:16px;padding:4px;background:var(--surface-2);
+  border-radius:99px}
+.cbs-seg{flex:1;padding:10px 8px;border:0;border-radius:99px;background:none;color:var(--texte-2);
+  font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s}
+.cbs-seg.actif{background:var(--surface);color:var(--accent);box-shadow:var(--ombre)}
+.cbs-sous-titre{display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+  margin:18px 2px 10px}
+.cbs-sous-titre b{font-size:15px;font-weight:800}
+.cbs-lien{border:0;background:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:0}
+.cbs-compte-evol{font-size:12px;color:var(--texte-3)}
+.cbs-carac-grille{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cbs-carac{background:var(--surface);border:1px solid var(--filet);border-radius:var(--r-m);
+  padding:12px 13px;box-shadow:var(--ombre)}
+.cbs-carac-h{display:flex;align-items:center;gap:7px}
+.cbs-carac-h .e{font-size:17px}
+.cbs-carac-h b{flex:1;min-width:0;font-size:13px;font-weight:800;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cbs-carac-h .p{font-size:14px;font-weight:800;color:var(--xp);font-variant-numeric:tabular-nums}
+.cbs-carac .cc-barre{margin-top:9px}
+.cbs-carac-acc{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:9px;
+  font-size:10.5px;color:var(--texte-3)}
+.cbs-carac-acc.ok{color:var(--faite);font-weight:700}
+.cbs-carac-acc span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbs-carac-acc .v{font-size:14px;flex:0 0 auto}
+.cbs-carac-aide{font-size:11px;color:var(--texte-2);margin-top:8px;line-height:1.4}
+.cbs-evol-grille{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.cbs-evol{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;
+  border:1px solid var(--filet);border-radius:var(--r-m);background:var(--surface);text-align:center}
+.cbs-evol.actuel{border-color:var(--accent);border-width:2px}
+.cbs-evol.verrouille{background:var(--surface-2);opacity:.75}
+.cbs-evol-vign{width:52px;height:52px;position:relative;display:flex;align-items:center;justify-content:center}
+.cbs-evol-vign img{width:100%;height:100%;object-fit:contain;border-radius:10px;position:relative;z-index:1}
+.cbs-evol-repli{position:absolute;font-size:26px;z-index:0}
+.cbs-evol-vign.sans-image img{display:none}
+.cbs-evol-cadenas{font-size:22px}
+.cbs-evol-niv{font-size:11px;font-weight:700;color:var(--texte-2)}
+.cbs-evol-etat{font-size:10px;color:var(--texte-3);max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.cbs-evol.actuel .cbs-evol-etat{color:var(--accent);font-weight:700}
 span.pastille-annee{display:inline-block!important;font-family:var(--mono);font-size:10px;font-weight:700;
   color:var(--texte-2);background:var(--surface-2);border-radius:99px;padding:2px 7px;
   margin-left:0;vertical-align:middle;white-space:nowrap;width:auto}
@@ -380,6 +451,7 @@ details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-l .cours-titre-hist{display:block;font-size:11.5px;color:var(--texte-2);font-style:italic}
 .hist-l.cours-edit .txt{display:flex;flex-direction:column;gap:4px}
 .hist-l.cours-edit input[type="text"]{width:100%}
+.mat-edit .me-code{max-width:64px;flex:0 0 auto;text-transform:uppercase;font-family:var(--mono);font-weight:700}
 .hist-l .txt{flex:1;min-width:0}
 .hist-l .txt b{display:block;font-family:var(--mono);font-size:13px;font-weight:700}
 .hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
@@ -1406,7 +1478,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.11 · audio mixable, réglages réorganisés, historique';
+const VERSION = 'v56.13 · onglet Cabosse redessiné';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2294,6 +2366,39 @@ function emploiDuTemps(){
 function emploiMatiere(code){
   const e = emploiDuTemps()[code];
   return (e && e.defini) ? e : null;
+}
+
+/* Matières disponibles par année scolaire.
+   Modèle : DB.matieres reste la définition GLOBALE d'une matière
+   (code → nom + couleur, unique par code). DB.reglages.matieresParAnnee
+   ne stocke QUE la disponibilité : quels codes sont proposés pour une
+   année donnée. Une année absente de la table = non personnalisée =
+   toutes les matières disponibles (comportement d'avant la v56.12,
+   donc rien ne disparaît à la mise à jour). Personnaliser une année
+   matérialise sa liste (toutes les matières, moins/plus ce qu'on
+   change). */
+function tableMatieresParAnnee(){
+  if (!DB.reglages.matieresParAnnee) DB.reglages.matieresParAnnee = {};
+  return DB.reglages.matieresParAnnee;
+}
+function anneePersonnalisee(annee){
+  return Array.isArray(tableMatieresParAnnee()[annee]);
+}
+function codesMatieresAnnee(annee){
+  const t = tableMatieresParAnnee();
+  if (annee && Array.isArray(t[annee])) return t[annee].filter(code => DB.matieres.some(m => m.code === code));
+  return DB.matieres.map(m => m.code); // non personnalisée : tout
+}
+function matieresAnnee(annee){
+  const codes = codesMatieresAnnee(annee);
+  return DB.matieres.filter(m => codes.indexOf(m.code) !== -1);
+}
+/* Rend l'année « personnalisée » en figeant sa liste actuelle
+   (toutes les matières) avant un premier ajout/retrait. */
+function assurerListeAnnee(annee){
+  const t = tableMatieresParAnnee();
+  if (!Array.isArray(t[annee])) t[annee] = DB.matieres.map(m => m.code);
+  return t[annee];
 }
 /* Une matière a-t-elle déjà son emploi du temps ? C'est ce qui
    décide si le bloc est obligatoire à la saisie du cours. */
@@ -3232,8 +3337,13 @@ function validerBase(o){
   if (reg.annulationsExcluesAvant !== undefined && !(reg.annulationsExcluesAvant === '' || dateValide(reg.annulationsExcluesAvant))) {
     rapport.push('réglage annulationsExcluesAvant'); delete reg.annulationsExcluesAvant;
   }
-  for (const cle of ['calendrier','emploiDuTemps','gamification','semainesEncaissees']) {
+  for (const cle of ['calendrier','emploiDuTemps','gamification','semainesEncaissees','matieresParAnnee']) {
     if (reg[cle] !== undefined && !objet(reg[cle])) { rapport.push('réglage ' + cle); delete reg[cle]; }
+  }
+  if (objet(reg.matieresParAnnee)) {
+    for (const [an, liste] of Object.entries(reg.matieresParAnnee)) {
+      if (!Array.isArray(liste) || liste.some(v => typeof v !== 'string')) { rapport.push('matières/' + an); delete reg.matieresParAnnee[an]; }
+    }
   }
   for (const [k, cal] of Object.entries(reg.calendrier || {})) {
     let ok = objet(cal) && (!cal.rentree || dateValide(cal.rentree)) && (!cal.finAnnee || dateValide(cal.finAnnee));
@@ -4429,77 +4539,127 @@ function vueCabosse(){
   const cout = coutNiveauSuivant(g.niveauGlobal);
   const auMax = g.niveauGlobal >= NIVEAU_MAX;
   const peutMonter = !auMax && dispo >= cout && !modeLecture();
-  const pctJauge = auMax ? 100 : Math.min(100, Math.round(dispo / cout * 100));
+  const pct = auMax ? 100 : Math.min(100, Math.round(dispo / cout * 100));
+  const dicton = DICTONS_CABOSSE[Math.min(g.niveauGlobal - 1, DICTONS_CABOSSE.length - 1)] || '';
+  const onglet = cabosseOnglet;
 
-  /* Le singe ouvre la galerie, exactement comme le bouton
-     « Voir toutes les évolutions » juste en dessous. */
-  let html = '<div class="cbs-entete">' +
-    '<button type="button" class="cbs-avatar-btn" data-act="cabosse-galerie" ' +
-      'aria-label="Voir toutes les évolutions">' + avatarCabosse('grand') + '</button>' +
-    '<div class="cbs-rang">' + ech(g.rangLabel) + '</div>' +
-    '<div class="cbs-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
+  /* HERO : le singe sur le décor choisi, niveau et rang en surimpression,
+     un dicton, la bascule Bureau/Plage, et une flèche vers la galerie. */
+  let html = '<div class="cbs-hero" style="background-image:url(\'' + paysageCabosse() + '\')">' +
+    '<div class="cbs-hero-voile"></div>' +
+    '<div class="cbs-hero-statut">' + (peutMonter ? '🎉 Prêt à évoluer' : (auMax ? '👑 Niveau max' : '🐒 Encore du travail')) + '</div>' +
+    (g.niveauGlobal > 1 || !auMax
+      ? '<button type="button" class="cbs-hero-fleche" data-act="cabosse-galerie" aria-label="Voir les évolutions">\u203A</button>' : '') +
+    '<div class="cbs-hero-corps">' +
+      '<div class="cabosse-avatar grand">' +
+        '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
+        '<img class="cabosse-base" alt="' + ech(g.rangLabel) + '" src="' + fichierRang(g.niveauGlobal) + '" ' +
+          'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+      '</div>' +
+      '<div class="cbs-hero-niv">Niveau ' + g.niveauGlobal + ' sur ' + NIVEAU_MAX + '</div>' +
+      '<div class="cbs-hero-rang">' + ech(g.rangLabel) + '</div>' +
+      (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
+      '<div class="cbs-hero-paysages">' +
+        boutonPaysage('bibliotheque', '📚 Bureau') +
+        boutonPaysage('plage', '🌴 Plage') +
+      '</div>' +
+    '</div>' +
   '</div>';
 
-  /* Bloc « faire évoluer » : le cœur de la vue. */
-  html += '<div class="cbs-evolution' + (peutMonter ? ' pret' : '') + '">' +
-    '<div class="cbs-solde"><b>' + dispo + '</b><span>point' + (dispo > 1 ? 's' : '') + ' à dépenser</span></div>' +
-    (auMax
-      ? '<div class="cbs-max">Niveau maximum atteint 🎉</div>'
-      : '<button type="button" class="cbs-plus' + (peutMonter ? '' : ' pas-assez') + '" ' +
-        'data-act="cabosse-evoluer" aria-label="Faire évoluer Cabosse">+</button>') +
-  '</div>' +
-  (auMax ? '' :
-    '<div class="jauge-points" id="jauge-points">' +
-      '<i style="width:' + pctJauge + '%"></i>' +
-      '<span class="jauge-txt">' + dispo + ' / ' + cout + '</span>' +
+  /* BANDEAU d'évolution : progression vers le prochain niveau + action. */
+  if (!auMax) {
+    html += '<div class="cbs-bandeau' + (peutMonter ? ' pret' : '') + '">' +
+      '<span class="cbs-bandeau-ico">' + (peutMonter ? '✨' : '🔓') + '</span>' +
+      '<div class="cbs-bandeau-txt">' +
+        '<b>' + (peutMonter ? 'Une évolution t\u2019attend' : 'Une nouvelle évolution t\u2019attend') + '</b>' +
+        '<span>' + (peutMonter
+          ? 'Appuie sur + pour dépenser ' + cout + ' points et faire évoluer Cabosse.'
+          : 'Gagne encore ' + (cout - dispo) + ' point' + ((cout - dispo) > 1 ? 's' : '') + ', puis fais évoluer Cabosse.') + '</span>' +
+      '</div>' +
+      '<button type="button" class="cbs-bandeau-plus' + (peutMonter ? '' : ' pas-assez') + '" ' +
+        'data-act="cabosse-evoluer" aria-label="Faire évoluer Cabosse">+</button>' +
     '</div>' +
-    '<p class="aide-champ" style="text-align:center;margin-top:6px">' +
-      (peutMonter
-        ? 'Appuie sur le + pour dépenser ' + cout + ' points et faire évoluer Cabosse.'
-        : 'Encore ' + (cout - dispo) + ' point' + ((cout - dispo) > 1 ? 's' : '') +
-          ' pour le niveau ' + (g.niveauGlobal + 1) + '.') + '</p>');
+    '<div class="jauge-points" id="jauge-points"><i style="width:' + pct + '%"></i>' +
+      '<span class="jauge-txt">' + dispo + ' / ' + cout + '</span></div>';
+  } else {
+    html += '<div class="cbs-bandeau pret"><span class="cbs-bandeau-ico">👑</span>' +
+      '<div class="cbs-bandeau-txt"><b>Niveau maximum atteint 🎉</b>' +
+      '<span>Cabosse a atteint sa forme ultime.</span></div></div>';
+  }
 
-  html += '<button class="bouton discret" data-act="cabosse-galerie" style="margin-top:12px">' +
-    '🖼️ Voir toutes les évolutions débloquées</button>';
+  /* BASCULE Progression / Évolutions. */
+  html += '<div class="cbs-segments" role="tablist">' +
+    '<button type="button" role="tab" class="cbs-seg' + (onglet === 'progression' ? ' actif' : '') + '" ' +
+      'data-act="cabosse-onglet" data-onglet="progression"' + (onglet === 'progression' ? ' aria-selected="true"' : '') + '>Progression</button>' +
+    '<button type="button" role="tab" class="cbs-seg' + (onglet === 'evolutions' ? ' actif' : '') + '" ' +
+      'data-act="cabosse-onglet" data-onglet="evolutions"' + (onglet === 'evolutions' ? ' aria-selected="true"' : '') + '>' +
+      'Évolutions \u00b7 ' + g.niveauGlobal + ' / ' + NIVEAU_MAX + '</button>' +
+  '</div>';
 
-  html += '<p class="etiquette" style="margin-top:18px">Caractéristiques</p>';
+  if (onglet === 'evolutions') {
+    html += vueCabosseEvolutions(g);
+  } else {
+    html += vueCabosseProgression(g);
+  }
+  return html;
+}
+
+/* Onglet Progression : les quatre caractéristiques et leurs accessoires. */
+function vueCabosseProgression(g){
+  let html = '<div class="cbs-sous-titre"><b>Ses caractéristiques</b>' +
+    '<button type="button" class="cbs-lien" data-act="cabosse-aides">' +
+    (cabosseAidesVisibles ? 'Masquer les explications' : 'Touchez pour en savoir plus') + '</button></div>' +
+    '<div class="cbs-carac-grille">';
   CARACTERISTIQUES.forEach(c => {
     const pts = (g.jauges[c.cle] || {points:0}).points;
     const pct = Math.min(100, Math.round(pts / SEUIL_ACCESSOIRE * 100));
     const acc = ARTEFACTS_CABOSSE.find(a => a.carac === c.cle);
     const acquis = acc && g.artefacts[acc.cle];
-    html += '<div class="cbs-carte">' +
-      '<div class="h">' + c.emoji + ' <b>' + c.nom + '</b>' +
-        '<span class="p">' + pts + ' pt' + (pts > 1 ? 's' : '') + '</span></div>' +
-      '<div class="cc-barre" style="margin-top:7px"><i style="width:' + pct + '%"></i></div>' +
-      '<span class="aide">' +
-        (acquis
-          ? acc.emoji + ' ' + ech(acc.nom) + ' débloqué !'
-          : (acc ? 'Encore ' + (SEUIL_ACCESSOIRE - pts) + ' points pour ' + ech(acc.nom) : '')) +
-        '<br>' + c.aide + '</span>' +
+    html += '<div class="cbs-carac">' +
+      '<div class="cbs-carac-h"><span class="e">' + c.emoji + '</span><b>' + c.nom + '</b>' +
+        '<span class="p">' + pts + '</span></div>' +
+      '<div class="cc-barre"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="cbs-carac-acc' + (acquis ? ' ok' : '') + '">' +
+        '<span>' + (acc ? ech(acc.nom) : '') + '</span>' +
+        '<span class="v">' + (acquis ? acc.emoji : '🔒') + '</span></div>' +
+      (cabosseAidesVisibles ? '<p class="cbs-carac-aide">' + c.aide +
+        (acc && !acquis ? ' Encore ' + (SEUIL_ACCESSOIRE - pts) + ' points pour ' + ech(acc.nom) + '.' : '') + '</p>' : '') +
     '</div>';
   });
-
-  html += '<p class="etiquette" style="margin-top:18px">Accessoires légendaires</p>' +
-    '<div class="cbs-artefacts">';
-  ARTEFACTS_CABOSSE.forEach(a => {
-    const acquis = !!g.artefacts[a.cle];
-    html += '<div class="cbs-art ' + (acquis ? 'acquis' : 'verrouille') + '">' +
-      '<span class="e">' + (acquis ? a.emoji : '🔒') + '</span>' +
-      '<span>' + ech(a.nom) + '</span></div>';
-  });
   html += '</div>';
-
   if (g.artefacts.formeUltime) {
     html += '<div class="cbs-ultime">✨ CABOSSE SUPRÊME DÉBLOQUÉ ! ✨</div>';
   }
-
-  html += '<p style="margin-top:18px;text-align:center;font-size:11.5px;color:var(--texte-3)">' +
-    'Cabosse grandit avec ta régularité 🐒</p>';
   return html;
 }
 
-/* --- Galerie plein écran des évolutions déjà débloquées ------- */
+/* Onglet Évolutions : aperçu des premiers niveaux + accès à la galerie. */
+function vueCabosseEvolutions(g){
+  const APERCU = 8;
+  let html = '<div class="cbs-sous-titre"><b>Ses évolutions</b>' +
+    '<span class="cbs-compte-evol">' + g.niveauGlobal + ' débloquée' + (g.niveauGlobal > 1 ? 's' : '') + ' sur ' + NIVEAU_MAX + '</span></div>' +
+    '<div class="cbs-evol-grille">';
+  for (let n = 1; n <= APERCU; n++) {
+    const acquis = n <= g.niveauGlobal;
+    const actuel = n === g.niveauGlobal;
+    const balise = acquis ? 'button' : 'div';
+    html += '<' + balise + (acquis ? ' type="button" data-act="cabosse-rang-detail" data-niveau="' + n + '"' : '') +
+      ' class="cbs-evol' + (acquis ? '' : ' verrouille') + (actuel ? ' actuel' : '') + '">' +
+      '<div class="cbs-evol-vign">' +
+        (acquis
+          ? '<img src="' + fichierRang(n) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'sans-image\')"><span class="cbs-evol-repli">🐒</span>'
+          : '<span class="cbs-evol-cadenas">🔒</span>') +
+      '</div>' +
+      '<span class="cbs-evol-niv">Niv. ' + n + '</span>' +
+      '<span class="cbs-evol-etat">' + (actuel ? 'Actuel' : (acquis ? ech(RANGS_CABOSSE[n-1]) : 'Verrouillé')) + '</span>' +
+    '</' + balise + '>';
+  }
+  html += '</div>' +
+    '<button class="bouton discret" data-act="cabosse-galerie" style="margin-top:12px">Voir les ' + NIVEAU_MAX + ' niveaux</button>';
+  return html;
+}
+
+/* --- Galerie plein écran des évolutions déjà débloquées ------- *//* --- Galerie plein écran des évolutions déjà débloquées ------- */
 function vueGalerieCabosse(){
   const g = gamif();
   let html = '<p class="etiquette">Évolutions débloquées · ' +
@@ -4579,6 +4739,8 @@ function boutonPaysage(cle, libelle){
    null = grille des 40 évolutions, sinon = détail plein écran de ce
    niveau précis, avec son propre bouton retour vers la grille. */
 let galerieNiveauDetail = null;
+let cabosseOnglet = 'progression'; // onglet actif de la vue Cabosse
+let cabosseAidesVisibles = false;  // « en savoir plus » sur les caractéristiques
 
 function rafraichirGalerie(){
   const contenu = document.getElementById('galerie-contenu');
@@ -5123,6 +5285,15 @@ function ouvrirBonusQuizz(idCours){
 
 /* --- Ajout ------------------------------------------------- */
 let matiereEnEdition = null;
+/* Année sélectionnée dans le bloc « matières disponibles » des
+   réglages avancés. Par défaut : la dernière année utilisée, ou la
+   première de la liste. */
+let anneeMatieresChoisie = null;
+function anneeMatieresAffichee(){
+  if (anneeMatieresChoisie && ANNEES.indexOf(anneeMatieresChoisie) !== -1) return anneeMatieresChoisie;
+  return DB.reglages.derniereAnnee && ANNEES.indexOf(DB.reglages.derniereAnnee) !== -1
+    ? DB.reglages.derniereAnnee : ANNEES[0];
+}
 let emploiEnEdition = null;
 
 /* --- Emploi du temps d'une matière (formulaire Nouveau cours) ---
@@ -5182,6 +5353,14 @@ function contenuEmploiMatiere(code){
   '</div>';
 }
 
+/* Options du sélecteur de matière filtrées par l'année choisie.
+   Année non personnalisée (ou vide) : toutes les matières. */
+function optionsMatiereAnnee(annee){
+  let opts = '<option value="">Choisir une matière</option>';
+  const liste = annee ? matieresAnnee(annee) : DB.matieres;
+  liste.forEach(m => { opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>'; });
+  return opts;
+}
 function vueAjout(){
   if (modeLecture()) {
     return '<div class="vide"><div class="gros">👀</div>' +
@@ -5189,12 +5368,8 @@ function vueAjout(){
       '<p>Ce téléphone suit les cours encodés sur un autre appareil. ' +
       'La gestion des cours et des matières se fait depuis celui-ci.</p></div>';
   }
-  let opts = '<option value="">Choisir une matière</option>';
-  DB.matieres.forEach(m => {
-    opts += '<option value="' + m.code + '">' + ech(m.nom) + ' (' + m.code + ')</option>';
-  });
-
   const derniere = DB.reglages.derniereAnnee || '';
+  let opts = optionsMatiereAnnee(derniere);
   let optsAnnee = '<option value="">Choisir une année</option>';
   ANNEES.forEach(a => {
     optsAnnee += '<option value="' + ech(a) + '"' + (a === derniere ? ' selected' : '') + '>' + ech(a) + '</option>';
@@ -5371,13 +5546,17 @@ function carteCoursEnregistres(){
   return html;
 }
 
-function carteMatieres(){
+function carteMatieres(annee){
+  const perso = annee && anneePersonnalisee(annee);
+  const liste = annee ? matieresAnnee(annee) : DB.matieres;
   let html = '<div class="carte" style="padding:5px 15px">';
-  DB.matieres.forEach(m => {
+  if (annee && !liste.length) html += '<p class="aide-champ" style="padding:8px 0">Aucune matière pour ' + ech(annee) + '.</p>';
+  liste.forEach(m => {
     if (matiereEnEdition === m.code) {
       html += '<div class="mat-l mat-edit">' +
         '<input type="color" id="me-couleur" value="' + couleurSure(m.c) + '">' +
-        '<input type="text" id="me-nom" value="' + ech(m.nom) + '">' +
+        '<input type="text" id="me-code" class="me-code" maxlength="4" value="' + ech(m.code) + '" aria-label="Code">' +
+        '<input type="text" id="me-nom" value="' + ech(m.nom) + '" aria-label="Nom">' +
         '<button class="mini ok" data-act="matiere-enregistrer" data-id="' + ech(m.code) + '">\u2713</button>' +
         '<button class="mini" data-act="matiere-annuler-edition">\u2715</button>' +
       '</div>';
@@ -5390,7 +5569,9 @@ function carteMatieres(){
         '<span class="mat-nom"><b>' + ech(m.code) + '</b> · ' + ech(m.nom) +
           (emploi ? '<span class="mat-emploi">' + ech(emploi) + '</span>' : '') + '</span>' +
         '<button class="mini" data-act="matiere-editer" data-id="' + ech(m.code) + '">\u270E</button>' +
-        '<button class="mini sup" data-act="matiere-suppr" data-id="' + ech(m.code) + '">\u2715</button>' +
+        (annee
+          ? '<button class="mini sup" data-act="matiere-retirer-annee" data-id="' + ech(m.code) + '" data-annee="' + ech(annee) + '" title="Retirer de ' + ech(annee) + '">\u2715</button>'
+          : '<button class="mini sup" data-act="matiere-suppr" data-id="' + ech(m.code) + '">\u2715</button>') +
       '</div>';
     }
   });
@@ -5404,7 +5585,17 @@ function carteMatieres(){
     '<label class="check-ligne" style="margin-top:10px">' +
       '<input type="color" id="nm-couleur" value="#3A56D4">' +
       '<span>Couleur de la pastille</span></label>' +
-    '<button class="bouton discret" data-act="matiere-ajouter" style="margin-top:8px">Ajouter une matière</button>';
+    '<button class="bouton discret" data-act="matiere-ajouter"' + (annee ? ' data-annee="' + ech(annee) + '"' : '') + ' style="margin-top:8px">Ajouter une matière' + (annee ? ' à ' + ech(annee) : '') + '</button>';
+  if (annee) {
+    const absentes = DB.matieres.filter(m => codesMatieresAnnee(annee).indexOf(m.code) === -1);
+    if (absentes.length) {
+      html += '<div class="carte" style="margin-top:8px"><div class="champ" style="margin-bottom:0">' +
+        '<label for="ma-existante">Ajouter une matière existante à ' + ech(annee) + '</label>' +
+        '<select id="ma-existante">' + absentes.map(m => '<option value="' + ech(m.code) + '">' + ech(m.nom) + ' (' + ech(m.code) + ')</option>').join('') + '</select>' +
+      '</div></div>' +
+      '<button class="bouton discret" data-act="matiere-ajouter-existante" data-annee="' + ech(annee) + '" style="margin-top:8px">Ajouter à ' + ech(annee) + '</button>';
+    }
+  }
   return html;
 }
 
@@ -5631,7 +5822,15 @@ function blocReglagesAvances(){
       blocCalendrierScolaire() +
       '<button class="bouton discret" data-act="cal-corriger-defaut">Vérifier les dates de reprise de l’ancien calendrier 2026–2027</button>' +
       '<p class="etiquette" style="margin-top:6px">Intitulé des matières disponibles</p>' +
-      carteMatieres() +
+      '<div class="champ"><label for="f-mat-annee">Année scolaire</label>' +
+        '<select id="f-mat-annee">' +
+          ANNEES.map(a => '<option value="' + ech(a) + '"' + (a === anneeMatieresAffichee() ? ' selected' : '') + '>' + ech(a) +
+            (anneePersonnalisee(a) ? ' \u2022 personnalisée' : '') + '</option>').join('') +
+        '</select>' +
+        '<span class="aide-champ">' + (anneePersonnalisee(anneeMatieresAffichee())
+          ? 'Liste personnalisée pour cette année.'
+          : 'Non personnalisée : toutes les matières sont proposées. Retire ou ajoute une matière pour la personnaliser.') + '</span></div>' +
+      carteMatieres(anneeMatieresAffichee()) +
       '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
       carteCoursEnregistres() +
       '<div class="champ" style="margin-top:18px"><label for="f-tolerance">Tolérance de délai de révision (± jours)</label>' +
@@ -7382,32 +7581,81 @@ function supprimerTousQuizz(){
 
 /* Gestion des matières : le code identifie les cours existants et
    n'est donc modifiable qu'à la création, jamais en édition. */
-function ajouterMatiere(code, nom, couleur){
+function ajouterMatiere(code, nom, couleur, annee){
   code = code.toUpperCase().trim();
   nom = nom.trim();
   if (!/^[A-Z]{3,4}$/.test(code) || !nom || !couleurValide(couleur)) { toast('Code : 3 à 4 lettres ; nom et couleur valides requis.'); return; }
   if (DB.matieres.some(m => m.code === code)) { toast('Ce code existe déjà.'); return; }
   DB.matieres.push({code: code, nom: nom, c: couleur});
+  /* Ajoutée pour une année précise : on ne l'ouvre que là (les
+     autres années personnalisées ne la reçoivent pas ; les années
+     non personnalisées la voient automatiquement). */
+  if (annee) { const l = assurerListeAnnee(annee); if (l.indexOf(code) === -1) l.push(code); }
   sauver();
   rendre();
-  toast(code + ' ajoutée.');
+  toast(code + ' ajoutée' + (annee ? ' à ' + annee : '') + '.');
 }
 
-function modifierMatiere(code, nom, couleur){
+/* Migration d'un code de matière (X → Y) : met à jour la définition,
+   TOUS les cours (leur code ET leur id), les révisions qui les
+   référencent, les états de quizz (indexés par id de cours),
+   l'emploi du temps (indexé par code) et les listes par année.
+   Opération réversible uniquement par une nouvelle migration. */
+function migrerCodeMatiere(ancien, neuf){
+  neuf = (neuf || '').toUpperCase().trim();
+  if (neuf === ancien) return true;
+  if (!/^[A-Z]{3,4}$/.test(neuf)) { toast('Code : 3 à 4 lettres.'); return false; }
+  if (DB.matieres.some(m => m.code === neuf)) { toast('Le code ' + neuf + ' existe déjà.'); return false; }
+  /* Cours + révisions + quizz. On construit d'abord la carte
+     ancienId → nouvelId, puis on réécrit toutes les références. */
+  const carteId = {};
+  DB.cours.forEach(c => {
+    if (c.code !== ancien) return;
+    const nouvelId = idCours(neuf, c.numero, c.date);
+    carteId[c.id] = nouvelId;
+    c.code = neuf; c.id = nouvelId;
+  });
+  DB.revisions.forEach(r => { if (carteId[r.cours]) r.cours = carteId[r.cours]; });
+  if (DB.quizz) {
+    Object.keys(DB.quizz).forEach(id => {
+      if (carteId[id]) { DB.quizz[carteId[id]] = DB.quizz[id]; delete DB.quizz[id]; }
+    });
+  }
+  const emploi = emploiDuTemps();
+  if (emploi[ancien] && !emploi[neuf]) { emploi[neuf] = emploi[ancien]; delete emploi[ancien]; }
+  const t = tableMatieresParAnnee();
+  Object.keys(t).forEach(annee => {
+    if (Array.isArray(t[annee])) t[annee] = t[annee].map(code => code === ancien ? neuf : code);
+  });
+  const m = DB.matieres.find(x => x.code === ancien);
+  if (m) m.code = neuf;
+  return true;
+}
+
+function modifierMatiere(code, nom, couleur, codeNeuf){
   const m = DB.matieres.find(x => x.code === code);
   if (!m) return;
   nom = nom.trim();
   if (!nom || !couleurValide(couleur)) { toast('Nom et couleur valides requis.'); return; }
+  codeNeuf = (codeNeuf || '').toUpperCase().trim();
+  const changeCode = codeNeuf && codeNeuf !== code;
   const idsCours = DB.cours.filter(c => c.code === code).map(c => c.id);
   const nbRevisions = DB.revisions.filter(r => idsCours.indexOf(r.cours) !== -1).length;
-  if (nbRevisions > 0 && !confirm('ATTENTION : vous allez modifier ' + nbRevisions +
+  if (changeCode) {
+    const nbCours = idsCours.length;
+    if (nbCours > 0 && !confirm('Changer le code ' + code + ' → ' + codeNeuf + ' ?\n\n' +
+        nbCours + ' cours et ' + nbRevisions + ' révision(s) seront migrés vers le nouveau code. ' +
+        'Leur identifiant change ; l\u2019historique et les quizz suivent.')) return;
+    if (!migrerCodeMatiere(code, codeNeuf)) return;
+    code = codeNeuf; // pour la suite (nom/couleur)
+  } else if (nbRevisions > 0 && !confirm('ATTENTION : vous allez modifier ' + nbRevisions +
       ' révision' + (nbRevisions > 1 ? 's' : '') + ', confirmez-vous ?')) return;
-  m.nom = nom;
-  m.c = couleur;
+  const cible = DB.matieres.find(x => x.code === code);
+  if (cible) { cible.nom = nom; cible.c = couleur; }
   matiereEnEdition = null;
   sauver();
   rendre();
-  toast('Matière modifiée.');
+  toast(changeCode ? 'Matière migrée vers ' + code + '.' : 'Matière modifiée.');
 }
 
 function supprimerMatiere(code){
@@ -7689,6 +7937,8 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'ouvrir-cabosse') { vueActive = 'cabosse'; rendre(); }
+  else if (act === 'cabosse-onglet') { cabosseOnglet = b.dataset.onglet; rendre(); }
+  else if (act === 'cabosse-aides') { cabosseAidesVisibles = !cabosseAidesVisibles; rendre(); }
   else if (act === 'cabosse-evoluer') monterNiveauCabosse();
   else if (act === 'cabosse-galerie') ouvrirGalerieCabosse();
   else if (act === 'emploi-modifier') {
@@ -7816,14 +8066,26 @@ vue.addEventListener('click', e => {
   else if (act === 'matiere-enregistrer') {
     const nom = document.getElementById('me-nom').value;
     const couleur = document.getElementById('me-couleur').value;
-    modifierMatiere(id, nom, couleur);
+    const codeNeuf = (document.getElementById('me-code') || {}).value || '';
+    modifierMatiere(id, nom, couleur, codeNeuf);
   }
   else if (act === 'matiere-suppr') supprimerMatiere(id);
+  else if (act === 'matiere-retirer-annee') {
+    const annee = b.dataset.annee;
+    const liste = assurerListeAnnee(annee);
+    const i = liste.indexOf(id);
+    if (i !== -1) { liste.splice(i, 1); sauver(); rendre(); toast(id + ' retirée de ' + annee + '.'); }
+  }
+  else if (act === 'matiere-ajouter-existante') {
+    const annee = b.dataset.annee;
+    const code = (document.getElementById('ma-existante') || {}).value;
+    if (code) { const liste = assurerListeAnnee(annee); if (liste.indexOf(code) === -1) liste.push(code); sauver(); rendre(); toast(code + ' ajoutée à ' + annee + '.'); }
+  }
   else if (act === 'matiere-ajouter') {
     const code = document.getElementById('nm-code').value;
     const nom = document.getElementById('nm-nom').value;
     const couleur = document.getElementById('nm-couleur').value;
-    ajouterMatiere(code, nom, couleur);
+    ajouterMatiere(code, nom, couleur, b.dataset.annee || '');
   }
   else if (act === 'cours-editer') { if (!modeLecture()) { coursEnEdition = id; rendre(); } }
   else if (act === 'cours-editer-annuler') { coursEnEdition = null; rendre(); }
@@ -7862,6 +8124,12 @@ vue.addEventListener('click', e => {
 
 vue.addEventListener('input', e => {
   if (e.target.id === 'f-date') majApercu();
+  if (e.target.id === 'f-annee') {
+    const sel = document.getElementById('f-mat');
+    if (sel) { const avant = sel.value; sel.innerHTML = optionsMatiereAnnee(e.target.value);
+      if ([...sel.options].some(o => o.value === avant)) sel.value = avant; }
+    majApercu();
+  }
   if (e.target.id === 'f-num') e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
 });
 
@@ -7913,6 +8181,7 @@ vue.addEventListener('change', e => {
     rendre();
     return;
   }
+  if (e.target.id === 'f-mat-annee') { anneeMatieresChoisie = e.target.value; rendre(); return; }
   if (e.target.id === 'f-type-compte') {
     DB.reglages.typeCompte = e.target.value;
     sauver();
@@ -8124,7 +8393,12 @@ document.getElementById('stockage-recuperer').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url),2000);
 });
 document.addEventListener('click', e => {
-  if (!Store.bloque && (!navigator.locks || Store.verrouAcquis || Store.verrouEtat === 'attente')) return;
+  /* Ne bloque QUE lors d'un conflit avéré (lecture seule). L'ancienne
+     condition s'appuyait aussi sur l'état du verrou Web Locks, qui
+     transite normalement lors des retours d'arrière-plan sur iPhone :
+     des boutons légitimes (« Éditer »…) étaient alors avalés. Les
+     écritures réelles restent protégées dans Store.ecrire(). */
+  if (!Store.bloque) return;
   const b = e.target.closest && e.target.closest('button');
   if (!b || b.id === 'stockage-export' || b.id === 'stockage-recuperer' ||
       b.dataset.vue || ['export','export-mail','importDeclencheur','parametres-deverrouiller'].includes(b.dataset.act) ||
