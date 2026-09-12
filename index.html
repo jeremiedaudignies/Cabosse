@@ -1519,7 +1519,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.20 · singe agenda → onglet Cabosse, swipe paysage';
+const VERSION = 'v56.21 · bilan de semaine (singe) en tête de l’agenda';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -5016,7 +5016,10 @@ function vueAgenda(){
      correspondante n'a rien à montrer. */
   const bilanDuJour = iso => (dDe(iso).getDay() === 6) ? carteBilanSemaine(iso) : '';
 
-  let html = banniere;
+  /* Bilan de la semaine (le singe + le score) en TÊTE de l'agenda :
+     l'enfant voit d'abord le résultat de sa semaine, avant même un
+     éventuel retard. */
+  let html = banniere + carteDimancheCabosse();
 
   if (retard.length) {
     grouperParDate(retard).forEach(g => {
@@ -5026,7 +5029,10 @@ function vueAgenda(){
   }
 
   const grProches = grouperParDate(proches);
-  if (!grProches.find(g => g.date === dimActuel)) grProches.push({date: dimActuel, items: []});
+  /* La carte du singe est désormais en tête : plus besoin de forcer
+     une section dimanche vide pour l'héberger. On garde seulement le
+     samedi forcé, pour que le bilan hebdo reste visible une fois tout
+     validé. */
   if (samediActuel >= ajISO && samediActuel <= dimSuivant &&
       !grProches.find(g => g.date === samediActuel)) {
     grProches.push({date: samediActuel, items: []});
@@ -5042,7 +5048,6 @@ function vueAgenda(){
        pas de titre propre (règle J4). */
     const classe = (estDimanche && !estAujourdhui) ? 'sans-titre' : '';
     html += sectionJour(titre, g.items, g.date, classe, estAujourdhui).html + bilanDuJour(g.date);
-    if (g.date === dimActuel) html += carteDimancheCabosse();
     html += '</section>';
   });
 
