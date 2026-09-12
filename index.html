@@ -1519,7 +1519,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.19 · paysage sans profils, carte agenda façon Cabosse';
+const VERSION = 'v56.20 · singe agenda → onglet Cabosse, swipe paysage';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3902,6 +3902,31 @@ document.addEventListener('toggle', e => {
     sectionsOuvertes[d.dataset.cle] = d.open;
   }
 }, true);
+
+/* Plein écran paysage de Cabosse : balayage horizontal pour passer
+   d'une évolution débloquée à une autre (les flèches sont masquées
+   dans ce mode). Borné au niveau atteint ; ne se déclenche qu'en
+   paysage et sur le décor du singe, pour ne pas gêner le défilement
+   vertical en portrait. Listeners délégués sur document (le contenu
+   de #vue est reconstruit à chaque rendu). */
+let swipeHeroX = null, swipeHeroY = null;
+document.addEventListener('touchstart', e => {
+  swipeHeroX = null;
+  const hero = e.target.closest && e.target.closest('.cbs-hero');
+  if (!hero || !window.matchMedia('(orientation: landscape)').matches) return;
+  swipeHeroX = e.touches[0].clientX; swipeHeroY = e.touches[0].clientY;
+}, {passive:true});
+document.addEventListener('touchend', e => {
+  if (swipeHeroX === null) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - swipeHeroX, dy = t.clientY - swipeHeroY;
+  swipeHeroX = null;
+  if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return; // horizontal franc uniquement
+  const g = gamif();
+  const cur = heroApercuNiveau || g.niveauGlobal;
+  const suiv = dx < 0 ? Math.min(g.niveauGlobal, cur + 1) : Math.max(1, cur - 1);
+  if (suiv !== cur) { heroApercuNiveau = suiv; rendre(); }
+}, {passive:true});
 
 /* Verrou des Réglages avancés / administrateur : deux mots de passe
    simples, côté client — un frein pour éviter qu'un enfant curieux ne
@@ -8045,10 +8070,9 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'cabosse-plein-ecran') {
-    /* Ouvre directement le niveau atteint en plein écran, avec le
-       décor choisi — même vue que depuis la galerie. */
-    ouvrirGalerieCabosse();
-    ouvrirDetailRangCabosse(gamif().niveauGlobal);
+    /* Clic sur le singe dans l'agenda : on bascule sur l'onglet
+       Cabosse (et non plus la galerie plein écran). */
+    heroApercuNiveau = null; vueActive = 'cabosse'; rendre();
   }
   else if (act === 'stats-periode') { statsPeriode = b.dataset.periode; rendre(); }
   else if (act === 'valider-pin') ouvrirValidationPin();
