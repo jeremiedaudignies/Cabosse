@@ -305,27 +305,30 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
   background-position:center;min-height:330px;display:flex;flex-direction:column;
   box-shadow:var(--ombre)}
 /* Niveau + nom EN HAUT, sur une plaque lisible (le fond reste net). */
-.cbs-hero-haut{position:relative;z-index:2;margin:14px auto 0;padding:8px 16px;
-  background:rgba(255,255,255,.86);border-radius:var(--r-m);text-align:center;
-  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+/* Bloc d'info (niveau + nom + citation) en surimpression, ancré en
+   HAUT À DROITE pour laisser visible le panneau « Encore du travail »
+   intégré au décor (situé en haut à gauche). En absolu : n'affecte pas
+   la position du singe. */
+.cbs-hero-info{position:absolute;top:12px;right:12px;z-index:2;max-width:60%;
+  display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.cbs-hero-haut{padding:7px 13px;background:rgba(255,255,255,.9);border-radius:var(--r-m);
+  text-align:right;box-shadow:var(--ombre);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .cbs-hero-niv{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--texte-2)}
 .cbs-hero-rang{font-size:14px;font-weight:800;letter-spacing:-.01em;color:var(--texte);margin-top:1px}
 .cbs-hero-apercu{font-size:10.5px;font-weight:700;color:var(--accent);margin-top:2px}
 /* Le singe est poussé vers le bas et posé sur le sol du décor. */
-.cbs-hero-singe{position:relative;z-index:1;margin-top:auto;display:flex;justify-content:center;
-  align-items:flex-end}
+.cbs-hero-singe{position:relative;z-index:1;flex:1;min-height:220px;display:flex;justify-content:center;
+  align-items:flex-end;padding-top:8px}
 .cbs-hero .cabosse-avatar.grand{width:172px;height:172px;margin:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}
-.cbs-hero-dicton{position:relative;z-index:2;font-size:12px;font-style:italic;color:var(--texte-2);
-  margin:8px auto 0;max-width:32ch;text-align:center;background:rgba(255,255,255,.9);padding:8px 13px;
-  border-radius:var(--r-m);box-shadow:var(--ombre)}
+.cbs-hero-dicton{font-size:11.5px;font-style:italic;color:var(--texte-2);text-align:right;
+  background:rgba(255,255,255,.9);padding:7px 12px;border-radius:var(--r-m);box-shadow:var(--ombre)}
 /* Plein écran en mode paysage (uniquement sur l'onglet Cabosse) :
    décor + singe occupent tout l'écran, le reste de l'interface est
    masqué. Revenir en portrait restaure l'affichage normal. */
 @media (orientation: landscape){
   body.vue-cabosse .cbs-hero{position:fixed;inset:0;z-index:60;width:100vw;height:100vh;
     min-height:0;border-radius:0;box-shadow:none}
-  body.vue-cabosse .cbs-hero-haut,
-  body.vue-cabosse .cbs-hero-dicton,
+  body.vue-cabosse .cbs-hero-info,
   body.vue-cabosse .cbs-hero-fleche{display:none}
   body.vue-cabosse .cbs-hero-singe{margin:auto;height:100%;align-items:center}
   body.vue-cabosse .cbs-hero .cabosse-avatar.grand{width:min(96vw,88vh);height:88vh}
@@ -1491,7 +1494,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.16 · hero : preview bornée, paysage plein écran';
+const VERSION = 'v56.17 · fonds ASCII, titre dégage le panneau';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2180,9 +2183,11 @@ const CABOSSE_ASSETS = {
        fichiers encodés pour l'URL. Toussaint et hiver seront ajoutés
        dès que leurs noms de fichiers seront confirmés ; d'ici là, ces
        périodes retombent sur la plage. */
-    'vacances-grandes':   'assets/cabosse/fonds/grandes-vacances.png',
-    'vacances-noel':      'assets/cabosse/fonds/no%C3%ABl.png',
-    'vacances-printemps': 'assets/cabosse/fonds/p%C3%A2ques.png'
+    'vacances-toussaint': 'assets/cabosse/fonds/toussaint.png',
+    'vacances-noel':      'assets/cabosse/fonds/noel.png',
+    'vacances-hiver':     'assets/cabosse/fonds/vacs-hiver.png',
+    'vacances-printemps': 'assets/cabosse/fonds/paques.png',
+    'vacances-grandes':   'assets/cabosse/fonds/grandes-vacances.png'
   },
   sons: {
     reward:    'assets/sons/reward_small.wav',
@@ -4599,12 +4604,14 @@ function vueCabosse(){
     ? '<button type="button" class="cbs-hero-fleche d" data-act="hero-niv-suiv" aria-label="Niveau supérieur">\u203A</button>' : '';
   let html = '<div class="cbs-hero" style="background-image:url(\'' + fondCabosseAuto() + '\')">' +
     flecheG + flecheD +
-    '<div class="cbs-hero-haut">' +
-      '<div class="cbs-hero-niv">Niveau ' + nApercu + ' sur ' + NIVEAU_MAX + '</div>' +
-      '<div class="cbs-hero-rang">' + ech(rangApercu) + '</div>' +
-      (nApercu !== g.niveauGlobal ? '<div class="cbs-hero-apercu">' + etatApercu + '</div>' : '') +
+    '<div class="cbs-hero-info">' +
+      '<div class="cbs-hero-haut">' +
+        '<div class="cbs-hero-niv">Niveau ' + nApercu + ' sur ' + NIVEAU_MAX + '</div>' +
+        '<div class="cbs-hero-rang">' + ech(rangApercu) + '</div>' +
+        (nApercu !== g.niveauGlobal ? '<div class="cbs-hero-apercu">' + etatApercu + '</div>' : '') +
+      '</div>' +
+      (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
     '</div>' +
-    (dicton ? '<p class="cbs-hero-dicton">\u201C' + ech(dicton) + '\u201D</p>' : '') +
     '<div class="cbs-hero-singe">' +
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
