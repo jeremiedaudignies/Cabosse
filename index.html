@@ -710,8 +710,23 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cabosse-avatar.grand{width:156px;height:156px;margin:0 auto}
 .cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
 .cabosse-avatar.grand .cabosse-repli{font-size:114px}
-.cabosse-avatar.avec-image .cabosse-repli{display:none}
-.cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+/* Fondu croisé anti-clignotement : l'emoji (placeholder) s'efface
+   pendant que l'image du serveur apparaît. L'emoji n'est PAS masqué
+   d'un coup (ancien display:none) pour éviter l'à-coup, et l'image
+   démarre transparente puis fond en entrée. Les PNG des rangs ayant
+   un fond transparent, l'emoji est bien mis à opacity:0 (et non gardé
+   derrière) pour ne pas transparaître à travers l'image. */
+.cabosse-avatar .cabosse-repli{transition:opacity .28s ease}
+.cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  opacity:0;transition:opacity .28s ease}
+.cabosse-avatar.avec-image .cabosse-repli{opacity:0}
+.cabosse-avatar.avec-image img{opacity:1}
+/* Rendu instantané (image déjà en cache) : pas de transition. */
+.cabosse-avatar.instantane .cabosse-repli,
+.cabosse-avatar.instantane img{transition:none}
+@media (prefers-reduced-motion: reduce){
+  .cabosse-avatar .cabosse-repli,.cabosse-avatar img{transition:none}
+}
 .cc-barre{height:7px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:6px}
 .cc-barre i{display:block;height:100%;background:var(--xp);border-radius:99px;
   transition:width .5s ease}
@@ -1519,7 +1534,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.21 · bilan de semaine (singe) en tête de l’agenda';
+const VERSION = 'v56.22 · avatar : fondu doux, plus de clignotement';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2257,10 +2272,24 @@ function avatarCabosse(taille){
   return '<div class="cabosse-avatar' + cls + '">' +
     '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
     '<img class="cabosse-base" alt="Cabosse" src="' + replis[0] + '" ' +
-      'data-replis="' + ech(chaine) + '" ' +
+      'data-replis="' + ech(chaine) + '" decoding="async" ' +
       'onerror="reculerAvatar(this)" ' +
       'onload="this.parentNode.classList.add(\'avec-image\')">' +
     calques + '</div>';
+}
+
+/* Après chaque rendu : les images d'avatar déjà présentes en cache
+   navigateur sont affichées immédiatement (sans fondu), avant même
+   le premier paint — ce qui supprime le clignotement récurrent lors
+   des navigations. Les images pas encore chargées gardent le fondu
+   doux via leur onload. Balaye tout le document (vue + overlays). */
+function revelerAvatarsCharges(){
+  document.querySelectorAll('.cabosse-avatar').forEach(av => {
+    const img = av.querySelector('img.cabosse-base, img.cabosse-layer');
+    if (img && img.complete && img.naturalWidth > 0) {
+      av.classList.add('instantane', 'avec-image');
+    }
+  });
 }
 
 /* Descend d'un cran dans la liste de replis, puis abandonne. */
@@ -4027,6 +4056,7 @@ function rendre(){
   else if (memeVue) vue.scrollTop = scrollAvant;
   else vue.scrollTop = 0;
   derniereVueRendue = vueActive;
+  revelerAvatarsCharges();
   majBascule();
   majIconeAgenda();
   majBadgeAgenda();
@@ -4602,7 +4632,7 @@ function carteDimancheCabosse(){
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
         '<img class="cabosse-base" alt="' + ech(g.rangLabel) + '" src="' + fichierRang(g.niveauGlobal) + '" ' +
-          'onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
+          'decoding="async" onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
           'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' + '</button>' +
     '<button type="button" class="cd-stats" data-act="ouvrir-cabosse" ' +
@@ -4675,7 +4705,7 @@ function vueCabosse(){
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
         '<img class="cabosse-base" alt="' + ech(rangApercu) + '" src="' + fichierRang(nApercu) + '" ' +
-          'onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
+          'decoding="async" onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
           'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' +
     '</div>' +
