@@ -375,6 +375,11 @@ details.pliable .contenu-pliable{padding:0 15px 15px}
 details.pliable .contenu-pliable .jour{margin-bottom:14px}
 .hist-l{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--filet)}
 .hist-l:last-child{border-bottom:0}
+.hist-l .cours-actions{display:flex;flex-direction:column;gap:5px;flex:0 0 auto;align-items:stretch}
+.hist-l .cours-actions button{font-size:11px;padding:6px 8px;white-space:normal;text-align:left}
+.hist-l .cours-titre-hist{display:block;font-size:11.5px;color:var(--texte-2);font-style:italic}
+.hist-l.cours-edit .txt{display:flex;flex-direction:column;gap:4px}
+.hist-l.cours-edit input[type="text"]{width:100%}
 .hist-l .txt{flex:1;min-width:0}
 .hist-l .txt b{display:block;font-family:var(--mono);font-size:13px;font-weight:700}
 .hist-l .txt span{display:block;font-size:11.5px;color:var(--texte-2)}
@@ -1401,7 +1406,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.10 · impression via iframe isolé';
+const VERSION = 'v56.11 · audio mixable, réglages réorganisés, historique';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2163,6 +2168,11 @@ function preparerAudio(){
   if (audioPret) return;
   audioPret = true;
   try {
+    /* iOS 16.4+ : déclarer la session audio « ambient » pour que les
+       bruitages de Cabosse se MÉLANGENT à l'audio des autres apps
+       (Spotify, etc.) au lieu de le mettre en pause. Silencieux et
+       sans effet sur les navigateurs qui ne connaissent pas l'API. */
+    if ('audioSession' in navigator) { try { navigator.audioSession.type = 'ambient'; } catch (e) {} }
     Object.keys(CABOSSE_ASSETS.sons).forEach(k => {
       const a = new Audio(CABOSSE_ASSETS.sons[k]);
       a.preload = 'auto';
@@ -4768,7 +4778,59 @@ function vueAgenda(){
     html += '</div></details>';
   }
 
+  html += carteHistoriqueAgenda();
   return html;
+}
+
+/* Historique de l'agenda : liste des révisions déjà traitées, de la
+   plus récente à la plus ancienne. On peut annuler UNIQUEMENT la
+   toute dernière action (pour rattraper un clic erroné) et la
+   remettre dans le flux ; les annulations en masse restent dans les
+   réglages avancés. Le titre de chaque cours reste éditable ici. */
+function carteHistoriqueAgenda(){
+  if (modeLecture()) return '';
+  const dl = donneesLecture();
+  const traitees = dl.revisions.filter(r => r.statut === 'faite' || r.statut === 'reportee' || r.statut === 'annulee');
+  if (!traitees.length) return '';
+  const quand = r => r.actionLe || Date.parse((r.faitLe || r.date || '2000-01-01') + 'T00:00:00') || 0;
+  const ordre = traitees.slice().sort((a, b) => quand(b) - quand(a));
+  const derniereId = ordre[0].id; // seule action annulable
+  const MAX = 100;
+  const liste = ordre.slice(0, MAX);
+  const etiquetteStatut = r => r.statut === 'faite'
+      ? (r.comprehension === 'partiel' ? '😐 Révisé, à revoir' : '😎 Révisé')
+      : (r.statut === 'reportee' ? '😳 Reporté' : '🫣 Annulé');
+  let lignes = '';
+  liste.forEach(r => {
+    const c = trouverCours(r.cours);
+    if (!c) return;
+    const m = matiereDe(c.code);
+    if (coursEnEdition === c.id) {
+      lignes += '<div class="hist-l cours-edit">' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+          '<input type="text" id="ce-titre" maxlength="80" placeholder="Titre du cours (facultatif)" value="' + ech(c.titre || '') + '"></div>' +
+        '<button class="mini ok" data-act="cours-editer-ok" data-id="' + ech(c.id) + '">\u2713</button>' +
+        '<button class="mini" data-act="cours-editer-annuler">\u2715</button></div>';
+      return;
+    }
+    const titre = (c.titre || '').trim();
+    const estDerniere = r.id === derniereId;
+    lignes += '<div class="hist-l">' +
+      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
+        (titre ? '<span class="cours-titre-hist">' + ech(titre) + '</span>' : '') +
+        '<span>' + etiquetteStatut(r) + ' · ' + libelleCourt(r.faitLe || r.date) + '</span></div>' +
+      '<button class="mini" data-act="cours-editer" data-id="' + ech(c.id) + '" title="Éditer le titre">\u270E</button>' +
+      (estDerniere ? '<button data-act="hist-annuler-derniere" data-id="' + ech(r.id) + '">Annuler cette action</button>' : '') +
+    '</div>';
+  });
+  return '<details class="pliable" data-cle="historique"' + ouvert('historique') + '>' +
+    '<summary>Historique<span class="compte">' + traitees.length + '</span></summary>' +
+    '<div class="contenu-pliable">' +
+      '<p class="aide-champ">Seule la toute dernière action peut être annulée, pour corriger un clic erroné.</p>' +
+      '<div class="carte" style="padding:5px 15px">' + lignes + '</div>' +
+    '</div></details>';
 }
 
 /* --- Tâches (onglet) : même découpage temporel que l'Agenda,
@@ -5279,18 +5341,31 @@ function carteCoursEnregistres(){
     const m = matiereDe(c.code);
     const reste = DB.revisions.filter(r =>
       r.cours === c.id && (r.statut === 'aFaire' || r.statut === 'reportee')).length;
-    let optsAnnee = '<option value="">Année \u2014</option>';
-    ANNEES.forEach(a => {
-      optsAnnee += '<option value="' + ech(a) + '"' + (a === c.annee ? ' selected' : '') + '>' + ech(a) + '</option>';
-    });
-    html += '<div class="hist-l">' +
-      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
-      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
-      '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span>' +
-      '<select class="annee-select" data-act="cours-annee" data-id="' + ech(c.id) + '">' + optsAnnee + '</select>' +
-      '</div>' +
-      '<button data-act="cours-annuler-serie" data-id="' + ech(c.id) + '">Annuler la série</button>' +
-      '<button class="sup" data-act="suppr" data-id="' + ech(c.id) + '">✕</button></div>';
+    if (coursEnEdition === c.id) {
+      let optsAnnee = '<option value="">Année \u2014</option>';
+      ANNEES.forEach(a => { optsAnnee += '<option value="' + ech(a) + '"' + (a === c.annee ? ' selected' : '') + '>' + ech(a) + '</option>'; });
+      html += '<div class="hist-l cours-edit">' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+          '<input type="text" id="ce-titre" maxlength="80" placeholder="Titre du cours (facultatif)" value="' + ech(c.titre || '') + '">' +
+          '<select id="ce-annee" class="annee-select">' + optsAnnee + '</select>' +
+        '</div>' +
+        '<button class="mini ok" data-act="cours-editer-ok" data-id="' + ech(c.id) + '">\u2713</button>' +
+        '<button class="mini" data-act="cours-editer-annuler">\u2715</button></div>';
+    } else {
+      const titre = (c.titre || '').trim();
+      html += '<div class="hist-l">' +
+        '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+        '<div class="txt"><b>' + ech(refCours(c)) + '</b>' + pastilleAnnee(c) +
+        (titre ? '<span class="cours-titre-hist">' + ech(titre) + '</span>' : '') +
+        '<span>' + ech(m.nom) + ' · ' + reste + ' révision' + (reste > 1 ? 's' : '') + ' en attente</span>' +
+        '<div class="cours-actions">' +
+          '<button data-act="cours-editer" data-id="' + ech(c.id) + '">Éditer</button>' +
+          '<button data-act="cours-annuler-serie" data-id="' + ech(c.id) + '">Annuler la série à venir</button>' +
+          '<button data-act="cours-annuler-tout" data-id="' + ech(c.id) + '">Annuler toutes les révisions réalisées et à venir</button>' +
+        '</div>' +
+        '</div></div>';
+    }
   });
   html += '</div>';
   return html;
@@ -5535,16 +5610,19 @@ function blocReglagesAvances(){
   const tc = DB.reglages.typeCompte || '';
   /* La valeur stockée reste 'enfant' : la renommer casserait tous les
      profils déjà enregistrés et synchronisés. Seul le libellé change. */
+  /* Seuls Élève et Parent sont proposés. La valeur historique
+     'etudiant' reste tolérée si elle existe déjà (option affichée
+     uniquement dans ce cas), mais n'est plus offerte à la création. */
   const optsType = '<option value="">Non renseigné</option>' +
-    '<option value="etudiant"' + (tc === 'etudiant' ? ' selected' : '') + '>Étudiant</option>' +
     '<option value="enfant"' + (tc === 'enfant' ? ' selected' : '') + '>Élève</option>' +
-    '<option value="parent"' + (tc === 'parent' ? ' selected' : '') + '>Parent</option>';
+    '<option value="parent"' + (tc === 'parent' ? ' selected' : '') + '>Parent</option>' +
+    (tc === 'etudiant' ? '<option value="etudiant" selected>Étudiant (ancien)</option>' : '');
   return '<details class="pliable" data-cle="reglages-avances"' + ouvert('reglages-avances') + ' style="margin-top:20px">' +
     '<summary>Réglages avancés</summary>' +
     '<div class="contenu-pliable">' +
       '<div class="champ" style="margin-top:12px"><label for="f-type-compte">Type de compte</label>' +
         '<select id="f-type-compte">' + optsType + '</select></div>' +
-      '<div class="champ"><label for="f-code-pin">Code parental (4 chiffres)</label>' +
+      '<div class="champ"><label for="f-code-pin">Code de confirmation parental (4 chiffres)</label>' +
         '<input type="text" id="f-code-pin" inputmode="numeric" maxlength="4" ' +
           'value="' + ech(codePinParental()) + '">' +
         '<span class="aide-champ">Saisi par un parent sur ce téléphone pour valider ' +
@@ -5558,31 +5636,39 @@ function blocReglagesAvances(){
       carteCoursEnregistres() +
       '<div class="champ" style="margin-top:18px"><label for="f-tolerance">Tolérance de délai de révision (± jours)</label>' +
         '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
-        '<span class="aide-champ">Une révision cochée dans cette fenêtre avant ou après sa date prévue ' +
-        'est évaluée par l’ancien indicateur de ponctualité. Ce réglage historique ne change ni la fenêtre actuelle de ±3 jours, ni les statistiques de compréhension.</span></div>' +
-      '<p class="aide-champ">Cagnotte historique : semaines déjà encaissées figées, même après contrôle parental tardif. Les points RPG sont recalculés séparément. Les anciennes dates de réalisation inconnues ne prouvent pas la ponctualité.</p>' +
+        '<span class="aide-champ">Fenêtre d\u2019évaluation de l\u2019ancien indicateur de ponctualité.</span></div>' +
       '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
-      '<button class="bouton discret" data-act="export">Exporter une sauvegarde</button>' +
-      '<button class="bouton discret" data-act="recuperation" style="margin-top:8px">Exporter les copies de récupération</button>' +
-      '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Importer une sauvegarde</button>' +
-      '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
-      '<p class="aide-champ" style="margin-top:10px">Restaurer l\u2019appli comme il y a :</p>' +
+      '<p class="aide-champ">Restaurer l\u2019appli comme il y a :</p>' +
       '<div style="display:flex;gap:6px;margin-top:4px">' +
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-1h">1 heure</button>' +
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-24h">24 h</button>' +
         '<button class="bouton discret" style="flex:1;padding:11px 4px;font-size:12px" data-act="restaurer-7j">7 jours</button>' +
       '</div>' +
-      '<label class="check-ligne" style="margin-top:16px">' +
+      '<button class="bouton discret" data-act="export" style="margin-top:12px">Exporter une sauvegarde</button>' +
+      '<button class="bouton discret" data-act="importDeclencheur" style="margin-top:8px">Importer une sauvegarde</button>' +
+      '<input type="file" id="fichier-import" accept="application/json,.json" style="display:none">' +
+      '<button class="bouton discret" data-act="recuperation" style="margin-top:8px">Exporter la sauvegarde automatique avant remise à zéro des statistiques</button>' +
+      '<button class="bouton discret" data-act="export-mail" style="margin-top:8px">M\u2019envoyer une sauvegarde par email</button>' +
+      '<label class="check-ligne" style="margin-top:12px">' +
         '<input type="checkbox" id="f-export-hebdo"' +
         (DB.reglages.exportHebdo !== false ? ' checked' : '') + '>' +
         '<span>Me proposer ma sauvegarde par mail chaque semaine</span></label>' +
-      '<button class="bouton discret" data-act="export-mail">M\u2019envoyer ma sauvegarde maintenant</button>' +
-      '<p class="etiquette" style="margin-top:18px">Maintenance des données</p>' +
-      '<p class="aide-champ">Chaque action demande confirmation et conserve d’abord une copie brute, ' +
-        'récupérable via « Exporter les copies de récupération » ci-dessus.</p>' +
+      '<p class="etiquette" style="margin-top:18px">Réinitialiser les statistiques</p>' +
+      '<p class="aide-champ">L\u2019action demande confirmation et conserve d’abord une copie brute, ' +
+        'récupérable via « Exporter la sauvegarde automatique… » ci-dessus.</p>' +
       '<button class="bouton discret" data-act="maint-stats" style="margin-top:8px">Remettre les statistiques à zéro</button>' +
       '<p class="aide-champ">Les échéances traitées repassent « à faire ». Dates de révision, cours, tâches et quizz conservés.</p>' +
-      '<p class="etiquette" style="margin-top:14px">Points de Cabosse</p>' +
+      '<p class="etiquette" style="margin-top:18px">Exclusion des statistiques</p>' +
+      '<p class="aide-champ">Exclut du calcul les annulations dont la date est antérieure à la date choisie ' +
+        '(utile après une réinitialisation qui a annulé beaucoup de révisions d’un coup). ' +
+        'Elles disparaissent des statistiques sans être supprimées ni réactivées.</p>' +
+      (DB.reglages.annulationsExcluesAvant ? '<p class="aide-champ"><b>Actuellement :</b> annulations avant le ' +
+        ech(libelleCourt(DB.reglages.annulationsExcluesAvant)) + ' exclues (' + nbAnnulationsExclues() + ').</p>' : '') +
+      '<label class="champ" style="margin-top:8px"><span class="aide-champ">Exclure les annulations avant le :</span>' +
+        '<input type="date" id="f-annul-seuil" value="' + ech(DB.reglages.annulationsExcluesAvant || isoDe(aujourdhui())) + '"></label>' +
+      '<button class="bouton discret" data-act="stats-exclure-annul" style="margin-top:8px">Appliquer</button>' +
+      (DB.reglages.annulationsExcluesAvant ? '<button class="bouton discret" data-act="stats-reafficher-annul" style="margin-top:8px">Tout réafficher</button>' : '') +
+      '<p class="etiquette" style="margin-top:18px">Définir les points Cabosse</p>' +
       '<div class="emploi-ligne" style="flex-wrap:wrap;gap:6px">' +
         CARACTERISTIQUES.map(c => '<label class="champ" style="flex:1 1 44%;margin:0">' +
           '<span class="aide-champ">' + c.emoji + ' ' + ech(c.nom) + '</span>' +
@@ -5593,28 +5679,11 @@ function blocReglagesAvances(){
       '<button class="bouton discret" data-act="maint-points" style="margin-top:8px">Appliquer ces points</button>' +
       '<p class="aide-champ">Les points continuent ensuite d’évoluer normalement à partir de ces valeurs. ' +
         'Niveaux déjà achetés (' + (gamif().pointsDepenses || 0) + ' point(s) dépensé(s)) et accessoires débloqués restent acquis.</p>' +
-      '<button class="bouton discret" data-act="maint-revisions" style="margin-top:14px">Supprimer toutes les séries de révisions</button>' +
+      '<p class="etiquette" style="margin-top:18px">Suppression en masse</p>' +
+      '<p class="aide-champ">Chaque action demande confirmation et conserve d’abord une copie brute.</p>' +
+      '<button class="bouton discret" data-act="maint-revisions" style="margin-top:8px">Supprimer toutes les séries de révisions</button>' +
       '<button class="bouton discret" data-act="maint-taches" style="margin-top:8px">Supprimer toutes les tâches</button>' +
       '<button class="bouton discret" data-act="maint-quizz" style="margin-top:8px">Supprimer tous les quizz</button>' +
-      '<p class="etiquette" style="margin-top:18px">Correction des statistiques</p>' +
-      '<p class="aide-champ">Exclut du calcul les annulations dont la date est antérieure à la date choisie ' +
-        '(utile après une réinitialisation qui a annulé beaucoup de révisions d’un coup). ' +
-        'Elles disparaissent des statistiques sans être supprimées ni réactivées.</p>' +
-      (DB.reglages.annulationsExcluesAvant ? '<p class="aide-champ"><b>Actuellement :</b> annulations avant le ' +
-        ech(libelleCourt(DB.reglages.annulationsExcluesAvant)) + ' exclues (' + nbAnnulationsExclues() + ').</p>' : '') +
-      '<label class="champ" style="margin-top:8px"><span class="aide-champ">Exclure les annulations avant le :</span>' +
-        '<input type="date" id="f-annul-seuil" value="' + ech(DB.reglages.annulationsExcluesAvant || isoDe(aujourdhui())) + '"></label>' +
-      '<button class="bouton discret" data-act="stats-exclure-annul" style="margin-top:8px">Appliquer</button>' +
-      (DB.reglages.annulationsExcluesAvant ? '<button class="bouton discret" data-act="stats-reafficher-annul" style="margin-top:8px">Tout réafficher</button>' : '') +
-      '<p class="etiquette" style="margin-top:18px">Cabosse</p>' +
-      '<label class="check-ligne">' +
-        '<input type="checkbox" id="f-sons-cabosse"' +
-        (prefsCabosse().sons !== false ? ' checked' : '') + '>' +
-        '<span>Sons de Cabosse</span></label>' +
-      '<label class="check-ligne">' +
-        '<input type="checkbox" id="f-anim-cabosse"' +
-        (prefsCabosse().animations !== false ? ' checked' : '') + '>' +
-        '<span>Animations de Cabosse</span></label>' +
     '</div></details>';
 }
 
@@ -7036,12 +7105,25 @@ function importerSauvegarde(fichier){
   lecteur.readAsText(fichier);
 }
 
+/* Estampille d'action strictement croissante : ~temps réel entre
+   sessions (départage fiable dans l'historique), et jamais deux
+   actions à égalité même dans la même milliseconde. */
+let derniereEstampille = null;
+function estampilleAction(){
+  if (derniereEstampille === null) {
+    derniereEstampille = 0;
+    (DB.revisions || []).forEach(r => { if (r.actionLe && r.actionLe > derniereEstampille) derniereEstampille = r.actionLe; });
+  }
+  derniereEstampille = Math.max(Date.now(), derniereEstampille + 1);
+  return derniereEstampille;
+}
 function marquer(id, statut, resultat){
   if (modeLecture()) return false;
   const r = DB.revisions.find(x => x.id === id);
   if (!r || r.statut === statut || !['aFaire','reportee'].includes(r.statut)) return false;
   if (statut === 'faite' && !estValidable(r.date)) { toast('Cette révision est hors de la fenêtre de validation : reporte-la.'); return false; }
   r.statut = statut;
+  r.actionLe = estampilleAction(); // horodatage de l'action, pour l'historique
   if (statut === 'faite') r.comprehension = resultat || 'reussi';
   else { delete r.faitLe; delete r.comprehension; }
   /* Date réelle du clic, distincte de la date prévue : c'est elle qui
@@ -7091,6 +7173,30 @@ function toleranceJours(){
    reportée) — les révisions déjà faites ne sont jamais touchées.
    Accepte indifféremment l'id d'une révision de ce cours (Agenda,
    historique) ou l'id du cours lui-même (Paramètres avancés). */
+/* Annule TOUTES les révisions d'un cours (faites, à venir, reportées),
+   sauf celles déjà annulées. Réversible depuis l'historique. */
+function annulerToutesRevisionsCours(id){
+  const r = DB.revisions.find(x => x.id === id);
+  const coursId = r ? r.cours : id;
+  const cibles = DB.revisions.filter(x => x.cours === coursId && x.statut !== 'annulee');
+  cibles.forEach(x => { x.statut = 'annulee'; x.actionLe = estampilleAction(); delete x.faitLe; delete x.comprehension; });
+  sauver(); rafraichirGamification(true); rendre();
+  toast(cibles.length + ' révision' + (cibles.length > 1 ? 's' : '') + ' annulée' + (cibles.length > 1 ? 's' : '') + '.');
+}
+
+/* Édition en ligne du titre d'un cours (Cours enregistrés et
+   Historique). Un seul cours en édition à la fois. */
+let coursEnEdition = null;
+function enregistrerTitreCours(id){
+  const c = DB.cours.find(x => x.id === id);
+  if (!c || modeLecture()) { coursEnEdition = null; rendre(); return; }
+  const champ = document.getElementById('ce-titre');
+  if (champ) c.titre = champ.value.trim().slice(0, 80);
+  const anneeSel = document.getElementById('ce-annee');
+  if (anneeSel) c.annee = anneeSel.value;
+  coursEnEdition = null; sauver(); rendre(); toast('Cours mis à jour.');
+}
+
 function annulerSerie(id){
   const r = DB.revisions.find(x => x.id === id);
   const coursId = r ? r.cours : id;
@@ -7357,7 +7463,7 @@ document.getElementById('voile-ok').addEventListener('click', () => {
   } else if (reportEnCours) {
     const r = DB.revisions.find(x => x.id === reportEnCours);
     if (r) {
-      r.date = d; r.statut = 'reportee'; delete r.faitLe; delete r.comprehension; reconcilierOccurrences(); sauver();
+      r.date = d; r.statut = 'reportee'; r.actionLe = estampilleAction(); delete r.faitLe; delete r.comprehension; reconcilierOccurrences(); sauver();
       /* Jamais culpabilisant : ton doux, pas de rouge, pas de son
          d'échec. Cabosse retrouvera son rythme. */
       jouerSonCabosse('reported');
@@ -7718,6 +7824,26 @@ vue.addEventListener('click', e => {
     const nom = document.getElementById('nm-nom').value;
     const couleur = document.getElementById('nm-couleur').value;
     ajouterMatiere(code, nom, couleur);
+  }
+  else if (act === 'cours-editer') { if (!modeLecture()) { coursEnEdition = id; rendre(); } }
+  else if (act === 'cours-editer-annuler') { coursEnEdition = null; rendre(); }
+  else if (act === 'cours-editer-ok') { enregistrerTitreCours(id); }
+  else if (act === 'cours-annuler-tout') {
+    const c = trouverCours(id);
+    if (c && confirm('Annuler TOUTES les révisions de ' + refCours(c) + libelleAnnee(c) + ' (réalisées et à venir) ? ' +
+        'Réversible depuis l\u2019historique pour la dernière, ou en recréant la série.')) {
+      annulerToutesRevisionsCours(id);
+    }
+  }
+  else if (act === 'hist-annuler-derniere') {
+    const r = DB.revisions.find(x => x.id === id);
+    if (r && !modeLecture()) {
+      r.statut = 'aFaire';
+      if (r.prevue) r.date = r.prevue;
+      delete r.faitLe; delete r.comprehension; delete r.actionLe;
+      sauver(); rafraichirGamification(true); rendre();
+      toast('Dernière action annulée : révision remise dans le flux.');
+    }
   }
   else if (act === 'cours-annuler-serie') {
     const c = trouverCours(id);
