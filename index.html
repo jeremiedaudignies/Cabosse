@@ -710,17 +710,17 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
 .cabosse-avatar.grand{width:156px;height:156px;margin:0 auto}
 .cabosse-avatar .cabosse-repli{font-size:34px;line-height:1}
 .cabosse-avatar.grand .cabosse-repli{font-size:114px}
-/* Fondu croisé anti-clignotement : l'emoji (placeholder) s'efface
-   pendant que l'image du serveur apparaît. L'emoji n'est PAS masqué
-   d'un coup (ancien display:none) pour éviter l'à-coup, et l'image
-   démarre transparente puis fond en entrée. Les PNG des rangs ayant
-   un fond transparent, l'emoji est bien mis à opacity:0 (et non gardé
-   derrière) pour ne pas transparaître à travers l'image. */
-.cabosse-avatar .cabosse-repli{transition:opacity .28s ease}
+/* Anti-clignotement : l'emoji de repli est INVISIBLE par défaut ; il
+   n'apparaît que si l'image du rang échoue réellement à charger
+   (classe .sans-image posée par onerror). En usage normal, on ne voit
+   donc jamais l'emoji : l'image fond en entrée (premier chargement)
+   ou s'affiche instantanément (déjà en cache). */
+.cabosse-avatar .cabosse-repli{opacity:0;transition:opacity .28s ease}
 .cabosse-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transition:opacity .28s ease}
-.cabosse-avatar.avec-image .cabosse-repli{opacity:0}
 .cabosse-avatar.avec-image img{opacity:1}
+/* Image manquante : on révèle l'emoji comme filet de sécurité. */
+.cabosse-avatar.sans-image .cabosse-repli{opacity:1}
 /* Rendu instantané (image déjà en cache) : pas de transition. */
 .cabosse-avatar.instantane .cabosse-repli,
 .cabosse-avatar.instantane img{transition:none}
@@ -1534,7 +1534,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.22 · avatar : fondu doux, plus de clignotement';
+const VERSION = 'v56.23 · emoji de repli invisible sauf image manquante';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2302,8 +2302,7 @@ function reculerAvatar(img){
     img.dataset.replis = liste.map(s => "'" + s + "'").join(',');
     img.src = suivant;
   } else {
-    img.style.display = 'none';
-    img.parentNode.classList.remove('avec-image');
+    img.parentNode.classList.add('sans-image');
   }
 }
 
@@ -4632,7 +4631,7 @@ function carteDimancheCabosse(){
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
         '<img class="cabosse-base" alt="' + ech(g.rangLabel) + '" src="' + fichierRang(g.niveauGlobal) + '" ' +
-          'decoding="async" onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
+          'decoding="async" onerror="this.parentNode.classList.add(\'sans-image\')" ' +
           'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' + '</button>' +
     '<button type="button" class="cd-stats" data-act="ouvrir-cabosse" ' +
@@ -4705,7 +4704,7 @@ function vueCabosse(){
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
         '<img class="cabosse-base" alt="' + ech(rangApercu) + '" src="' + fichierRang(nApercu) + '" ' +
-          'decoding="async" onerror="this.style.display=\'none\';this.parentNode.classList.remove(\'avec-image\')" ' +
+          'decoding="async" onerror="this.parentNode.classList.add(\'sans-image\')" ' +
           'onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' +
     '</div>' +
@@ -4853,7 +4852,7 @@ function vueDetailRangCabosse(n){
       '<div class="cabosse-avatar grand">' +
         '<span class="cabosse-repli">🐒</span>' +
         '<img class="cabosse-base" alt="' + ech(RANGS_CABOSSE[n-1]) + '" src="' + fichierRang(n) + '" ' +
-          'onerror="this.style.display=\'none\'" onload="this.parentNode.classList.add(\'avec-image\')">' +
+          'decoding="async" onerror="this.parentNode.classList.add(\'sans-image\')" onload="this.parentNode.classList.add(\'avec-image\')">' +
       '</div>' +
       '<div class="gal-detail-niveau">Niveau ' + n + ' sur ' + NIVEAU_MAX + '</div>' +
       '<div class="gal-detail-nom">' + ech(RANGS_CABOSSE[n-1]) + '</div>' +
