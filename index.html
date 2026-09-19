@@ -790,6 +790,12 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   animation:cd-clignote 1.2s ease-in-out infinite}
 @keyframes cd-clignote{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.96)}}
 @media (prefers-reduced-motion: reduce){.cd-evolution-pret{animation:none}}
+/* Bouton « Revoir » la fête, discret en haut à droite de la carte. */
+.cd-revoir{position:absolute;top:10px;right:10px;z-index:2;border:0;cursor:pointer;
+  padding:6px 12px;border-radius:99px;font-size:11.5px;font-weight:800;
+  color:#fff;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.cd-revoir:active{transform:scale(.96)}
 
 /* Calendrier scolaire (Réglages avancés). */
 .cal-paire{display:flex;align-items:center;gap:8px;margin-top:4px}
@@ -967,6 +973,31 @@ button.gal-case:active{transform:scale(.97)}
 @media (prefers-reduced-motion: reduce){.cbs-evolution.pret .cbs-plus{animation:none}}
 
 /* File de récompenses */
+/* Fête de fin de semaine : overlay plein écran, chiffres animés. */
+#fete-voile{position:fixed;inset:0;z-index:300;display:none;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:24px;
+  background-size:cover;background-position:center;color:#fff}
+#fete-voile.on{display:flex}
+#fete-voile .fete-fond{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,70,57,.32),rgba(9,70,57,.74))}
+#fete-voile > *{position:relative;z-index:1}
+.fete-titre{font-size:26px;font-weight:800;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.5);
+  animation:fete-pop .5s ease both}
+.fete-singe.grand{width:min(50vw,200px);height:min(50vw,200px);margin:8px auto 2px;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.42))}
+.fete-kpis{display:flex;flex-direction:column;gap:11px;margin-top:12px;width:min(90vw,360px)}
+.fete-kpi{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:16px;
+  padding:11px 16px;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  animation:fete-monte .5s ease both}
+.fete-kpi:nth-child(1){animation-delay:.15s}.fete-kpi:nth-child(2){animation-delay:.28s}
+.fete-kpi:nth-child(3){animation-delay:.41s}
+.fete-kpi b{display:block;font-size:30px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 8px rgba(0,0,0,.4)}
+.fete-kpi span{display:block;font-size:12.5px;font-weight:600;margin-top:4px;opacity:.96}
+.fete-fermer{margin-top:22px;padding:12px 26px;border:0;border-radius:99px;font-size:14px;font-weight:800;
+  background:#fff;color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
+@keyframes fete-pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes fete-monte{0%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@media (prefers-reduced-motion: reduce){.fete-titre,.fete-kpi{animation:none}}
 #recompenses{position:fixed;left:0;right:0;bottom:96px;z-index:60;
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 .recompense{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:99px;
@@ -1235,6 +1266,7 @@ button.gal-case:active{transform:scale(.97)}
   <p id="scan-statut">Vise le QR code affiché sur l\u2019autre téléphone.</p>
 </div></div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="fete-voile" role="dialog" aria-modal="true" aria-label="Bravo pour tes révisions" tabindex="-1"></div>
 <div id="impression"></div>
 
 <!-- ============================================================
@@ -1534,7 +1566,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.23 · emoji de repli invisible sauf image manquante';
+const VERSION = 'v56.25 · fête de fin de semaine (KPI + son)';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2235,7 +2267,8 @@ const CABOSSE_ASSETS = {
     levelup:   'assets/sons/level_up_badge.wav',
     happy:     'assets/sons/cabosse_happy.wav',
     reported:  'assets/sons/revision_reported_soft.wav',
-    cancelled: 'assets/sons/revision_cancelled_soft.wav'
+    cancelled: 'assets/sons/revision_cancelled_soft.wav',
+    weekend:   'assets/sons/weekend_complete.wav'
   }
 };
 
@@ -3106,6 +3139,54 @@ function reconcilierOccurrences(){
   }
   return change;
 }
+/* Nettoyage des retards redondants : quand un même cours a plusieurs
+   révisions encore en attente (aFaire ou reportée), on ne garde que
+   la plus récente et on supprime les autres qui sont EN RETARD
+   (date passée). L'enfant fera de toute façon la plus récente ; les
+   anciennes en retard sont donc redondantes. Pas de pénalité : la
+   baisse de « révisé le jour prévu » suffit. Les traces (dates
+   d'origine) sont repliées sur la révision conservée, pour ne rien
+   effacer silencieusement des données. Ne touche jamais au passé
+   déjà traité (faite/annulée), ni à une révision seule. */
+function nettoyerRetardsRedondants(){
+  const ajISO = isoDe(aujourdhui());
+  const enAttente = r => r.statut === 'aFaire' || r.statut === 'reportee';
+  // Date maximale (la plus récente) des révisions en attente, par cours.
+  const maxParCours = new Map();
+  DB.revisions.forEach(r => {
+    if (!enAttente(r)) return;
+    const m = maxParCours.get(r.cours);
+    if (m === undefined || r.date > m) maxParCours.set(r.cours, r.date);
+  });
+  const gardees = [], supprimees = [];
+  DB.revisions.forEach(r => {
+    const m = maxParCours.get(r.cours);
+    // Redondante = en attente, en retard, et il existe une révision
+    // du même cours prévue plus tard (aujourd'hui ou futur inclus).
+    if (enAttente(r) && r.date < ajISO && m !== undefined && r.date < m) {
+      supprimees.push(r);
+    } else {
+      gardees.push(r);
+    }
+  });
+  if (!supprimees.length) return 0;
+  // Replie les dates d'origine des supprimées sur la révision conservée
+  // la plus récente de chaque cours, pour garder une trace en données.
+  const recente = new Map();
+  gardees.forEach(r => {
+    if (r.statut !== 'aFaire' && r.statut !== 'reportee') return;
+    if (r.date === maxParCours.get(r.cours)) recente.set(r.cours, r);
+  });
+  supprimees.forEach(s => {
+    const cible = recente.get(s.cours);
+    if (cible) {
+      cible.origines = Array.from(new Set([cible.prevue, ...(cible.origines || []),
+        s.prevue, ...(s.origines || [])].filter(Boolean)));
+    }
+  });
+  DB.revisions = gardees;
+  return supprimees.length;
+}
 function entretenirPlanning(force){
   if (entretienEnCours || modeLecture() || Store.bloque) return false;
   if (navigator.locks && !Store.verrouAcquis) return false; // A12 : attend le verrou
@@ -3119,6 +3200,7 @@ function entretenirPlanning(force){
       appliquerReglesVacances();
     }
     reconcilierOccurrences();
+    nettoyerRetardsRedondants();
     dernierJourPlanning = jour;
     sauver();
   } finally { entretienEnCours = false; }
@@ -3410,7 +3492,7 @@ function validerBase(o){
     if (!ok) { rapport.push('quizz ' + String(id).slice(0, 40)); delete o.quizz[id]; }
   }
   const reg = o.reglages || {};
-  for (const cle of ['prenom','email','role','codePartage','affichage','typeCompte']) {
+  for (const cle of ['prenom','email','role','codePartage','affichage','typeCompte','feteSemaineVue']) {
     if (reg[cle] !== undefined && typeof reg[cle] !== 'string') { rapport.push('réglage ' + cle); delete reg[cle]; }
   }
   if (reg.annulationsExcluesAvant !== undefined && !(reg.annulationsExcluesAvant === '' || dateValide(reg.annulationsExcluesAvant))) {
@@ -4641,8 +4723,94 @@ function carteDimancheCabosse(){
       (evolutionPrete
         ? '<div class="cd-evolution-pret">\u2728 Évolution débloquée !</div>'
         : '') +
-    '</button></div>';
+    '</button>' +
+    /* Bouton « Revoir » la fête : seulement quand la semaine est
+       bouclée et qu'il y a eu au moins une révision. */
+    ((modeEleve() && !modeLecture() && restants === 0 && revises > 0)
+      ? '<button type="button" class="cd-revoir" data-act="revoir-fete" aria-label="Revoir la fête de la semaine">🎉 Revoir</button>'
+      : '') +
+  '</div>';
 }
+
+/* Jours révisés cette semaine (numérateur) sur les jours qui avaient
+   des révisions prévues (dénominateur), lundi→samedi. */
+function joursRevisesSemaine(){
+  const dl = donneesLecture();
+  const sem = semaineTaches(0);
+  const dans = d => d && d >= sem.debut && d <= sem.fin;
+  const prevus = new Set(), faits = new Set();
+  (dl.revisions || []).forEach(r => {
+    if (!dl.afficherAncrage && r.ancrage) return;
+    if (!dans(r.date)) return;
+    prevus.add(r.date);              // un jour qui avait une révision prévue
+    if (r.statut === 'faite') faits.add(r.date); // ce jour-là, la révision est faite
+  });
+  return {faits: faits.size, prevus: prevus.size};
+}
+
+/* Son de la fête : privilégie le fichier dédié ; s'il n'a pas pu être
+   chargé (pas encore livré), repli sur un son de réussite existant. */
+function jouerSonFete(){
+  if (!prefsCabosse().sons) return;
+  if (audioCache.weekend) return jouerSonCabosse('weekend');
+  if (audioCache.levelup) return jouerSonCabosse('levelup');
+  jouerSonCabosse('happy');
+}
+
+function contenuFeteSemaine(){
+  const j = joursRevisesSemaine();
+  const revises = coursRevisesSemaine();
+  const pts = pointsSemaineCabosse();
+  const g = gamif();
+  return '<div class="fete-fond"></div>' +
+    '<div class="fete-titre">Bravo pour tes révisions !</div>' +
+    '<div class="cabosse-avatar grand fete-singe">' +
+      '<span class="cabosse-repli">' + CABOSSE_ASSETS.rangs.repli + '</span>' +
+      '<img class="cabosse-base" alt="" src="' + fichierRang(g.niveauGlobal) + '" decoding="async" ' +
+        'onerror="this.parentNode.classList.add(\'sans-image\')" onload="this.parentNode.classList.add(\'avec-image\')">' +
+    '</div>' +
+    '<div class="fete-kpis">' +
+      '<div class="fete-kpi"><b data-cible="' + j.faits + '">0</b>' +
+        '<span>jours révisés sur ' + j.prevus + ' cette semaine</span></div>' +
+      '<div class="fete-kpi"><b data-cible="' + revises + '">0</b>' +
+        '<span>cours révisés au total</span></div>' +
+      '<div class="fete-kpi"><b data-cible="' + pts + '" data-prefixe="+">0</b>' +
+        '<span>points gagnés par Cabosse</span></div>' +
+    '</div>' +
+    '<button type="button" class="fete-fermer" data-act="fermer-fete">Super !</button>';
+}
+
+function animerChiffresFete(el){
+  const anim = animationsActives();
+  el.querySelectorAll('.fete-kpi b[data-cible]').forEach(b => {
+    const cible = parseInt(b.dataset.cible, 10) || 0, pre = b.dataset.prefixe || '';
+    if (!anim) { b.textContent = pre + cible; return; }
+    const t0 = Date.now(), dur = 750;
+    const pas = () => {
+      const p = Math.min(1, (Date.now() - t0) / dur);
+      b.textContent = pre + Math.round(cible * (0.5 - Math.cos(Math.PI * p) / 2));
+      if (p < 1) requestAnimationFrame(pas);
+    };
+    requestAnimationFrame(pas);
+  });
+}
+
+function ouvrirFeteSemaine(){
+  const el = document.getElementById('fete-voile');
+  if (!el) return;
+  el.style.backgroundImage = "url('" + (CABOSSE_ASSETS.fonds.plage || fondCabosseAuto()) + "')";
+  el.innerHTML = contenuFeteSemaine();
+  el.classList.add('on');
+  if (el.focus) el.focus();
+  jouerSonFete();
+  animerChiffresFete(el);
+}
+function fermerFeteSemaine(){
+  const el = document.getElementById('fete-voile');
+  if (el) { el.classList.remove('on'); el.innerHTML = ''; }
+}
+(function(){ const fv = document.getElementById('fete-voile');
+  if (fv) fv.addEventListener('click', fermerFeteSemaine); })();
 
 /* --- Vue détaillée de progression ---------------------------- */
 /* --- Vue détaillée Cabosse -----------------------------------
@@ -7484,6 +7652,17 @@ function marquer(id, statut, resultat){
      dernière révision en attente de la semaine, le solde des tâches
      bonus bascule dans la cagnotte (voir encaisserSemaines). */
   encaisserSemaines();
+  /* Fête de fin de semaine : cette validation solde-t-elle la
+     dernière révision de la semaine ? Une seule fois par semaine. */
+  if (statut === 'faite' && modeEleve() && !modeLecture()) {
+    const semF = semaineTaches(0);
+    if (coursRestantsSemaine() === 0 && coursRevisesSemaine() > 0 &&
+        DB.reglages.feteSemaineVue !== semF.cle) {
+      DB.reglages.feteSemaineVue = semF.cle;
+      sauver();
+      ouvrirFeteSemaine();
+    }
+  }
   /* Gains RPG immédiats, puis recalcul complet depuis l'historique :
      les petites bulles sont cosmétiques, le vrai état vient toujours
      de calculerGamification(). */
@@ -8103,6 +8282,7 @@ vue.addEventListener('click', e => {
       toast('Brouillon : les changements seront enregistrés avec le cours.');
     }
   }
+  else if (act === 'revoir-fete') ouvrirFeteSemaine();
   else if (act === 'cabosse-plein-ecran') {
     /* Clic sur le singe dans l'agenda : on bascule sur l'onglet
        Cabosse (et non plus la galerie plein écran). */
