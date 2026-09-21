@@ -3047,26 +3047,27 @@ function appliquerReglesVacances(){
 }
 
 /* Règle 4 : une révision « Reprise des cours » le samedi qui précède
-   le premier jour de classe — après chaque période de vacances, et à
-   la rentrée de septembre. Elle porte les 3 derniers cours de chaque
-   matière, pour remettre le pied à l'étrier avant de reprendre.
+   la rentrée de septembre — UNIQUEMENT au retour des grandes
+   vacances. Les retours de Toussaint, Noël, hiver et printemps ne
+   portent plus de « Reprise des cours ». Elle porte les 3 derniers
+   cours de chaque matière, pour remettre le pied à l'étrier.
    Le samedi précédant la reprise tombe pendant les vacances : c'est
    voulu, c'est le dernier jour utile pour se remettre en route. */
 function planifierReprises(){
-  const cal = calendrierPour(isoDe(aujourdhui()));
-  if (!cal) return 0;
+  const cals = calendriers();
+  if (!cals || !Object.keys(cals).length) return 0;
   const ajISO = isoDe(aujourdhui());
 
-  /* Jours de reprise de l'année : la rentrée, plus le lendemain de
-     chaque période de vacances (hors grandes vacances, qui ferment
-     l'année). */
+  /* Seule reprise concernée : la rentrée de septembre (retour des
+     grandes vacances). On lit la rentrée de TOUS les calendriers
+     connus, pas seulement celui « du jour » : fin août, la date est
+     encore rattachée à l'année scolaire précédente, donc
+     calendrierPour() ne sélectionne pas encore le calendrier de
+     l'année qui commence — alors que sa rentrée est déjà connue.
+     Le garde-fou « samedi déjà passé » plus bas écarte les rentrées
+     révolues. */
   const reprises = [];
-  if (cal.rentree) reprises.push(cal.rentree);
-  VACANCES_LIBELLES.forEach(v => {
-    if (v.cle === 'grandes') return;
-    const p = (cal.vacances || {})[v.cle];
-    if (p && p.fin) reprises.push(isoDe(plus(dDe(p.fin), 1)));
-  });
+  Object.values(cals).forEach(cal => { if (cal && cal.rentree) reprises.push(cal.rentree); });
 
   let ajouts = 0;
   const attendues = new Set();
@@ -3978,13 +3979,24 @@ function supprimerRevision(id){
 function assurerRenfortJ7(idCours, depuisISO){
   // Convention existante conservée : prochain JOUR de matière, pas nouvelle règle de veille.
   depuisISO = depuisISO < isoDe(aujourdhui()) ? isoDe(aujourdhui()) : depuisISO;
-  /* Mode ÉLÈVE : le renfort ne tombe plus à J+7 fixe mais au
-     prochain jour où la matière a effectivement lieu — réviser la
-     veille du cours suivant a bien plus de sens que sept jours plus
-     tard au hasard. Mode ÉTUDIANT : J+7 comme avant. */
-  const cible = modeEleve()
-    ? reporterAuProchainCours(idCours, depuisISO)
-    : isoDe(plus(dDe(depuisISO), 7));
+  /* Mode ÉLÈVE : le renfort se cale sur la VEILLE du prochain jour où
+     la matière a effectivement cours (même logique que les « Avant
+     cours »), et non plus à J+7 fixe. Règle du lundi : si ce prochain
+     cours tombe un lundi, le renfort passe au samedi précédent — dans
+     les révisions du weekend —, ce que fait déjà jourRevisionAvant().
+     Mode ÉTUDIANT : J+7 comme avant. */
+  let cible;
+  if (modeEleve()) {
+    const c = trouverCours(idCours);
+    const jourMatiere = c ? prochainJourMatiere(c.code, depuisISO) : null;
+    cible = jourMatiere ? jourRevisionAvant(jourMatiere) : null;
+    /* Cas limite : la veille (ou le samedi, pour un cours du lundi) est
+       déjà passée — on se rabat sur le jour du cours, seul créneau
+       encore à venir. */
+    if (cible && jourMatiere && cible < isoDe(aujourdhui())) cible = jourMatiere;
+  } else {
+    cible = isoDe(plus(dDe(depuisISO), 7));
+  }
   if (!cible) return false;
   const dejaPlanifiee = DB.revisions.some(r => r.cours === idCours && r.date === cible);
   if (dejaPlanifiee) return false;
