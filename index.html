@@ -381,6 +381,14 @@ input[type="checkbox"]:checked{border-color:var(--accent);background-color:var(-
 .cbs-carac-acc.ok{color:var(--faite);font-weight:700}
 .cbs-carac-acc span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cbs-carac-acc .v{font-size:14px;flex:0 0 auto}
+button.cbs-carac-acc{width:100%;border:0;background:none;padding:0;font-family:inherit;text-align:left;cursor:pointer}
+.fete-artefact{width:min(62vw,260px);height:min(62vw,260px);margin:10px auto 4px;position:relative;
+  display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 14px rgba(0,0,0,.42));
+  animation:fete-pop .5s ease both}
+.fete-artefact img{width:100%;height:100%;object-fit:contain}
+.fete-artefact .repli{font-size:min(34vw,150px);display:none}
+.fete-artefact.sans-image img{display:none}.fete-artefact.sans-image .repli{display:block}
+.fete-artefact-carac{margin-top:6px;font-size:14px;font-weight:700;opacity:.95;text-shadow:0 2px 8px rgba(0,0,0,.45)}
 .cbs-carac-aide{font-size:11px;color:var(--texte-2);margin-top:8px;line-height:1.4}
 .cbs-evol-grille{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
 .cbs-evol{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;
@@ -1566,7 +1574,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.25 · fête de fin de semaine (KPI + son)';
+const VERSION = 'v56.26 · accessoires légendaires visibles au clic';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -4817,6 +4825,26 @@ function ouvrirFeteSemaine(){
   jouerSonFete();
   animerChiffresFete(el);
 }
+/* Accessoire légendaire en plein écran (même voile que la fête). */
+function ouvrirArtefactCabosse(cle){
+  const acc = ARTEFACTS_CABOSSE.find(a => a.cle === cle);
+  const el = document.getElementById('fete-voile');
+  if (!acc || !el || !gamif().artefacts[cle]) return;
+  const visuel = (CABOSSE_ASSETS.artefacts || {})[cle] || {};
+  const carac = CARACTERISTIQUES.find(c => c.cle === acc.carac) || {};
+  el.style.backgroundImage = "url('" + fondCabosseAuto() + "')";
+  el.innerHTML = '<div class="fete-fond"></div>' +
+    '<div class="fete-titre">' + ech(acc.nom) + '</div>' +
+    '<div class="fete-artefact">' +
+      '<img src="' + (visuel.src || '') + '" alt="' + ech(acc.nom) + '" decoding="async" ' +
+        'onerror="this.parentNode.classList.add(\'sans-image\')">' +
+      '<span class="repli">' + (visuel.repli || acc.emoji) + '</span>' +
+    '</div>' +
+    '<div class="fete-artefact-carac">' + (carac.emoji || '') + ' Accessoire légendaire · ' + ech(carac.nom || '') + '</div>' +
+    '<button type="button" class="fete-fermer">Fermer</button>';
+  el.classList.add('on');
+  if (el.focus) el.focus();
+}
 function fermerFeteSemaine(){
   const el = document.getElementById('fete-voile');
   if (el) { el.classList.remove('on'); el.innerHTML = ''; }
@@ -4944,9 +4972,13 @@ function vueCabosseProgression(g){
       '<div class="cbs-carac-h"><span class="e">' + c.emoji + '</span><b>' + c.nom + '</b>' +
         '<span class="p">' + pts + '</span></div>' +
       '<div class="cc-barre"><i style="width:' + pct + '%"></i></div>' +
-      '<div class="cbs-carac-acc' + (acquis ? ' ok' : '') + '">' +
+      (acquis
+        ? '<button type="button" class="cbs-carac-acc ok" data-act="voir-artefact" data-cle="' + acc.cle + '" ' +
+            'aria-label="Voir ' + ech(acc.nom) + '">'
+        : '<div class="cbs-carac-acc">') +
         '<span>' + (acc ? ech(acc.nom) : '') + '</span>' +
-        '<span class="v">' + (acquis ? acc.emoji : '🔒') + '</span></div>' +
+        '<span class="v">' + (acquis ? acc.emoji : '🔒') + '</span>' +
+      (acquis ? '</button>' : '</div>') +
       (cabosseAidesVisibles ? '<p class="cbs-carac-aide">' + c.aide +
         (acc && !acquis ? ' Encore ' + (SEUIL_ACCESSOIRE - pts) + ' points pour ' + ech(acc.nom) + '.' : '') + '</p>' : '') +
     '</div>';
@@ -8295,6 +8327,7 @@ vue.addEventListener('click', e => {
     }
   }
   else if (act === 'revoir-fete') ouvrirFeteSemaine();
+  else if (act === 'voir-artefact') ouvrirArtefactCabosse(b.dataset.cle);
   else if (act === 'cabosse-plein-ecran') {
     /* Clic sur le singe dans l'agenda : on bascule sur l'onglet
        Cabosse (et non plus la galerie plein écran). */

@@ -3,7 +3,7 @@
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
 const PREFIXE = 'cabosse-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIXE + 'v56.25';
+const CACHE = PREFIXE + 'v56.26';
 const EXTERNES = [
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js',
@@ -37,12 +37,12 @@ const ASSETS_OPTIONNELS = [
   './assets/cabosse/fonds/noel.png',
   './assets/cabosse/fonds/vacs-hiver.png',
   './assets/cabosse/fonds/paques.png',
-  './assets/sons/reward-small.wav',
-  './assets/sons/power-up.wav',
-  './assets/sons/level-up-badge.wav',
-  './assets/sons/cabosse-happy.wav',
-  './assets/sons/revision-reported-soft.wav',
-  './assets/sons/revision-cancelled-soft.wav',
+  './assets/sons/reward_small.wav',
+  './assets/sons/power_up.wav',
+  './assets/sons/level_up_badge.wav',
+  './assets/sons/cabosse_happy.wav',
+  './assets/sons/revision_reported_soft.wav',
+  './assets/sons/revision_cancelled_soft.wav',
   './assets/sons/weekend_complete.wav'
 ].concat(
   /* Les 40 illustrations de rangs. Générées plutôt qu'écrites à la
