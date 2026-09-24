@@ -868,6 +868,9 @@ input[type="color"]{width:34px;height:34px;flex:0 0 auto;padding:2px;border-radi
   background:var(--surface);font-size:12.5px;font-weight:700;color:var(--texte-2);cursor:pointer}
 .stats-f.actif{background:var(--accent);border-color:var(--accent);color:#fff}
 .stats-kpi{display:flex;align-items:baseline;gap:9px;margin-bottom:8px}
+.gb-wrap{position:relative}
+.gb-zones{position:absolute;inset:0;display:flex}
+.gb-zones button{flex:1;border:0;background:none;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .stats-kpi b{font-size:26px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .stats-kpi span{font-size:12.5px;color:var(--texte-2);font-weight:600}
 .act-l{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--filet)}
@@ -1574,7 +1577,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.26 · accessoires légendaires visibles au clic';
+const VERSION = 'v56.27 · stats en nombres + quizz par matière';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -5497,12 +5500,20 @@ const QUIZZ_TRIS = [
   {cle:'essai-asc',  nom:'Dernier essai : le plus ancien'},
   {cle:'essai-desc', nom:'Dernier essai : le plus récent'},
   {cle:'taux-asc',   nom:'Réussite : la plus faible'},
-  {cle:'taux-desc',  nom:'Réussite : la plus forte'}
+  {cle:'taux-desc',  nom:'Réussite : la plus forte'},
+  {cle:'matiere',    nom:'Par matière'}
 ];
 
 function trierQuizz(liste){
   const cle = quizzTri;
   return liste.slice().sort((a, b) => {
+    if (cle === 'matiere') {
+      /* Regroupé par matière (ordre alphabétique), le cours le plus
+         récent d'abord à l'intérieur de chaque matière. */
+      const ma = matiereDe(a.code).nom || a.code, mb = matiereDe(b.code).nom || b.code;
+      if (ma !== mb) return ma.localeCompare(mb, 'fr');
+      return a.date < b.date ? 1 : -1;
+    }
     if (cle.indexOf('taux') === 0) {
       /* Jamais tenté (-1) remonte en tête du tri croissant : c'est
          bien ce qu'il reste de plus urgent à travailler. */
@@ -5568,10 +5579,11 @@ function vueQuizz(){
         '<span class="rang' + (taux < 0 ? ' nouveau' : (taux >= 70 ? ' bon' : '')) + '">' +
         (taux < 0 ? 'Jamais tenté' : taux + ' %') + '</span>') +
       '<div class="quizz-q">' + ech(c.commentaire) + '</div>' +
-      '<div class="quizz-meta">' +
-        (e.essais ? e.reussites + ' / ' + e.essais + ' réussi' + (e.reussites > 1 ? 's' : '') +
-          ' · dernier essai le ' + libelleCourt(e.dernierEssai) : 'Pas encore essayé') +
-      '</div>';
+      /* Sans essai, la pastille « Jamais tenté » suffit. */
+      (e.essais
+        ? '<div class="quizz-meta">' + e.reussites + ' / ' + e.essais + ' réussi' + (e.reussites > 1 ? 's' : '') +
+            ' · dernier essai le ' + libelleCourt(e.dernierEssai) + '</div>'
+        : '');
 
     if (!jouable && e.bloqueJusqu && e.bloqueJusqu > isoDe(aujourdhui())) {
       html += '<div class="quizz-bloque">⏳ À retenter demain</div>';
@@ -5589,7 +5601,7 @@ function vueQuizz(){
         '</div>';
       }
       html += '<button class="bouton discret quizz-acquis" data-act="quizz-resolu" data-id="' + ech(c.id) + '">' +
-        'C\u2019est acquis — retirer la question</button>';
+        'C\u2019est acquis (question supprimée du quizz)</button>';
     }
     html += '</div>';
   });
@@ -6608,20 +6620,31 @@ function graphiqueBarres(labels, valeurs, options){
     const h = (v / maxVal) * zoneH;
     const x = i * pas + (pas - largBarre) / 2;
     const y = margeHaut + (zoneH - h);
+    const pale = options.estompe && i !== options.selection;
     barres += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + largBarre.toFixed(1) +
-      '" height="' + Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + couleur + '"></rect>';
+      '" height="' + Math.max(h, 0).toFixed(1) + '" rx="3" fill="' + couleur + '"' +
+      (pale ? ' opacity="0.35"' : '') + '></rect>';
     if (v > 0) {
       barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (y - 6).toFixed(1) +
         '" text-anchor="middle" font-size="13" font-weight="700" font-family="var(--mono)" fill="var(--texte-2)">' +
         v + (options.suffixe || '') + '</text>';
     }
     barres += '<text x="' + (x + largBarre / 2).toFixed(1) + '" y="' + (haut - 8) +
-      '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--texte-3)">' +
+      '" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--texte-3)"' +
+      (i === options.selection && options.estompe ? ' font-weight="800"' : '') + '>' +
       ech(labels[i]) + '</text>';
   });
-  return '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
+  const svg = '<svg viewBox="0 0 ' + larg + ' ' + haut + '" style="width:100%;height:auto;display:block">' +
     '<line x1="0" y1="' + (margeHaut + zoneH) + '" x2="' + larg + '" y2="' + (margeHaut + zoneH) +
     '" stroke="var(--filet)" stroke-width="1"></line>' + barres + '</svg>';
+  if (!options.cliquable) return svg;
+  /* Une zone tactile invisible par période : un toucher affiche sa valeur. */
+  let zones = '';
+  valeurs.forEach((v, i) => {
+    zones += '<button type="button" data-act="stats-choisir" data-i="' + i + '" ' +
+      'aria-label="Voir ' + ech(labels[i]) + '"></button>';
+  });
+  return '<div class="gb-wrap">' + svg + '<div class="gb-zones">' + zones + '</div></div>';
 }
 
 
@@ -6908,6 +6931,9 @@ document.getElementById('chatnom-ok').addEventListener('click', () => {
    n'est plus utilisée nulle part.
    ============================================================ */
 let statsPeriode = 'semaine';
+/* Période choisie d'un toucher sur une barre (index dans la série) ;
+   null = la période en cours. Remise à zéro au changement de filtre. */
+let statsSelection = null;
 
 /* Bornes des N dernières périodes, de la plus ancienne à la plus
    récente. Chaque entrée porte son libellé d'axe. */
@@ -6953,7 +6979,7 @@ function mesuresPeriode(dl, p){
   const aLheure = faites.filter(r => (r.faitLe || r.date) === r.prevue);
   const base = prevues.length;
   return {
-    revises: faites.length,
+    revises: faites.length, nbJourPrevu: aLheure.length,
     pctJourPrevu: faites.length ? Math.round(aLheure.length / faites.length * 100) : 0,
     pctReport: base ? Math.round(reportees.length / base * 100) : 0,
     pctAnnule: base ? Math.round(annulees.length / base * 100) : 0,
@@ -6979,10 +7005,21 @@ function vueStats(){
   const periodes = periodesStats(type, nb);
   const mesures = periodes.map(p => mesuresPeriode(dl, p));
   const labels = periodes.map(p => p.label);
-  const courante = mesures[mesures.length - 1];
-  const motPeriode = type === 'jour' ? 'aujourd\u2019hui'
-                   : (type === 'semaine' ? 'cette semaine'
-                   : (type === 'mois' ? 'ce mois' : 'cette année'));
+  const dernier = mesures.length - 1;
+  const sel = (statsSelection !== null && statsSelection >= 0 && statsSelection < dernier)
+    ? statsSelection : dernier;
+  const courante = mesures[sel];
+  const pSel = periodes[sel];
+  const MOIS_LONGS = ['janvier','février','mars','avril','mai','juin','juillet','août',
+    'septembre','octobre','novembre','décembre'];
+  const motPeriode = sel !== dernier
+    ? (type === 'jour' ? 'le ' + pSel.label
+      : (type === 'semaine' ? 'la semaine du ' + pSel.label
+      : (type === 'mois' ? 'en ' + MOIS_LONGS[dDe(pSel.debut).getMonth()] + ' ' + dDe(pSel.debut).getFullYear()
+      : 'en ' + pSel.debut.slice(0, 4) + '-' + pSel.fin.slice(0, 4))))
+    : (type === 'jour' ? 'aujourd\u2019hui'
+      : (type === 'semaine' ? 'cette semaine'
+      : (type === 'mois' ? 'ce mois' : 'cette année')));
 
   /* Filtres de période. */
   let html = '<div class="stats-filtres">';
@@ -6996,19 +7033,20 @@ function vueStats(){
   const blocs = [
     {titre: 'Cours révisés ' + motPeriode, valeur: courante.revises, suffixe: '',
      serie: mesures.map(m => m.revises), couleur: 'var(--faite)', max: null},
-    {titre: 'Révisés le jour prévu', valeur: courante.pctJourPrevu, suffixe: ' %',
-     serie: mesures.map(m => m.pctJourPrevu), couleur: 'var(--accent)', max: 100},
-    {titre: 'Reports sur cours à réviser', valeur: courante.pctReport, suffixe: ' %',
-     serie: mesures.map(m => m.pctReport), couleur: 'var(--reportee)', max: 100},
-    {titre: 'Annulations sur cours à réviser', valeur: courante.pctAnnule, suffixe: ' %',
-     serie: mesures.map(m => m.pctAnnule), couleur: 'var(--annulee)', max: 100}
+    {titre: 'Nombre de révisions le jour prévu', valeur: courante.nbJourPrevu, suffixe: '',
+     serie: mesures.map(m => m.nbJourPrevu), couleur: 'var(--accent)', max: null},
+    {titre: 'Nombre de révisions reportées', valeur: courante.nbReport, suffixe: '',
+     serie: mesures.map(m => m.nbReport), couleur: 'var(--reportee)', max: null},
+    {titre: 'Nombre de révisions annulées', valeur: courante.nbAnnule, suffixe: '',
+     serie: mesures.map(m => m.nbAnnule), couleur: 'var(--annulee)', max: null}
   ];
   blocs.forEach(b => {
     html += '<div class="carte graf">' +
       '<div class="stats-kpi"><b style="color:' + b.couleur + '">' + b.valeur + b.suffixe + '</b>' +
         '<span>' + b.titre + '</span></div>' +
       graphiqueBarres(labels, b.serie,
-        {couleur: b.couleur, suffixe: b.suffixe.trim(), max: b.max}) +
+        {couleur: b.couleur, suffixe: b.suffixe.trim(), max: b.max,
+         cliquable: true, selection: sel, estompe: sel !== dernier}) +
     '</div>';
   });
 
@@ -8333,7 +8371,8 @@ vue.addEventListener('click', e => {
        Cabosse (et non plus la galerie plein écran). */
     heroApercuNiveau = null; vueActive = 'cabosse'; rendre();
   }
-  else if (act === 'stats-periode') { statsPeriode = b.dataset.periode; rendre(); }
+  else if (act === 'stats-periode') { statsPeriode = b.dataset.periode; statsSelection = null; rendre(); }
+  else if (act === 'stats-choisir') { statsSelection = parseInt(b.dataset.i, 10); rendre(); }
   else if (act === 'valider-pin') ouvrirValidationPin();
   else if (act === 'quizz-repondre') { if (quizzEtat(id).bonusEnAttente) { ouvrirBonusQuizz(id); return; } quizzOuverte = id; rendre(); }
   else if (act === 'quizz-reussi') {
