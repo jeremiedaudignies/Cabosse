@@ -1577,7 +1577,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.27 · stats en nombres + quizz par matière';
+const VERSION = 'v56.28 · stats : nouveaux cours encodés';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -6978,7 +6978,11 @@ function mesuresPeriode(dl, p){
   /* « Le jour prévu » : la date de validation égale la date prévue. */
   const aLheure = faites.filter(r => (r.faitLe || r.date) === r.prevue);
   const base = prevues.length;
+  /* Nouveaux cours : datés dans la période (la date du cours est celle
+     de son encodage, jour de sa révision « Encodage »). */
+  const nouveaux = (dl.cours || []).filter(c => c.date >= p.debut && c.date <= p.fin).length;
   return {
+    nouveaux: nouveaux,
     revises: faites.length, nbJourPrevu: aLheure.length,
     pctJourPrevu: faites.length ? Math.round(aLheure.length / faites.length * 100) : 0,
     pctReport: base ? Math.round(reportees.length / base * 100) : 0,
@@ -7029,8 +7033,10 @@ function vueStats(){
   });
   html += '</div>';
 
-  /* Quatre indicateurs, chacun avec sa courbe de tendance. */
+  /* Cinq indicateurs, chacun avec sa courbe de tendance. */
   const blocs = [
+    {titre: 'Nombre de nouveaux cours encodés', valeur: courante.nouveaux, suffixe: '',
+     serie: mesures.map(m => m.nouveaux), couleur: '#7B3FB8', max: null},
     {titre: 'Cours révisés ' + motPeriode, valeur: courante.revises, suffixe: '',
      serie: mesures.map(m => m.revises), couleur: 'var(--faite)', max: null},
     {titre: 'Nombre de révisions le jour prévu', valeur: courante.nbJourPrevu, suffixe: '',
