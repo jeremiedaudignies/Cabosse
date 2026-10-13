@@ -1577,7 +1577,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.28 · stats : nouveaux cours encodés';
+const VERSION = 'v56.29 · rappel du jour aligné sur l\u2019agenda';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -3216,6 +3216,9 @@ function entretenirPlanning(force){
     dernierJourPlanning = jour;
     sauver();
   } finally { entretienEnCours = false; }
+  /* Le planning du jour est maintenant complet : c'est seulement ici
+     que le rappel du jour peut annoncer le bon nombre de révisions. */
+  verifierRappelJournalier();
   return true;
 }
 function reporterAuProchainCours(idCours, depuisISO){
@@ -6685,6 +6688,12 @@ function notifier(titre, corps, options){
    d'œil si jamais on ouvre Cabosse ce jour-là. */
 function verifierRappelJournalier(){
   if (etatNotifications() !== 'granted') return;
+  /* Tant que la maintenance du jour n'a pas tourné (au lancement, le
+     verrou de stockage arrive un instant après le premier affichage),
+     les révisions « veille du prochain cours » ne sont pas encore
+     créées : on attend, sans consommer le rappel du jour.
+     entretenirPlanning() le relance dès que le planning est à jour. */
+  if (!modeLecture() && dernierJourPlanning !== isoDe(aujourdhui())) return;
   try {
     const cle = 'cabosse-rappel-' + isoDe(aujourdhui());
     if (localStorage.getItem(cle)) return;
