@@ -1577,7 +1577,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.29 · rappel du jour aligné sur l\u2019agenda';
+const VERSION = 'v56.30 · cahier de vacances complet + cours encodés pendant les vacances';
 
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
@@ -2998,8 +2998,11 @@ function debutPerimetreCahier(vac){
 /* Les cours qui composent le cahier d'une période de vacances. */
 function coursDuCahier(vac){
   const depuis = debutPerimetreCahier(vac);
+  /* Borne haute : la fin des vacances, et non leur début — un cours
+     oublié, encodé pendant les vacances avec une date tombant dans
+     la période, rejoint lui aussi le cahier. */
   return donneesLecture().cours
-    .filter(c => c.date > depuis && c.date < vac.debut)
+    .filter(c => c.date > depuis && c.date <= vac.fin)
     .sort((a, b) => a.date < b.date ? -1 : 1);
 }
 
@@ -3133,7 +3136,12 @@ function reconcilierOccurrences(){
   for (const [liste, relation] of [['revisions','cours'], ['occurrences','tache']]) {
     const uniques = [], parCle = new Map(), ids = new Set();
     for (const r of DB[liste]) {
-      const cle = r[relation] + '|' + (r.prevue || r.date);
+      /* Le cahier de vacances est daté du 1er jour des vacances — un
+         samedi, comme un ancrage ou une « veille du lundi » du même
+         cours. Ce ne sont pas des doublures : sans cette distinction,
+         la révision du cahier était absorbée et le cours disparaissait
+         du cahier. */
+      const cle = r[relation] + '|' + (r.prevue || r.date) + (r.rang === 'Cahier' ? '|cahier' : '');
       const precedente = parCle.get(cle);
       if (precedente) {
         let gardee = precedente, absorbee = r;
@@ -3170,12 +3178,18 @@ function nettoyerRetardsRedondants(){
     const m = maxParCours.get(r.cours);
     if (m === undefined || r.date > m) maxParCours.set(r.cours, r.date);
   });
+  /* Le cahier des vacances EN COURS est daté du premier jour des
+     vacances : dès le lendemain il paraît « en retard », alors qu'il
+     reste à faire pendant toute la période. Il n'est donc jamais
+     considéré comme redondant tant que les vacances durent. */
+  const vacEnCours = modeEleve() ? vacancesPour(ajISO) : null;
+  const protegee = r => !!vacEnCours && r.rang === 'Cahier' && r.prevue === vacEnCours.debut;
   const gardees = [], supprimees = [];
   DB.revisions.forEach(r => {
     const m = maxParCours.get(r.cours);
     // Redondante = en attente, en retard, et il existe une révision
     // du même cours prévue plus tard (aujourd'hui ou futur inclus).
-    if (enAttente(r) && r.date < ajISO && m !== undefined && r.date < m) {
+    if (enAttente(r) && !protegee(r) && r.date < ajISO && m !== undefined && r.date < m) {
       supprimees.push(r);
     } else {
       gardees.push(r);
@@ -3934,8 +3948,16 @@ function ajouterCours(code, numero, dateISO, annee, titre){
     /* Mode ÉLÈVE : échéances de base, puis la règle des 3 derniers
        cours de la matière — qui peut aussi ajouter des révisions à
        des cours plus anciens, d'où l'appel séparé. */
-    echeancierEleve(dateISO).forEach(e =>
-      ajouterRevisionSiAbsente(id, e.date, e.rang, e.ancrage));
+    /* Encodé pendant les vacances : c'est le cahier qui porte la
+       révision du cours (ajouté par entretenirPlanning ci-dessous).
+       Les échéances de base datées avant la fin des vacances
+       (encodage, ancrage du samedi) feraient doublon : retards
+       invisibles pendant la période, puis réapparition à la reprise. */
+    const vacEnc = vacancesPour(isoDe(aujourdhui()));
+    echeancierEleve(dateISO).forEach(e => {
+      if (vacEnc && e.date <= vacEnc.fin) return;
+      ajouterRevisionSiAbsente(id, e.date, e.rang, e.ancrage);
+    });
     planifierDerniersCours(code);
   } else {
     /* Mode ÉTUDIANT : rampe historique, inchangée. */
