@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.2 — v57.1 +
+R1 Une seule fois : les révisions d'avant la v57 encore en attente (à
+   faire ou reportées, renforts compris) sont retirées de l'agenda.
+   Faites et annulées intactes ; reprise de septembre et cahier des
+   vacances en cours conservés. Copie de sécurité prise avant.
+R2 Plus de renfort après « Pas encore tout compris » : la question
+   posée va dans le Quizz.
+R3 Quizz : section repliée « Cours sans question » (année scolaire en
+   cours), avec un bouton ✎ pour en écrire une.
+
 Cabosse v57.1 — v57.0 +
 F1 Focus devient un chrono non contraignant : on peut changer d'onglet
    ou quitter Cabosse, le chrono continue (heure de fin stockée, phases
@@ -1719,7 +1729,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.1 · Focus en chrono libre, nouvel écran';
+const VERSION = 'v57.2 · anciennes révisions retirées, plus de renfort, cours sans question';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3384,6 +3394,7 @@ function entretenirPlanning(force){
       /* v57 : la règle du jour de classe suivant remplace celle des
          3 derniers cours (bascule automatique, une seule fois). */
       activerRegleVeille();
+      purgerAnciennesRevisions();
       appliquerReglesVacances();
     }
     reconcilierOccurrences();
@@ -3440,6 +3451,26 @@ function activerRegleVeille(){
   DB.revisions = DB.revisions.filter(r =>
     !(r.statut === 'aFaire' && /Encodage|Ancrage|Avant cours/.test(r.rang || '')));
   DB.reglages.regleVeilleDepuis = isoDe(aujourdhui());
+  return true;
+}
+
+/* v57.2 — Nettoyage complémentaire, une seule fois : toutes les
+   révisions d'avant la nouvelle règle encore en attente (à faire ou
+   reportées, renforts compris) quittent l'agenda. Restent intactes :
+   les révisions faites et annulées, la « Reprise des cours » de
+   septembre et le cahier des vacances EN COURS. */
+function purgerAnciennesRevisions(){
+  if (modeLecture() || !modeEleve() || DB.reglages.regleVeillePurge) return false;
+  try { Store.sauvegarderOriginal(localStorage.getItem(CLE), 'Avant le retrait des anciennes révisions en attente'); } catch (e) { /* on continue */ }
+  const ajISO = isoDe(aujourdhui());
+  const vac = vacancesPour(ajISO);
+  DB.revisions = DB.revisions.filter(r => {
+    if (r.statut !== 'aFaire' && r.statut !== 'reportee') return true;
+    if (r.rang === 'Reprise des cours') return true;
+    if (r.rang === 'Cahier' && vac && r.prevue === vac.debut) return true;
+    return false;
+  });
+  DB.reglages.regleVeillePurge = ajISO;
   return true;
 }
 
@@ -3564,8 +3595,7 @@ function validerVeille(v, comprehension, note){
   };
   if (v.avance) r.avance = true;
   DB.revisions.push(r);
-  /* Pas encore tout retenu : renfort habituel, inchangé. */
-  if (comprehension === 'partiel') assurerRenfortJ7(c.id, ajISO);
+  /* v57.2 : plus de renfort — la question posée rejoint le Quizz. */
   delete veilleBrouillons[cleVeille(v.code, v.cible)];
   sauver();
   encaisserSemaines();
@@ -5998,6 +6028,37 @@ function trierQuizz(liste){
   });
 }
 
+/* Cours de l'année scolaire en cours pour lesquels aucune question n'a
+   encore été rédigée, triés par matière puis numéro. */
+function coursSansQuestion(){
+  const annee = anneeCouranteCle();
+  return donneesLecture().cours
+    .filter(c => !(c.commentaire || '').trim() && libelleAnneeScolaire(dDe(c.date)) === annee)
+    .sort((a, b) => {
+      const ma = matiereDe(a.code).nom || a.code, mb = matiereDe(b.code).nom || b.code;
+      if (ma !== mb) return ma.localeCompare(mb, 'fr');
+      return a.numero < b.numero ? -1 : (a.numero > b.numero ? 1 : 0);
+    });
+}
+function blocCoursSansQuestion(){
+  const liste = coursSansQuestion();
+  if (!liste.length) return '';
+  let h = '<details class="pliable" data-cle="quizz-sans"' + ouvert('quizz-sans') + ' style="margin-top:16px">' +
+    '<summary>Cours sans question<span class="compte">' + liste.length + '</span></summary>' +
+    '<div class="contenu-pliable"><div class="carte" style="padding:5px 15px">';
+  liste.forEach(c => {
+    const m = matiereDe(c.code);
+    h += '<div class="hist-l">' +
+      '<i class="puce" style="background:' + couleurSure(m.c) + '"></i>' +
+      '<div class="txt"><b>' + ech(refCours(c)) + '</b>' +
+        ((c.titre || '').trim() ? '<span class="cours-titre-hist">' + ech(c.titre.trim()) + '</span>' : '') +
+        '<span>' + ech(m.nom) + ' · ' + libelleCourt(c.date) + '</span></div>' +
+      (modeLecture() ? '' : '<button class="mini" data-act="note" data-id="' + ech(c.id) + '" title="Écrire une question">\u270E</button>') +
+    '</div>';
+  });
+  return h + '</div></div></details>';
+}
+
 function vueQuizz(){
   const dl = donneesLecture();
   const toutes = coursAvecDifficulte(false);
@@ -6005,7 +6066,7 @@ function vueQuizz(){
     return '<div class="vide"><div class="gros">🧩</div>' +
       '<p><b>Aucune question pour l\u2019instant.</b></p>' +
       '<p>Quand tu coches « Pas encore tout compris ou retenu », ' +
-      'la question que tu poses arrive ici.</p></div>';
+      'la question que tu poses arrive ici.</p></div>' + blocCoursSansQuestion();
   }
 
   /* Barre de filtres : matière et tri. */
@@ -6100,6 +6161,7 @@ function vueQuizz(){
     html += '</div></details>';
   }
 
+  html += blocCoursSansQuestion();
   html += '<p class="aide-champ" style="margin-top:14px;text-align:center">' +
     'Tant qu\u2019une question reste dans le suivi, le cours revient chaque année.</p>';
   return html;
@@ -8778,7 +8840,7 @@ confirmVoile.addEventListener('click', e => {
     /* La révision a bien eu lieu — elle compte comme faite — mais
        comme tout n'est pas retenu, un renfort à J+7 est programmé
        d'office (sauf s'il en existe déjà un ce jour-là). */
-    if (r) assurerRenfortJ7(r.cours, r.date);
+    if (r && !regleVeilleActive()) assurerRenfortJ7(r.cours, r.date);   // v57.2 : plus de renfort
     marquer(actionEnCours.id, 'faite', 'partiel');
     fermerConfirmation();
   }
