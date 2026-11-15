@@ -1,8 +1,26 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.0 — v56.31 +
+M1 Mode ÉLÈVE, hors vacances : la règle des 3 derniers cours et les
+   révisions « Encodage » / « Ancrage » sont remplacées par la règle du
+   jour de classe suivant. Chaque jour, l'agenda ne propose que les
+   matières de l'emploi du temps du prochain jour de classe (vendredi,
+   samedi et dimanche visent le lundi). L'élève saisit le numéro du
+   cours au moment de réviser : le cours est créé à ce moment-là.
+M2 Encart replié « Je m'avance ! » : matières du jour de classe d'après,
+   facultatives, points doublés (Intelligence et Sagesse).
+M3 Réponse PRONOTE obligatoire avant de valider : « Devoir fait ✅ » ou
+   « Pas de devoir ». Enregistrée sur la révision, visible du parent.
+M4 Bascule automatique : les révisions de l'ancienne règle encore
+   intactes sont retirées (copie de sécurité prise avant). Faites,
+   reportées, annulées, renforts, cahier et reprise : inchangés.
+   Les vacances gardent leur logique (cahier de vacances).
+
 Cabosse v56.31 — v56.30 +
-L1 Nouvel onglet Focus 🍫 dans la barre du bas : minuteur travail /
-   récupération réglable de 15 à 55 min (pas de 5), durées mémorisées.
+L1 Nouvel onglet Focus 🍫 dans la barre du bas : minuteur travail (15 à
+   55 min) / récupération (5 à 55 min), pas de 5, durées mémorisées.
+   Lançable quel que soit le profil affiché ; les carrés vont toujours
+   au profil personnel de l'appareil.
    Pendant le travail : plein écran (ni en-tête ni onglets), écran gardé
    allumé, une cabosse mûrit du vert à l'orange. Quitter Cabosse plus de
    10 s la fait tomber de l'arbre (session perdue, sans malus) ; abandon
@@ -1228,6 +1246,46 @@ body.focus-travail #vue{padding:0;background:#0E3B30}
   border-bottom:1px solid var(--filet)}
 .fx-hist:last-child{border-bottom:0}
 .fx-hist span:last-child{color:var(--texte-3);font-family:var(--mono);font-size:12px;white-space:nowrap}
+/* ===== Règle « jour de classe suivant » (v57.0) ===== */
+.vl{margin-bottom:18px}
+.vl-tete{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:2px 0 8px}
+.vl-sur{margin:0;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--texte-3)}
+.vl-titre{margin:2px 0 0;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--texte)}
+.vl-titre::first-letter{text-transform:uppercase}
+.vl-score{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--texte-2);white-space:nowrap}
+.vl-score b{font-size:22px;color:var(--accent)}
+.vl-barre{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-bottom:12px}
+.vl-barre i{display:block;height:100%;border-radius:99px;background:var(--faite);transition:width .4s ease}
+.vl-bravo{margin:0 0 12px;padding:12px 14px;border-radius:var(--r-m);background:var(--accent-doux);color:var(--accent);
+  font-size:14px;font-weight:800;text-align:center}
+.vl-carte{background:var(--surface);border:1px solid var(--filet);border-left:5px solid var(--vl-c,#9AA3B2);
+  border-radius:var(--r-m);padding:13px 15px;margin-bottom:8px;box-shadow:var(--ombre)}
+.vl-carte-tete{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vl-matiere{font-size:15.5px;font-weight:800;color:var(--texte)}
+.vl-pastille{font-family:var(--mono);font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;
+  background:var(--surface-2);color:var(--texte-2);white-space:nowrap}
+.vl-pastille.ok{background:var(--faite);color:#fff}
+.vl-pastille.x2{background:#FFE9B8;color:#7A4B00}
+.vl-carte.faite{background:var(--accent-doux);border-color:transparent;border-left-color:var(--faite)}
+.vl-resume{margin:6px 0 0;font-size:13px;color:var(--texte-2);font-weight:600}
+.vl-resume b{font-family:var(--mono);color:var(--texte)}
+.vl-ligne{display:flex;align-items:center;gap:10px;margin-top:11px}
+.vl-ligne > span{flex:0 0 76px;font-size:12px;font-weight:700;color:var(--texte-2)}
+.vl-num{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--texte)}
+.vl-num input{width:74px;padding:9px 8px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;
+  border-radius:var(--r-s)}
+.vl-choix{flex:1;display:flex;gap:6px}
+.vl-choix button{flex:1;padding:10px 6px;border-radius:99px;background:var(--surface-2);color:var(--texte-2);
+  font-size:12.5px;font-weight:700;border:1.5px solid transparent;line-height:1.2}
+.vl-choix button.choisi{background:var(--accent-doux);color:var(--accent);border-color:var(--accent)}
+.vl-valider{display:block;width:100%;margin-top:12px;padding:12px;border-radius:99px;background:var(--faite);color:#fff;
+  font-size:14.5px;font-weight:800}
+.vl-valider.attente{background:var(--surface-2);color:var(--texte-3)}
+.vl-aide{margin:6px 0 0;font-size:11.5px;color:var(--texte-3);text-align:center}
+details.pliable.vl-avance{border:1.5px dashed #E0A93B;background:#FFFBF0}
+details.pliable.vl-avance summary{color:#7A4B00;font-size:14.5px}
+.vl-avance-info{margin:0 0 12px;font-size:13px;color:var(--texte-2);font-weight:600}
+.vl-avance-info::first-letter{text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -1640,11 +1698,11 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v56.31 · onglet Focus 🍫 (minuteur travail / récupération)';
+const VERSION = 'v57.0 · cours du jour de classe suivant + « Je m\u2019avance ! »';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_ABSENCE_MAX_S = 10;
-var FOCUS_MIN = 15, FOCUS_MAX = 55, FOCUS_PAS = 5;
+var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
 var FOCUS_CONSEILS = [
   'Bois un grand verre d’eau 💧', 'Étire-toi comme un singe 🐒', 'Regarde au loin par la fenêtre 🌳',
   'Lève-toi et marche un peu 🚶', 'Respire profondément 5 fois 🌬️', 'Range ton bureau en 1 minute 🧹',
@@ -1971,7 +2029,8 @@ const XP_CABOSSE = {
   tacheValideeSagesse: 1,  // 🧘 Sagesse
   tachePerdueForce:  -1,   // 💪 Force        (annulée ou supprimée)
   tachePerdueSagesse: -1,  // 🧘 Sagesse
-  carreFocus:         1    // 🍫 Énergie — session Focus menée au bout
+  carreFocus:         1,   // 🍫 Énergie — session Focus menée au bout
+  facteurAvance:      2    // « Je m'avance ! » : points de révision doublés
 };
 
 /* Courbe de progression des 40 niveaux.
@@ -2120,8 +2179,9 @@ function calculerGamification(dl, penalites, bonusQuizz, ajustements){
      doit rester lisible par un enfant. */
   (dl.revisions || []).forEach(r => {
     if (r.statut === 'faite') {
-      j.intelligence += XP_CABOSSE.revisionFaite;
-      j.sagesse      += XP_CABOSSE.revisionFaiteSagesse;
+      const k = r.avance ? XP_CABOSSE.facteurAvance : 1;   // « Je m'avance ! »
+      j.intelligence += XP_CABOSSE.revisionFaite * k;
+      j.sagesse      += XP_CABOSSE.revisionFaiteSagesse * k;
     } else if (r.statut === 'reportee') {
       j.sagesse      += XP_CABOSSE.revisionReportee;
     }
@@ -3220,7 +3280,7 @@ function reconcilierOccurrences(){
          cours. Ce ne sont pas des doublures : sans cette distinction,
          la révision du cahier était absorbée et le cours disparaissait
          du cahier. */
-      const cle = r[relation] + '|' + (r.prevue || r.date) + (r.rang === 'Cahier' ? '|cahier' : '');
+      const cle = r[relation] + '|' + (r.prevue || r.date) + (r.rang === 'Cahier' ? '|cahier' : '') + (r.pourLe ? '|pour-' + r.pourLe : '');
       const precedente = parCle.get(cle);
       if (precedente) {
         let gardee = precedente, absorbee = r;
@@ -3301,7 +3361,9 @@ function entretenirPlanning(force){
   try {
     completerRappels(); completerTaches();
     if (modeEleve()) {
-      [...new Set(DB.cours.map(c => c.code))].forEach(planifierDerniersCours);
+      /* v57 : la règle du jour de classe suivant remplace celle des
+         3 derniers cours (bascule automatique, une seule fois). */
+      activerRegleVeille();
       appliquerReglesVacances();
     }
     reconcilierOccurrences();
@@ -3314,6 +3376,284 @@ function entretenirPlanning(force){
   verifierRappelJournalier();
   return true;
 }
+/* ============================================================
+   RÈGLE « JOUR DE CLASSE SUIVANT »  (mode ÉLÈVE, v57.0)
+
+   Remplace, hors vacances, la règle des 3 derniers cours ainsi que
+   les révisions « Encodage » et « Ancrage » :
+
+     - chaque jour, Cabosse ne propose que les MATIÈRES de l'emploi du
+       temps du prochain jour de classe (le vendredi, le samedi et le
+       dimanche visent donc le lundi) ;
+     - l'élève saisit le numéro du cours au moment de réviser : le
+       cours est créé à ce moment-là (plus d'encodage préalable) ;
+     - les matières du jour de classe d'après sont proposées, repliées,
+       dans « Je m'avance ! » : facultatives, elles comptent double ;
+     - une réponse PRONOTE (« Devoir fait » / « Pas de devoir ») est
+       obligatoire avant de valider.
+
+   Rien n'est matérialisé d'avance : le programme se déduit de
+   l'emploi du temps. Seule la révision FAITE est enregistrée, avec
+   `pourLe` (le jour de classe visé), `devoir` et `avance`. Une matière
+   non révisée ne laisse aucune trace et ne crée aucun retard.
+
+   Les vacances gardent leur logique propre (cahier de vacances).
+   DB.reglages.regleVeilleDepuis porte la date de bascule ; elle est
+   transmise aux appareils qui suivent.
+   ============================================================ */
+function regleVeilleDepuis(){
+  if (!modeEleve()) return '';
+  if (modeLecture()) {
+    const s = suiviActif();
+    return (s && s.reglages && s.reglages.regleVeilleDepuis) || '';
+  }
+  return DB.reglages.regleVeilleDepuis || '';
+}
+function regleVeilleActive(){ return !!regleVeilleDepuis(); }
+
+/* Bascule, une seule fois : retire les révisions de l'ancienne règle
+   encore intactes (jamais une révision faite, reportée ou annulée,
+   ni un renfort, ni le cahier, ni la reprise de septembre). */
+function activerRegleVeille(){
+  if (modeLecture() || !modeEleve() || DB.reglages.regleVeilleDepuis) return false;
+  try { Store.sauvegarderOriginal(localStorage.getItem(CLE), 'Avant la règle du jour de classe suivant'); } catch (e) { /* on continue */ }
+  DB.revisions = DB.revisions.filter(r =>
+    !(r.statut === 'aFaire' && /Encodage|Ancrage|Avant cours/.test(r.rang || '')));
+  DB.reglages.regleVeilleDepuis = isoDe(aujourdhui());
+  return true;
+}
+
+/* Matières qui ont cours ce jour-là (aucune pendant les vacances). */
+function matieresDuJour(iso){
+  if (estEnVacances(iso)) return [];
+  let codes = donneesLecture().matieres.map(m => m.code);
+  if (!modeLecture()) {
+    const permis = codesMatieresAnnee(DB.reglages.derniereAnnee);
+    codes = codes.filter(c => permis.indexOf(c) !== -1);
+  }
+  return codes.filter(c => matiereALieuLe(c, iso));
+}
+/* Prochain jour de classe strictement après `iso`. Null si des
+   vacances commencent avant : c'est alors le cahier qui prend le
+   relais, on ne prépare pas la rentrée d'avance. */
+function prochainJourClasse(iso){
+  let d = plus(dDe(iso), 1);
+  for (let i = 0; i < 21; i++, d = plus(d, 1)) {
+    const j = isoDe(d);
+    if (estEnVacances(j)) return null;
+    if (matieresDuJour(j).length) return j;
+  }
+  return null;
+}
+function revisionVeille(dl, code, cible){
+  return dl.revisions.find(r => {
+    if (r.pourLe !== cible || r.statut !== 'faite') return false;
+    const c = trouverCours(r.cours);
+    return !!c && c.code === code;
+  }) || null;
+}
+/* Programme du jour : matières du prochain jour de classe, et
+   matières « en avance » du jour de classe d'après. Une matière
+   présente les deux jours n'est pas proposée en avance : le cours à
+   apprendre n'a pas encore été donné. */
+function programmeVeille(ajISO){
+  ajISO = ajISO || isoDe(aujourdhui());
+  if (!regleVeilleActive() || estEnVacances(ajISO)) return null;
+  const cible = prochainJourClasse(ajISO);
+  if (!cible) return null;
+  const dl = donneesLecture();
+  const item = (code, jour, avance) => ({code: code, cible: jour, avance: avance, rev: revisionVeille(dl, code, jour)});
+  const codes = matieresDuJour(cible);
+  const cibleAvance = prochainJourClasse(cible);
+  const codesAvance = cibleAvance ? matieresDuJour(cibleAvance).filter(c => codes.indexOf(c) === -1) : [];
+  return {
+    cible: cible, items: codes.map(c => item(c, cible, false)),
+    cibleAvance: cibleAvance, itemsAvance: codesAvance.map(c => item(c, cibleAvance, true))
+  };
+}
+/* Matières du prochain jour de classe encore à réviser aujourd'hui
+   (l'avance, facultative, n'est jamais comptée). */
+function veilleAFaire(){
+  const p = programmeVeille();
+  return p ? p.items.filter(i => !i.rev).length : 0;
+}
+/* Ce qu'il reste à réviser d'ici `finISO` : matières non faites des
+   jours de classe préparés entre aujourd'hui et cette date. Une
+   veille passée ne compte plus — une matière manquée ne bloque rien. */
+function resteVeille(debutISO, finISO){
+  if (!regleVeilleActive()) return 0;
+  const ajISO = isoDe(aujourdhui());
+  const dl = donneesLecture(), vus = {};
+  let n = 0;
+  for (let d = dDe(ajISO > debutISO ? ajISO : debutISO); isoDe(d) <= finISO; d = plus(d, 1)) {
+    const veille = isoDe(d);
+    if (estEnVacances(veille)) continue;
+    const cible = prochainJourClasse(veille);
+    if (!cible || vus[cible]) continue;
+    vus[cible] = true;
+    matieresDuJour(cible).forEach(code => { if (!revisionVeille(dl, code, cible)) n++; });
+  }
+  return n;
+}
+/* Dernier jour (aujourd'hui compris) où la matière a eu cours : c'est
+   la date donnée au cours créé au moment de la révision. */
+function dernierJourMatiere(code, ajISO){
+  let d = dDe(ajISO);
+  for (let i = 0; i < 21; i++, d = plus(d, -1)) {
+    const j = isoDe(d);
+    if (!estEnVacances(j) && matiereALieuLe(code, j)) return j;
+  }
+  return ajISO;
+}
+
+/* Saisie en cours, par matière et jour visé : numéro du cours et
+   réponse PRONOTE. En mémoire seulement — rien n'existe tant que la
+   révision n'est pas validée. */
+var veilleBrouillons = {};
+function cleVeille(code, cible){ return cible + '|' + code; }
+function brouillonVeille(code, cible){
+  const k = cleVeille(code, cible);
+  if (!veilleBrouillons[k]) veilleBrouillons[k] = {num: prochainNumero(code), devoir: ''};
+  return veilleBrouillons[k];
+}
+function pointsVeille(avance){
+  return (XP_CABOSSE.revisionFaite + XP_CABOSSE.revisionFaiteSagesse) * (avance ? XP_CABOSSE.facteurAvance : 1);
+}
+
+function validerVeille(v, comprehension, note){
+  if (modeLecture() || !regleVeilleActive()) return false;
+  if (revisionVeille(donneesLecture(), v.code, v.cible)) return false;
+  const ajISO = isoDe(aujourdhui());
+  /* Même numéro déjà connu cette année scolaire (leçon étalée sur
+     deux séances) : on réutilise le cours au lieu d'en créer un. */
+  const annee = anneeCouranteCle();
+  let c = DB.cours
+    .filter(x => x.code === v.code && x.numero === v.num && libelleAnneeScolaire(dDe(x.date)) === annee)
+    .sort((a, b) => a.date < b.date ? 1 : -1)[0];
+  if (!c) {
+    const date = dernierJourMatiere(v.code, ajISO);
+    if (!ajouterCours(v.code, v.num, date, DB.reglages.derniereAnnee || '', '')) { toast('Impossible d’enregistrer ce cours.'); return false; }
+    c = DB.cours.find(x => x.id === idCours(v.code, v.num, date));
+    if (!c) return false;
+  }
+  if (note !== undefined) { c.commentaire = note; completerRappels(); }
+  const r = {
+    id: c.id + '#pour-' + v.cible, cours: c.id, rang: v.avance ? 'Avance' : 'Veille', ancrage: false,
+    prevue: ajISO, date: ajISO, statut: 'faite', faitLe: ajISO,
+    comprehension: comprehension, pourLe: v.cible, devoir: v.devoir, actionLe: estampilleAction()
+  };
+  if (v.avance) r.avance = true;
+  DB.revisions.push(r);
+  /* Pas encore tout retenu : renfort habituel, inchangé. */
+  if (comprehension === 'partiel') assurerRenfortJ7(c.id, ajISO);
+  delete veilleBrouillons[cleVeille(v.code, v.cible)];
+  sauver();
+  encaisserSemaines();
+  const semF = semaineTaches(0);
+  if (coursRestantsSemaine() === 0 && coursRevisesSemaine() > 0 && DB.reglages.feteSemaineVue !== semF.cle) {
+    DB.reglages.feteSemaineVue = semF.cle;
+    sauver();
+    ouvrirFeteSemaine();
+  }
+  const k = v.avance ? XP_CABOSSE.facteurAvance : 1;
+  gainCabosse('intelligence', XP_CABOSSE.revisionFaite * k);
+  gainCabosse('sagesse', XP_CABOSSE.revisionFaiteSagesse * k);
+  rafraichirGamification();
+  rendre();
+  toast(v.avance ? 'Bien joué, tu t’avances ! Points doublés ⚡' : 'Révision faite.');
+  return true;
+}
+
+/* Ouvre la feuille « Comment ça s'est passé ? » pour une matière du
+   programme. Refuse tant que le numéro ou PRONOTE manque. */
+function demanderConfirmationVeille(code, cible){
+  if (modeLecture()) return;
+  const p = programmeVeille();
+  const it = p && p.items.concat(p.itemsAvance).find(i => i.code === code && i.cible === cible);
+  if (!it || it.rev) return;
+  const b = brouillonVeille(code, cible);
+  const num = String(b.num || '').replace(/\D/g, '');
+  if (!num) { toast('Indique le numéro du cours.'); return; }
+  if (!b.devoir) { toast('Réponds d’abord à PRONOTE : devoir fait ou pas de devoir ?'); return; }
+  const numero = num.padStart(3, '0');
+  const existant = DB.cours.find(x => x.code === code && x.numero === numero &&
+    libelleAnneeScolaire(dDe(x.date)) === anneeCouranteCle());
+  actionEnCours = {veille: {code: code, cible: cible, avance: it.avance, num: numero, devoir: b.devoir}};
+  document.getElementById('confirm-titre').textContent = 'Comment ça s’est passé ?';
+  document.getElementById('confirm-note-zone').style.display = 'none';
+  document.getElementById('confirm-note').value = (existant && existant.commentaire) || '';
+  document.getElementById('confirm-actions').innerHTML =
+    '<button class="bouton principal" data-confirm="reussi">J’ai réussi à tout réciter sans regarder <span class="emo">😎</span></button>' +
+    '<button class="bouton discret" data-confirm="a-revoir">Pas encore tout compris ou retenu <span class="emo">🤔</span></button>';
+  document.getElementById('confirm-info').textContent =
+    code + '-' + numero + ' · pour ' + libelleJour(cible);
+  confirmVoile.classList.add('on');
+}
+
+/* --- Rendu --------------------------------------------------- */
+function carteVeille(it){
+  const m = matiereDe(it.code);
+  const style = ' style="--vl-c:' + couleurSure(m.c) + '"';
+  const x2 = it.avance || (it.rev && it.rev.avance);
+  if (it.rev) {
+    const c = trouverCours(it.rev.cours);
+    return '<article class="vl-carte faite"' + style + '>' +
+      '<div class="vl-carte-tete"><span class="vl-matiere">' + ech(m.nom) + '</span>' +
+        '<span class="vl-pastille ok">✅ Révisé · +' + pointsVeille(it.rev.avance) + (it.rev.avance ? ' ⚡' : '') + '</span></div>' +
+      '<p class="vl-resume"><b>' + (c ? ech(refCours(c)) : '') + '</b> · ' +
+        (it.rev.devoir === 'fait' ? 'Devoir PRONOTE fait ✅' : 'Pas de devoir') +
+        (it.rev.comprehension === 'partiel' ? ' · à revoir 🤔' : '') + '</p>' +
+    '</article>';
+  }
+  if (modeLecture()) {
+    return '<article class="vl-carte"' + style + '>' +
+      '<div class="vl-carte-tete"><span class="vl-matiere">' + ech(m.nom) + '</span>' +
+        '<span class="vl-pastille">À faire</span></div></article>';
+  }
+  const b = brouillonVeille(it.code, it.cible);
+  const cle = ech(cleVeille(it.code, it.cible));
+  const choix = (val, texte) => '<button type="button" data-act="veille-devoir" data-cle="' + cle + '" data-val="' + val + '"' +
+    (b.devoir === val ? ' class="choisi" aria-pressed="true"' : ' aria-pressed="false"') + '>' + texte + '</button>';
+  return '<article class="vl-carte"' + style + '>' +
+    '<div class="vl-carte-tete"><span class="vl-matiere">' + ech(m.nom) + '</span>' +
+      (x2 ? '<span class="vl-pastille x2">⚡ Points ×2</span>' : '') + '</div>' +
+    '<div class="vl-ligne"><span>Cours n°</span>' +
+      '<label class="vl-num">' + ech(it.code) + '-<input type="text" inputmode="numeric" maxlength="3" ' +
+        'data-veille-num="' + cle + '" value="' + ech(b.num) + '" aria-label="Numéro du cours de ' + ech(m.nom) + '"></label></div>' +
+    '<div class="vl-ligne"><span>PRONOTE</span><div class="vl-choix">' +
+      choix('fait', 'Devoir fait ✅') + choix('aucun', 'Pas de devoir') + '</div></div>' +
+    '<button type="button" class="vl-valider' + (b.devoir ? '' : ' attente') + '" data-act="veille-faite" data-cle="' + cle + '">' +
+      'J’ai révisé <span class="emo">😎</span></button>' +
+    (b.devoir ? '' : '<p class="vl-aide">Réponds à PRONOTE pour valider.</p>') +
+  '</article>';
+}
+function sectionVeille(){
+  const p = programmeVeille();
+  if (!p) return '';
+  const total = p.items.length, faits = p.items.filter(i => i.rev).length;
+  let h = '<section class="jour vl">' +
+    '<div class="vl-tete"><div><p class="vl-sur">À apprendre pour</p>' +
+      '<h2 class="vl-titre">' + ech(libelleJour(p.cible)) + '</h2></div>' +
+      '<div class="vl-score"><b>' + faits + '</b>/' + total + '</div></div>' +
+    '<div class="vl-barre"><i style="width:' + Math.round(100 * faits / total) + '%"></i></div>';
+  if (faits === total) {
+    h += '<p class="vl-bravo">🎉 Tout est prêt pour ' + ech(JOURS[dDe(p.cible).getDay()]) + ' ! Cabosse est fier de toi.</p>';
+  }
+  p.items.forEach(it => { h += carteVeille(it); });
+  h += '</section>';
+  if (p.itemsAvance.length) {
+    const reste = p.itemsAvance.filter(i => !i.rev).length;
+    h += '<details class="pliable vl-avance" data-cle="avance"' + ouvert('avance') + '>' +
+      '<summary>🚀 Je m’avance ! <span class="vl-pastille x2">Points ×2</span>' +
+        '<span class="compte">' + reste + '</span></summary>' +
+      '<div class="contenu-pliable">' +
+        '<p class="vl-avance-info">' + ech(libelleJour(p.cibleAvance)) + ' : en bonus, chaque révision compte double.</p>';
+    p.itemsAvance.forEach(it => { h += carteVeille(it); });
+    h += '</div></details>';
+  }
+  return h;
+}
+
 function reporterAuProchainCours(idCours, depuisISO){
   const c = trouverCours(idCours);
   if (!c) return null;
@@ -3830,7 +4170,9 @@ function chargesSync(){
                   appareil suivi ne fait que l'afficher, jamais le recalculer
                   ni le réécrire (rafraichirGamification sort si modeLecture). */
                gamification: DB.reglages.gamification,
-               annulationsExcluesAvant: DB.reglages.annulationsExcluesAvant || ''},
+               annulationsExcluesAvant: DB.reglages.annulationsExcluesAvant || '',
+               /* Date de bascule vers la règle du jour de classe suivant. */
+               regleVeilleDepuis: DB.reglages.regleVeilleDepuis || ''},
     anneeCourante: anneeCouranteCle(),
     anneesDisponibles: []
   };
@@ -4033,12 +4375,10 @@ function ajouterCours(code, numero, dateISO, annee, titre){
        Les échéances de base datées avant la fin des vacances
        (encodage, ancrage du samedi) feraient doublon : retards
        invisibles pendant la période, puis réapparition à la reprise. */
-    const vacEnc = vacancesPour(isoDe(aujourdhui()));
-    echeancierEleve(dateISO).forEach(e => {
-      if (vacEnc && e.date <= vacEnc.fin) return;
-      ajouterRevisionSiAbsente(id, e.date, e.rang, e.ancrage);
-    });
-    planifierDerniersCours(code);
+    /* v57 : plus aucune révision générée à l'encodage. Hors vacances,
+       c'est le programme du jour de classe suivant qui fait réviser ;
+       pendant les vacances, le cahier (entretenirPlanning ci-dessous). */
+    activerRegleVeille();
   } else {
     /* Mode ÉTUDIANT : rampe historique, inchangée. */
     echeancier(dateISO).forEach((e, i) => {
@@ -4292,13 +4632,14 @@ function majIconeAgenda(){
   if (!el) return;
   const dl = donneesLecture();
   el.classList.remove('ic-rouge', 'ic-verte');
-  if (!dl.cours.length) { el.textContent = '📅'; if (lb) lb.textContent = 'Agenda'; return; }
+  if (!dl.cours.length && !programmeVeille()) { el.textContent = '📅'; if (lb) lb.textContent = 'Agenda'; return; }
   const ajISO = isoDe(aujourdhui());
   const duJour = dl.revisions.filter(r => r.date === ajISO &&
     (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
-  if (duJour.length) {
+  const nbJour = duJour.length + veilleAFaire();
+  if (nbJour) {
     el.textContent = '📅'; el.classList.add('ic-rouge');
-    if (lb) lb.textContent = duJour.length + ' à faire';
+    if (lb) lb.textContent = nbJour + ' à faire';
   } else {
     el.textContent = '👍'; el.classList.add('ic-verte');
     if (lb) lb.textContent = 'Tout est ok';
@@ -4316,7 +4657,7 @@ function majBadgeAgenda(){
   const dl = donneesLecture();
   const ajISO = isoDe(aujourdhui());
   const restant = dl.revisions.some(r => r.date === ajISO &&
-    (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
+    (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage)) || veilleAFaire() > 0;
   badge.classList.toggle('on', restant);
 }
 
@@ -4395,6 +4736,7 @@ function numeroReactivation(r, dl){
    L'ancrage du samedi n'a plus de traitement particulier : il compte
    comme une réactivation ordinaire, exactement comme demandé. */
 function libelleRevision(r, dl){
+  if (r.pourLe) return r.avance ? 'Je m\u2019avance ×2' : 'Pour le cours';
   if (estEncodage(r)) return 'Nouveau !';
   if (estRenfort(r))  return 'Renfort';
   const n = numeroReactivation(r, dl);
@@ -4404,6 +4746,8 @@ function libelleRevision(r, dl){
 /* Conservé pour les écrans qui n'ont qu'une chaîne de rang sous la
    main (impression, aperçu d'échéancier, statistiques). */
 function libelleRang(rang){
+  if (rang === 'Veille') return 'Pour le cours';
+  if (rang === 'Avance') return 'Je m\u2019avance ×2';
   if ((rang || '').indexOf('Encodage') !== -1) return 'Nouveau !';
   if ((rang || '').indexOf('Renfort') !== -1) return 'Renfort';
   if ((rang || '').indexOf('Ancrage') !== -1) return 'Réactivation';
@@ -4774,7 +5118,7 @@ function pointsSemaineCabosse(){
   (dl.revisions || []).forEach(r => {
     const quand = r.faitLe || r.date;
     if (quand < sem.debut || quand > sem.fin) return;
-    if (r.statut === 'faite') pts += XP_CABOSSE.revisionFaite + XP_CABOSSE.revisionFaiteSagesse;
+    if (r.statut === 'faite') pts += (XP_CABOSSE.revisionFaite + XP_CABOSSE.revisionFaiteSagesse) * (r.avance ? XP_CABOSSE.facteurAvance : 1);
     else if (r.statut === 'reportee') pts += XP_CABOSSE.revisionReportee;
   });
   (dl.occurrences || []).forEach(o => {
@@ -4807,7 +5151,8 @@ function coursRestantsSemaine(){
   const sem = semaineTaches(0);
   return dl.revisions.filter(r => r.date >= sem.debut && r.date <= sem.fin &&
     (r.statut === 'aFaire' || r.statut === 'reportee') &&
-    (dl.afficherAncrage || !r.ancrage)).length;
+    (dl.afficherAncrage || !r.ancrage)).length +
+    resteVeille(sem.debut, isoDe(plus(dDe(sem.fin), 1)));   // dimanche compris : il prépare le lundi
 }
 
 /* Bloc affiché le dimanche, dans l'Agenda comme dans l'onglet
@@ -5293,7 +5638,7 @@ function vueAgenda(){
   const dl = donneesLecture();
   const banniere = modeLecture()
     ? '<div class="suivi-banniere"><span class="emo">👀</span> Lecture seule · suivi d\u2019un autre appareil</div>' : '';
-  if (!dl.cours.length) {
+  if (!dl.cours.length && !programmeVeille()) {
     return banniere + '<div class="vide"><div class="gros">📅</div>' +
       '<p><b>Aucune révision planifiée.</b></p>' +
       '<p>' + (modeLecture()
@@ -5372,7 +5717,7 @@ function vueAgenda(){
   /* Bilan de la semaine (le singe + le score) en TÊTE de l'agenda :
      l'enfant voit d'abord le résultat de sa semaine, avant même un
      éventuel retard. */
-  let html = banniere + carteDimancheCabosse();
+  let html = banniere + carteDimancheCabosse() + sectionVeille();
 
   if (retard.length) {
     grouperParDate(retard).forEach(g => {
@@ -6089,6 +6434,12 @@ function majApercu(){
   if (!zone) return;
   const date = (document.getElementById('f-date') || {}).value;
   if (!dateValide(date)) { zone.innerHTML = ''; if (compte) compte.textContent = ''; return; }
+  if (regleVeilleActive()) {
+    if (compte) compte.textContent = '';
+    zone.innerHTML = '<p class="aide-champ">Au quotidien, Cabosse te propose les matières du prochain jour de classe : ' +
+      'tu indiques le numéro du cours au moment de réviser. Un cours ajouté ici rejoint le cahier de vacances.</p>';
+    return;
+  }
   let liste = modeEleve() ? echeancierEleve(date) : echeancier(date);
   if (modeEleve()) {
     const code = (document.getElementById('f-mat') || {}).value;
@@ -6569,6 +6920,8 @@ function semaineDebloquee(dl, debutISO, finISO){
   const revs = dl.revisions.filter(r => r.date >= debutISO && r.date <= finISO &&
     (dl.afficherAncrage || !r.ancrage));
   if (revs.some(r => r.statut === 'aFaire' || r.statut === 'reportee')) return false;
+  /* v57 : les matières encore à préparer d'ici dimanche comptent aussi. */
+  if (resteVeille(debutISO, isoDe(plus(dDe(finISO), 1)))) return false;
   /* Les tâches de la semaine — samedi compris — doivent elles aussi
      être réglées : sinon un versement déclenché samedi matin figerait
      le solde avant la tâche prévue l'après-midi, dont le point serait
@@ -6808,9 +7161,10 @@ function verifierRappelJournalier(){
     const ajISO = isoDe(aujourdhui());
     const duJour = dl.revisions.filter(r => r.date === ajISO &&
       (r.statut === 'aFaire' || r.statut === 'reportee') && (dl.afficherAncrage || !r.ancrage));
-    if (duJour.length) {
-      notifier('Cabosse', duJour.length + ' révision' + (duJour.length > 1 ? 's' : '') +
-        ' prévue' + (duJour.length > 1 ? 's' : '') + ' aujourd\u2019hui.', {tag: 'rappel-jour'});
+    const nb = duJour.length + veilleAFaire();
+    if (nb) {
+      notifier('Cabosse', nb + ' révision' + (nb > 1 ? 's' : '') +
+        ' prévue' + (nb > 1 ? 's' : '') + ' aujourd\u2019hui.', {tag: 'rappel-jour'});
     }
   } catch (e) { /* localStorage indisponible : on passe simplement */ }
 }
@@ -8361,6 +8715,23 @@ confirmVoile.addEventListener('click', e => {
     return;
   }
   if (!actionEnCours) return;
+  if (actionEnCours.veille) {
+    /* Matière du programme « jour de classe suivant » : mêmes écrans,
+       mais la révision n'existe pas encore — elle est créée ici. */
+    const v = actionEnCours.veille, t = b.dataset.confirm;
+    if (t === 'reussi') { fermerConfirmation(); validerVeille(v, 'reussi'); }
+    else if (t === 'a-revoir') {
+      document.getElementById('confirm-titre').textContent = 'Pose ta question';
+      document.getElementById('confirm-note-zone').style.display = '';
+      document.getElementById('confirm-actions').innerHTML =
+        '<button class="bouton principal" data-confirm="a-revoir-confirmer">Confirmer</button>';
+    }
+    else if (t === 'a-revoir-confirmer') {
+      const note = document.getElementById('confirm-note').value.trim();
+      fermerConfirmation(); validerVeille(v, 'partiel', note);
+    }
+    return;
+  }
   const type = b.dataset.confirm;
   const revisionCible = DB.revisions.find(r => r.id === actionEnCours.id);
   if (modeLecture() || !revisionCible || !['aFaire','reportee'].includes(revisionCible.statut)) { fermerConfirmation(); return; }
@@ -8639,7 +9010,14 @@ vue.addEventListener('click', e => {
   }
   else if (act === 'hist-annuler-derniere') {
     const r = DB.revisions.find(x => x.id === id);
-    if (r && !modeLecture()) {
+    if (r && !modeLecture() && r.pourLe) {
+      /* Révision du jour de classe suivant : elle n'existe que faite.
+         L'annuler la retire, et la matière redevient « à faire ». */
+      DB.revisions = DB.revisions.filter(x => x.id !== id);
+      sauver(); rafraichirGamification(true); rendre();
+      toast('Dernière action annulée.');
+    }
+    else if (r && !modeLecture()) {
       r.statut = 'aFaire';
       if (r.prevue) r.date = r.prevue;
       delete r.faitLe; delete r.comprehension; delete r.actionLe;
@@ -8914,10 +9292,10 @@ vue.addEventListener('click', e => {
 /* Constantes et état : déclarés en tête de script (donneesLecture()
    peut être appelée dès le chargement). */
 
-function focusBornes(n, def){
+function focusBornes(n, def, min){
   n = parseInt(n, 10);
   if (!Number.isFinite(n)) return def;
-  return Math.min(FOCUS_MAX, Math.max(FOCUS_MIN, Math.round(n / FOCUS_PAS) * FOCUS_PAS));
+  return Math.min(FOCUS_MAX, Math.max(min || FOCUS_MIN, Math.round(n / FOCUS_PAS) * FOCUS_PAS));
 }
 function focusEtat(){
   if (focusCache) return focusCache;
@@ -8927,7 +9305,7 @@ function focusEtat(){
   focusCache = {
     v: 1,
     travail: focusBornes(e.travail, 25),
-    pause: focusBornes(e.pause, 15),
+    pause: focusBornes(e.pause, 5, FOCUS_MIN_PAUSE),
     sessions: Array.isArray(e.sessions) ? e.sessions.filter(s => s && Number.isFinite(s.d) && Number.isFinite(s.m)) : [],
     encours: (e.encours && ['travail','pause'].includes(e.encours.phase) && Number.isFinite(e.encours.fin)) ? e.encours : null
   };
@@ -8974,7 +9352,6 @@ function focusSignal(son, vibration){
 
 /* --- Transitions --------------------------------------------- */
 function focusDemarrer(){
-  if (modeLecture()) { toast('Le Focus se lance depuis ton propre profil.'); return; }
   const e = focusEtat(), maintenant = Date.now();
   e.encours = {phase:'travail', debut:maintenant, fin:maintenant + e.travail * 60000,
                travail:e.travail, pause:e.pause, vu:maintenant, cache:null};
@@ -9129,11 +9506,10 @@ function vueFocus(){
       '<div class="fx-ligne"><span>⏳ Travail</span><b id="fx-v-travail">' + e.travail + ' min</b></div>' +
       '<input type="range" id="fx-travail" min="' + FOCUS_MIN + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS + '" value="' + e.travail + '" aria-label="Durée de travail">' +
       '<div class="fx-ligne"><span>😌 Récupération</span><b id="fx-v-pause">' + e.pause + ' min</b></div>' +
-      '<input type="range" id="fx-pause" min="' + FOCUS_MIN + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS + '" value="' + e.pause + '" aria-label="Durée de récupération">' +
+      '<input type="range" id="fx-pause" min="' + FOCUS_MIN_PAUSE + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS + '" value="' + e.pause + '" aria-label="Durée de récupération">' +
     '</div>' +
-    (modeLecture()
-      ? '<p class="aide-champ">Le Focus se lance depuis ton propre profil.</p>'
-      : '<button type="button" class="bouton principal" data-act="focus-lancer">C’est parti !</button>') +
+    '<button type="button" class="bouton principal" data-act="focus-lancer">C’est parti !</button>' +
+    (modeLecture() ? '<p class="aide-champ">Les carrés gagnés vont dans « Mes révisions » (cet appareil).</p>' : '') +
     focusTabletteDuJour() +
   '</div>';
 }
@@ -9180,7 +9556,7 @@ vue.addEventListener('click', e => {
 vue.addEventListener('input', e => {
   if (e.target.id !== 'fx-travail' && e.target.id !== 'fx-pause') return;
   const st = focusEtat(), cle = e.target.id === 'fx-travail' ? 'travail' : 'pause';
-  st[cle] = focusBornes(e.target.value, st[cle]);
+  st[cle] = focusBornes(e.target.value, st[cle], cle === 'pause' ? FOCUS_MIN_PAUSE : FOCUS_MIN);
   const v = document.getElementById('fx-v-' + cle);
   if (v) v.textContent = st[cle] + ' min';
   focusEcrire();
@@ -9222,6 +9598,25 @@ if (focusEtat().encours) {
   if (focusEnTravail()) vueActive = 'focus';
   setTimeout(focusVerifier, 0);
 }
+
+/* Programme « jour de classe suivant » : PRONOTE, numéro, validation. */
+vue.addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b || modeLecture()) return;
+  const act = b.dataset.act;
+  if (act !== 'veille-devoir' && act !== 'veille-faite') return;
+  const parts = (b.dataset.cle || '').split('|');
+  if (parts.length !== 2) return;
+  if (act === 'veille-devoir') { brouillonVeille(parts[1], parts[0]).devoir = b.dataset.val === 'fait' ? 'fait' : 'aucun'; rendre(); }
+  else demanderConfirmationVeille(parts[1], parts[0]);
+});
+vue.addEventListener('input', e => {
+  const cle = e.target.dataset && e.target.dataset.veilleNum;
+  if (!cle) return;
+  const parts = cle.split('|');
+  e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
+  brouillonVeille(parts[1], parts[0]).num = e.target.value;
+});
 
 function ouvrirVueDepuisBouton(e){
   const b = e.target.closest('button[data-vue]');
