@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.5 — v57.4 +
+E1 Réglages > matières : le ✎ permet aussi de modifier l'emploi du temps
+   (jours et semaines A/B) en mode ÉLÈVE.
+E2 Champ « Tolérance de délai de révision » retiré des réglages.
+E3 Bouton « J'ai révisé mon dernier cours ! », moins haut.
+
 Cabosse v57.4 — v57.3 +
 A1 « Je m'avance ! » propose toutes les matières du jour de classe
    d'après, même celles qui ont aussi cours le jour visé.
@@ -1318,8 +1324,8 @@ button.gal-case:active{transform:scale(.97)}
 .vl-choix button{flex:1;padding:7px 6px;border-radius:99px;background:var(--surface-2);color:var(--texte-2);
   font-size:12.5px;font-weight:700;border:1.5px solid transparent;line-height:1.2}
 .vl-choix button.choisi{background:var(--accent-doux);color:var(--accent);border-color:var(--accent)}
-.vl-valider{display:block;width:100%;margin:8px 0 4px;padding:9px;border-radius:99px;background:var(--faite);color:#fff;
-  font-size:14.5px;font-weight:800}
+.vl-valider{display:block;width:100%;margin:6px 0 3px;padding:5px 9px;border-radius:99px;background:var(--faite);color:#fff;
+  font-size:14px;font-weight:800;line-height:1.3}
 .vl-valider.attente{background:var(--surface-2);color:var(--texte-3)}
 .vl-aide{margin:0 0 4px;font-size:11.5px;color:var(--texte-3);text-align:center}
 details.pliable.vl-avance{border:1.5px dashed #E0A93B;background:#FFFBF0}
@@ -1738,7 +1744,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.4 · « Je m\u2019avance ! » complet, vignettes compactes';
+const VERSION = 'v57.5 · emploi du temps dans les réglages';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3682,7 +3688,7 @@ function carteVeille(it){
     '<div class="vl-ligne"><span>PRONOTE</span><div class="vl-choix">' +
       choix('fait', 'Devoir fait ✅') + choix('aucun', 'Pas de devoir') + '</div></div>' +
     '<button type="button" class="vl-valider' + (b.devoir ? '' : ' attente') + '" data-act="veille-faite" data-cle="' + cle + '">' +
-      'J’ai révisé <span class="emo">😎</span></button>' +
+      'J’ai révisé mon dernier cours ! <span class="emo">😎</span></button>' +
   '</article>';
 }
 function sectionVeille(){
@@ -6463,6 +6469,40 @@ function carteCoursEnregistres(){
   return html;
 }
 
+/* v57.5 — Emploi du temps modifiable depuis les réglages (mode ÉLÈVE).
+   Même grille que le formulaire Nouveau cours ; enregistrée avec le ✓
+   de la ligne de la matière. Aucun jour coché : la matière n'a plus
+   d'emploi du temps. */
+function grilleEmploiReglages(code){
+  const e = emploiMatiere(code);
+  let h = '<div class="carte emploi-saisie" style="margin:4px 0 10px">' +
+    '<div class="emploi-titre">📅 Emploi du temps</div>';
+  JOURS_ECOLE.forEach(j => {
+    const nom = JOURS[j].charAt(0).toUpperCase() + JOURS[j].slice(1, 3);
+    let opts = '';
+    FREQUENCES.forEach(f => {
+      opts += '<option value="' + f.cle + '"' + (e && e.jours[j] === f.cle ? ' selected' : '') + '>' + ech(f.nom) + '</option>';
+    });
+    h += '<div class="emploi-ligne">' +
+      '<label class="check-ligne" style="padding:0;flex:0 0 auto">' +
+        '<input type="checkbox" data-emploi-jour="' + j + '"' + (e && e.jours[j] ? ' checked' : '') + '>' +
+        '<span style="min-width:34px">' + nom + '</span></label>' +
+      '<select data-emploi-freq="' + j + '"' + (e && e.jours[j] ? '' : ' disabled') + '>' + opts + '</select>' +
+    '</div>';
+  });
+  return h + '</div>';
+}
+/* Lit la grille affichée ; null si elle n'est pas à l'écran. */
+function lireGrilleEmploi(){
+  if (!document.querySelector('[data-emploi-jour]')) return null;
+  const jours = {};
+  JOURS_ECOLE.forEach(j => {
+    const coche = document.querySelector('[data-emploi-jour="' + j + '"]');
+    if (coche && coche.checked) jours[j] = (document.querySelector('[data-emploi-freq="' + j + '"]') || {}).value || 'toutes';
+  });
+  return jours;
+}
+
 function carteMatieres(annee){
   const perso = annee && anneePersonnalisee(annee);
   const liste = annee ? matieresAnnee(annee) : DB.matieres;
@@ -6476,7 +6516,7 @@ function carteMatieres(annee){
         '<input type="text" id="me-nom" value="' + ech(m.nom) + '" aria-label="Nom">' +
         '<button class="mini ok" data-act="matiere-enregistrer" data-id="' + ech(m.code) + '">\u2713</button>' +
         '<button class="mini" data-act="matiere-annuler-edition">\u2715</button>' +
-      '</div>';
+      '</div>' + (modeEleve() ? grilleEmploiReglages(m.code) : '');
     } else {
       /* En mode ÉLÈVE, on rappelle l'emploi du temps sous la matière :
          c'est l'endroit naturel pour vérifier ce qui a été saisi. */
@@ -6756,9 +6796,6 @@ function blocReglagesAvances(){
       carteMatieres(anneeMatieresAffichee()) +
       '<p class="etiquette" style="margin-top:18px">Cours enregistrés</p>' +
       carteCoursEnregistres() +
-      '<div class="champ" style="margin-top:18px"><label for="f-tolerance">Tolérance de délai de révision (± jours)</label>' +
-        '<input type="number" id="f-tolerance" min="0" max="30" inputmode="numeric" value="' + toleranceJours() + '">' +
-        '<span class="aide-champ">Fenêtre d\u2019évaluation de l\u2019ancien indicateur de ponctualité.</span></div>' +
       '<p class="etiquette" style="margin-top:18px">Sauvegarde</p>' +
       '<p class="aide-champ">Restaurer l\u2019appli comme il y a :</p>' +
       '<div style="display:flex;gap:6px;margin-top:4px">' +
@@ -9066,7 +9103,17 @@ vue.addEventListener('click', e => {
     const nom = document.getElementById('me-nom').value;
     const couleur = document.getElementById('me-couleur').value;
     const codeNeuf = (document.getElementById('me-code') || {}).value || '';
-    modifierMatiere(id, nom, couleur, codeNeuf);
+    /* v57.5 : emploi du temps édité dans la même ligne (mode ÉLÈVE). */
+    const jours = modeEleve() ? lireGrilleEmploi() : null;
+    if (jours) {
+      if (Object.keys(jours).length) emploiDuTemps()[id] = {jours: jours, defini: true};
+      else delete emploiDuTemps()[id];
+    }
+    const m = DB.matieres.find(x => x.code === id);
+    const inchangee = m && nom.trim() === m.nom && couleur.toLowerCase() === String(m.c).toLowerCase() &&
+      (!codeNeuf.trim() || codeNeuf.toUpperCase().trim() === id);
+    if (jours && inchangee) { matiereEnEdition = null; sauver(); rendre(); toast('Emploi du temps enregistré.'); }
+    else modifierMatiere(id, nom, couleur, codeNeuf);
   }
   else if (act === 'matiere-suppr') supprimerMatiere(id);
   else if (act === 'matiere-retirer-annee') {
