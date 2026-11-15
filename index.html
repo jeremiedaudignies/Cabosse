@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.3 — v57.2 +
+S1 Agenda : l'encart replié « Semaines suivantes » est retiré.
+
 Cabosse v57.2 — v57.1 +
 R1 Une seule fois : les révisions d'avant la v57 encore en attente (à
    faire ou reportées, renforts compris) sont retirées de l'agenda.
@@ -1729,7 +1732,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.2 · anciennes révisions retirées, plus de renfort, cours sans question';
+const VERSION = 'v57.3 · encart « Semaines suivantes » retiré';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -5796,7 +5799,8 @@ function vueAgenda(){
     html += '</section>';
   });
 
-  if (plusTard.length) {
+  /* v57.3 : l'encart « Semaines suivantes » est retiré de l'agenda. */
+  if (false && plusTard.length) {
     html += '<details class="pliable" data-cle="semaines"' + ouvert('semaines') + '>' +
       '<summary>Semaines suivantes<span class="compte">' + plusTard.length + '</span></summary>' +
       '<div class="contenu-pliable">';
