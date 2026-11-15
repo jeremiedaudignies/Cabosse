@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.4 — v57.3 +
+A1 « Je m'avance ! » propose toutes les matières du jour de classe
+   d'après, même celles qui ont aussi cours le jour visé.
+A2 Vignettes de révision environ 30 % moins hautes ; ligne d'aide
+   « Réponds à PRONOTE pour valider » retirée.
+
 Cabosse v57.3 — v57.2 +
 S1 Agenda : l'encart replié « Semaines suivantes » est retiré.
 
@@ -1288,12 +1294,12 @@ button.gal-case:active{transform:scale(.97)}
 .vl-titre::first-letter{text-transform:uppercase}
 .vl-score{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--texte-2);white-space:nowrap}
 .vl-score b{font-size:22px;color:var(--accent)}
-.vl-barre{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-bottom:12px}
+.vl-barre{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-bottom:8px}
 .vl-barre i{display:block;height:100%;border-radius:99px;background:var(--faite);transition:width .4s ease}
 .vl-bravo{margin:0 0 12px;padding:12px 14px;border-radius:var(--r-m);background:var(--accent-doux);color:var(--accent);
   font-size:14px;font-weight:800;text-align:center}
 .vl-carte{background:var(--surface);border:1px solid var(--filet);border-left:5px solid var(--vl-c,#9AA3B2);
-  border-radius:var(--r-m);padding:13px 15px;margin-bottom:8px;box-shadow:var(--ombre)}
+  border-radius:var(--r-m);padding:6px 14px;margin-bottom:6px;box-shadow:var(--ombre)}
 .vl-carte-tete{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .vl-matiere{font-size:15.5px;font-weight:800;color:var(--texte)}
 .vl-pastille{font-family:var(--mono);font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;
@@ -1301,21 +1307,21 @@ button.gal-case:active{transform:scale(.97)}
 .vl-pastille.ok{background:var(--faite);color:#fff}
 .vl-pastille.x2{background:#FFE9B8;color:#7A4B00}
 .vl-carte.faite{background:var(--accent-doux);border-color:transparent;border-left-color:var(--faite)}
-.vl-resume{margin:6px 0 0;font-size:13px;color:var(--texte-2);font-weight:600}
+.vl-resume{margin:2px 0 0;font-size:13px;color:var(--texte-2);font-weight:600}
 .vl-resume b{font-family:var(--mono);color:var(--texte)}
-.vl-ligne{display:flex;align-items:center;gap:10px;margin-top:11px}
+.vl-ligne{display:flex;align-items:center;gap:10px;margin-top:5px}
 .vl-ligne > span{flex:0 0 76px;font-size:12px;font-weight:700;color:var(--texte-2)}
 .vl-num{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--texte)}
-.vl-num input{width:74px;padding:9px 8px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;
+.vl-num input{width:74px;padding:5px 8px;text-align:center;font-family:var(--mono);font-size:16px;font-weight:700;
   border-radius:var(--r-s)}
 .vl-choix{flex:1;display:flex;gap:6px}
-.vl-choix button{flex:1;padding:10px 6px;border-radius:99px;background:var(--surface-2);color:var(--texte-2);
+.vl-choix button{flex:1;padding:7px 6px;border-radius:99px;background:var(--surface-2);color:var(--texte-2);
   font-size:12.5px;font-weight:700;border:1.5px solid transparent;line-height:1.2}
 .vl-choix button.choisi{background:var(--accent-doux);color:var(--accent);border-color:var(--accent)}
-.vl-valider{display:block;width:100%;margin-top:12px;padding:12px;border-radius:99px;background:var(--faite);color:#fff;
+.vl-valider{display:block;width:100%;margin:8px 0 4px;padding:9px;border-radius:99px;background:var(--faite);color:#fff;
   font-size:14.5px;font-weight:800}
 .vl-valider.attente{background:var(--surface-2);color:var(--texte-3)}
-.vl-aide{margin:6px 0 0;font-size:11.5px;color:var(--texte-3);text-align:center}
+.vl-aide{margin:0 0 4px;font-size:11.5px;color:var(--texte-3);text-align:center}
 details.pliable.vl-avance{border:1.5px dashed #E0A93B;background:#FFFBF0}
 details.pliable.vl-avance summary{color:#7A4B00;font-size:14.5px}
 .vl-avance-info{margin:0 0 12px;font-size:13px;color:var(--texte-2);font-weight:600}
@@ -1732,7 +1738,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.3 · encart « Semaines suivantes » retiré';
+const VERSION = 'v57.4 · « Je m\u2019avance ! » complet, vignettes compactes';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3507,8 +3513,8 @@ function revisionVeille(dl, code, cible){
   }) || null;
 }
 /* Programme du jour : matières du prochain jour de classe, et
-   matières « en avance » du jour de classe d'après. Une matière
-   présente les deux jours n'est pas proposée en avance : le cours à
+   matières « en avance » du jour de classe d'après (toutes, même
+   celles qui ont aussi cours le jour visé — v57.4). Ancienne note : le cours à
    apprendre n'a pas encore été donné. */
 function programmeVeille(ajISO){
   ajISO = ajISO || isoDe(aujourdhui());
@@ -3519,7 +3525,7 @@ function programmeVeille(ajISO){
   const item = (code, jour, avance) => ({code: code, cible: jour, avance: avance, rev: revisionVeille(dl, code, jour)});
   const codes = matieresDuJour(cible);
   const cibleAvance = prochainJourClasse(cible);
-  const codesAvance = cibleAvance ? matieresDuJour(cibleAvance).filter(c => codes.indexOf(c) === -1) : [];
+  const codesAvance = cibleAvance ? matieresDuJour(cibleAvance) : [];   // v57.4 : toutes les matières du jour d'après
   return {
     cible: cible, items: codes.map(c => item(c, cible, false)),
     cibleAvance: cibleAvance, itemsAvance: codesAvance.map(c => item(c, cibleAvance, true))
@@ -3677,7 +3683,6 @@ function carteVeille(it){
       choix('fait', 'Devoir fait ✅') + choix('aucun', 'Pas de devoir') + '</div></div>' +
     '<button type="button" class="vl-valider' + (b.devoir ? '' : ' attente') + '" data-act="veille-faite" data-cle="' + cle + '">' +
       'J’ai révisé <span class="emo">😎</span></button>' +
-    (b.devoir ? '' : '<p class="vl-aide">Réponds à PRONOTE pour valider.</p>') +
   '</article>';
 }
 function sectionVeille(){
