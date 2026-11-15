@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.7 — v57.6 +
+N1 Validation d'une révision : les choix « tout récité » / « pas encore
+   retenu » sont remplacés par une note d'auto-évaluation de 0 à 20 et
+   une question de quizz, toutes deux obligatoires. Sous 10/20, la
+   révision est enregistrée « à revoir » (renfort J+7 dans l'ancien
+   moteur uniquement, comme avant).
+N2 Statistiques : « Moyenne d'auto-évaluation » par période.
+
 Cabosse v57.6 — v57.5 +
 H1 Agenda : historique limité aux 14 derniers jours.
 H2 Bouton « ➕ Ajouter une révision » sous le programme du jour : une
@@ -1346,6 +1354,15 @@ button.gal-case:active{transform:scale(.97)}
   background:transparent;color:var(--accent);font-size:14px;font-weight:800}
 .vl-ajout-form{padding:10px 14px}
 .vl-ajout-form select{width:100%}
+.eval-tete{display:flex;align-items:baseline;justify-content:space-between;margin:4px 0 8px}
+.eval-tete span{font-size:14px;font-weight:800;color:var(--texte)}
+.eval-tete b{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--accent)}
+.eval-tete b small{font-size:14px;color:var(--texte-3);font-weight:700}
+.eval-notes{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.eval-notes button{padding:8px 0;border-radius:10px;background:var(--surface-2);color:var(--texte-2);
+  font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;border:1.5px solid transparent}
+.eval-notes button.choisi{color:#fff;background:var(--eval-c);border-color:var(--eval-c)}
+#confirm-actions .bouton.attente{opacity:.45}
 .vl-aide{margin:0 0 4px;font-size:11.5px;color:var(--texte-3);text-align:center}
 details.pliable.vl-avance{border:1.5px dashed #E0A93B;background:#FFFBF0}
 details.pliable.vl-avance summary{color:#7A4B00;font-size:14.5px}
@@ -1408,6 +1425,15 @@ details.pliable.vl-avance summary{color:#7A4B00;font-size:14.5px}
     <label for="confirm-note">Pose-toi une question sur ce point difficile</label>
     <textarea id="confirm-note" rows="3" placeholder="Ex. Que veut dire « démoniaque » ?"></textarea>
     <span class="aide-champ">Formule-la comme une vraie question : elle te sera reposée dans le Quizz.</span>
+  </div>
+  <div id="confirm-eval" style="display:none">
+    <div class="eval-tete"><span>Ta note d’auto-évaluation</span><b id="eval-val">–<small>/20</small></b></div>
+    <div class="eval-notes" id="eval-notes" role="group" aria-label="Note sur 20"></div>
+    <div class="champ" style="margin:14px 0 4px">
+      <label for="eval-question">Ta question de quizz</label>
+      <textarea id="eval-question" rows="3" placeholder="Ex. Quelle est la capitale de l’Australie ?"></textarea>
+      <span class="aide-champ">Elle te sera reposée dans le Quizz.</span>
+    </div>
   </div>
   <div id="confirm-actions" style="display:flex;flex-direction:column;gap:9px"></div>
   <button class="bouton discret" id="confirm-non" style="margin-top:9px">Fermer</button>
@@ -1763,7 +1789,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.6 · ajouter une révision, cours annulé, historique 14 jours';
+const VERSION = 'v57.7 · auto-évaluation /20 et question de quizz obligatoires';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3643,7 +3669,7 @@ function pointsVeille(avance){
   return (XP_CABOSSE.revisionFaite + XP_CABOSSE.revisionFaiteSagesse) * (avance ? XP_CABOSSE.facteurAvance : 1);
 }
 
-function validerVeille(v, comprehension, note){
+function validerVeille(v, comprehension, note, noteEval){
   if (modeLecture() || !regleVeilleActive()) return false;
   if (revisionVeille(donneesLecture(), v.code, v.cible)) return false;
   const ajISO = isoDe(aujourdhui());
@@ -3665,6 +3691,7 @@ function validerVeille(v, comprehension, note){
     prevue: ajISO, date: ajISO, statut: 'faite', faitLe: ajISO,
     comprehension: comprehension, pourLe: v.cible, devoir: v.devoir, actionLe: estampilleAction()
   };
+  if (Number.isInteger(noteEval)) r.note = noteEval;   // v57.7 : auto-évaluation /20
   if (v.avance) r.avance = true;
   DB.revisions.push(r);
   /* v57.2 : plus de renfort — la question posée rejoint le Quizz. */
@@ -3686,6 +3713,52 @@ function validerVeille(v, comprehension, note){
   return true;
 }
 
+/* v57.7 — Validation par auto-évaluation : une note de 0 à 20 et une
+   question de quizz, toutes deux obligatoires. Remplace les deux
+   choix « tout récité » / « pas encore retenu ». La compréhension
+   enregistrée s'en déduit : sous 10/20, la révision est « à revoir ». */
+var EVAL_SEUIL = 10;
+var evalNote = null;
+function couleurEval(n){ return n < 10 ? 'var(--annulee)' : (n < 14 ? 'var(--reportee)' : 'var(--faite)'); }
+function comprehensionDeNote(n){ return n >= EVAL_SEUIL ? 'reussi' : 'partiel'; }
+function majEvaluation(){
+  const v = document.getElementById('eval-val');
+  if (v) v.innerHTML = (evalNote === null ? '–' : evalNote) + '<small>/20</small>';
+  if (v) v.style.color = evalNote === null ? '' : couleurEval(evalNote);
+  document.querySelectorAll('#eval-notes button').forEach(b => {
+    const n = +b.dataset.eval, on = n === evalNote;
+    b.classList.toggle('choisi', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.style.setProperty('--eval-c', couleurEval(n));
+  });
+  const ok = evalNote !== null && document.getElementById('eval-question').value.trim();
+  const bt = document.querySelector('#confirm-actions [data-confirm="eval-valider"]');
+  if (bt) bt.classList.toggle('attente', !ok);
+}
+function ouvrirEvaluation(titre, info, question){
+  evalNote = null;
+  let h = '';
+  for (let n = 0; n <= 20; n++) h += '<button type="button" data-eval="' + n + '">' + n + '</button>';
+  document.getElementById('eval-notes').innerHTML = h;
+  document.getElementById('eval-question').value = question || '';
+  document.getElementById('confirm-titre').textContent = titre;
+  document.getElementById('confirm-info').textContent = info;
+  document.getElementById('confirm-note-zone').style.display = 'none';
+  document.getElementById('confirm-eval').style.display = '';
+  document.getElementById('confirm-actions').innerHTML =
+    '<button class="bouton principal" data-confirm="eval-valider">Valider ma révision <span class="emo">😎</span></button>';
+  majEvaluation();
+  confirmVoile.classList.add('on');
+}
+/* Lit la note et la question ; null (avec un message) si incomplet. */
+function lireEvaluation(){
+  const q = document.getElementById('eval-question').value.trim();
+  if (evalNote === null) { toast('Donne-toi une note sur 20.'); return null; }
+  if (!q) { toast('Écris ta question de quizz.'); document.getElementById('eval-question').focus(); return null; }
+  return {note: evalNote, question: q};
+}
+document.getElementById('eval-question').addEventListener('input', majEvaluation);
+
 /* Ouvre la feuille « Comment ça s'est passé ? » pour une matière du
    programme. Refuse tant que le numéro ou PRONOTE manque. */
 function demanderConfirmationVeille(code, cible){
@@ -3701,15 +3774,8 @@ function demanderConfirmationVeille(code, cible){
   const existant = DB.cours.find(x => x.code === code && x.numero === numero &&
     libelleAnneeScolaire(dDe(x.date)) === anneeCouranteCle());
   actionEnCours = {veille: {code: code, cible: cible, avance: it.avance, num: numero, devoir: b.devoir}};
-  document.getElementById('confirm-titre').textContent = 'Comment ça s’est passé ?';
-  document.getElementById('confirm-note-zone').style.display = 'none';
-  document.getElementById('confirm-note').value = (existant && existant.commentaire) || '';
-  document.getElementById('confirm-actions').innerHTML =
-    '<button class="bouton principal" data-confirm="reussi">J’ai réussi à tout réciter sans regarder <span class="emo">😎</span></button>' +
-    '<button class="bouton discret" data-confirm="a-revoir">Pas encore tout compris ou retenu <span class="emo">🤔</span></button>';
-  document.getElementById('confirm-info').textContent =
-    code + '-' + numero + ' · pour ' + libelleJour(cible);
-  confirmVoile.classList.add('on');
+  ouvrirEvaluation('Comment ça s’est passé ?', code + '-' + numero + ' · pour ' + libelleJour(cible),
+    (existant && existant.commentaire) || '');
 }
 
 /* --- Rendu --------------------------------------------------- */
@@ -3724,6 +3790,7 @@ function carteVeille(it){
         '<span class="vl-pastille ok">✅ Révisé · +' + pointsVeille(it.rev.avance) + (it.rev.avance ? ' ⚡' : '') + '</span></div>' +
       '<p class="vl-resume"><b>' + (c ? ech(refCours(c)) : '') + '</b> · ' +
         (it.rev.devoir === 'fait' ? 'Devoir PRONOTE fait ✅' : 'Pas de devoir') +
+        (Number.isInteger(it.rev.note) ? ' · <b>' + it.rev.note + '/20</b>' : '') +
         (it.rev.comprehension === 'partiel' ? ' · à revoir 🤔' : '') + '</p>' +
     '</article>';
   }
@@ -7676,6 +7743,27 @@ function mesuresPeriode(dl, p){
   };
 }
 
+/* v57.7 — Moyenne des notes d'auto-évaluation (/20) des révisions
+   faites dans chaque période. Absent tant qu'aucune note n'existe. */
+function moyenneEval(dl, p){
+  const notes = dl.revisions.filter(r => r.statut === 'faite' && Number.isInteger(r.note) &&
+    (r.faitLe || r.date) >= p.debut && (r.faitLe || r.date) <= p.fin).map(r => r.note);
+  if (!notes.length) return null;
+  return Math.round(10 * notes.reduce((a, b) => a + b, 0) / notes.length) / 10;
+}
+function blocMoyenneEval(dl, periodes, labels, sel, dernier){
+  if (!dl.revisions.some(r => r.statut === 'faite' && Number.isInteger(r.note))) return '';
+  const serie = periodes.map(p => moyenneEval(dl, p));
+  const v = serie[sel];
+  return '<div class="carte graf">' +
+    '<div class="stats-kpi"><b style="color:' + (v === null ? 'var(--texte-3)' : couleurEval(v)) + '">' +
+      (v === null ? '–' : String(v).replace('.', ',')) + '<small style="font-size:14px">/20</small></b>' +
+      '<span>Moyenne d’auto-évaluation</span></div>' +
+    graphiqueBarres(labels, serie.map(x => x === null ? 0 : x), {couleur: 'var(--accent)', suffixe: '', max: 20,
+      cliquable: true, selection: sel, estompe: sel !== dernier}) +
+  '</div>';
+}
+
 function vueStats(){
   const dl = donneesLecture();
   /* Un seul point d'application : on retire ici les annulations exclues,
@@ -7740,6 +7828,7 @@ function vueStats(){
          cliquable: true, selection: sel, estompe: sel !== dernier}) +
     '</div>';
   });
+  html += blocMoyenneEval(dl, periodes, labels, sel, dernier);
   html += focusBlocStats(periodes, labels, sel, dernier);
 
   /* --- Benchmark des matières -------------------------------- */
@@ -8417,7 +8506,7 @@ function marquer(id, statut, resultat){
   r.statut = statut;
   r.actionLe = estampilleAction(); // horodatage de l'action, pour l'historique
   if (statut === 'faite') r.comprehension = resultat || 'reussi';
-  else { delete r.faitLe; delete r.comprehension; }
+  else { delete r.faitLe; delete r.comprehension; delete r.note; }
   /* Date réelle du clic, distincte de la date prévue : c'est elle qui
      permet de savoir si la révision a été faite dans les temps. */
   if (statut === 'faite') r.faitLe = isoDe(aujourdhui());
@@ -8482,7 +8571,7 @@ function annulerToutesRevisionsCours(id){
   const r = DB.revisions.find(x => x.id === id);
   const coursId = r ? r.cours : id;
   const cibles = DB.revisions.filter(x => x.cours === coursId && x.statut !== 'annulee');
-  cibles.forEach(x => { x.statut = 'annulee'; x.actionLe = estampilleAction(); delete x.faitLe; delete x.comprehension; });
+  cibles.forEach(x => { x.statut = 'annulee'; x.actionLe = estampilleAction(); delete x.faitLe; delete x.comprehension; delete x.note; });
   sauver(); rafraichirGamification(true); rendre();
   toast(cibles.length + ' révision' + (cibles.length > 1 ? 's' : '') + ' annulée' + (cibles.length > 1 ? 's' : '') + '.');
 }
@@ -8572,7 +8661,7 @@ function reinitialiserStatistiques(){
   if (!maintenanceAutorisee('Avant remise à zéro des statistiques')) return;
   DB.revisions.forEach(r => {
     r.statut = 'aFaire'; r.date = r.prevue || r.date;
-    delete r.faitLe; delete r.comprehension;
+    delete r.faitLe; delete r.comprehension; delete r.note;
   });
   DB.occurrences.forEach(o => {
     o.statut = 'aFaire'; o.date = o.prevue || o.date;
@@ -8817,7 +8906,7 @@ document.getElementById('voile-ok').addEventListener('click', () => {
   } else if (reportEnCours) {
     const r = DB.revisions.find(x => x.id === reportEnCours);
     if (r) {
-      r.date = d; r.statut = 'reportee'; r.actionLe = estampilleAction(); delete r.faitLe; delete r.comprehension; reconcilierOccurrences(); sauver();
+      r.date = d; r.statut = 'reportee'; r.actionLe = estampilleAction(); delete r.faitLe; delete r.comprehension; delete r.note; reconcilierOccurrences(); sauver();
       /* Jamais culpabilisant : ton doux, pas de rouge, pas de son
          d'échec. Cabosse retrouvera son rythme. */
       jouerSonCabosse('reported');
@@ -8879,13 +8968,13 @@ function demanderConfirmation(id, statut){
     /* Premier écran : on demande d'abord comment ça s'est passé,
        avant toute confirmation. La note et le renfort J+7 n'entrent
        en jeu que sur « pas encore retenu » (voir le handler de clic). */
-    document.getElementById('confirm-titre').textContent = 'Comment ça s\u2019est passé ?';
-    zoneNote.style.display = 'none';
-    document.getElementById('confirm-note').value = (c && c.commentaire) || '';
-    actions.innerHTML =
-      '<button class="bouton principal" data-confirm="reussi">J\u2019ai réussi à tout réciter sans regarder <span class="emo">😎</span></button>' +
-      '<button class="bouton discret" data-confirm="a-revoir">Pas encore tout compris ou retenu <span class="emo">🤔</span></button>';
+    /* v57.7 : note d'auto-évaluation et question de quizz obligatoires. */
+    ouvrirEvaluation('Comment ça s\u2019est passé ?',
+      (c ? refCours(c) + libelleAnnee(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date),
+      (c && c.commentaire) || '');
+    return;
   } else {
+    document.getElementById('confirm-eval').style.display = 'none';
     document.getElementById('confirm-titre').textContent = 'Annuler cette révision ?';
     zoneNote.style.display = 'none';
     /* Annuler toute la série reste possible, mais uniquement depuis
@@ -8898,11 +8987,16 @@ function demanderConfirmation(id, statut){
     (c ? refCours(c) + libelleAnnee(c) + ' · ' : '') + libelleRang(r.rang) + ' · ' + libelleJour(r.date);
   confirmVoile.classList.add('on');
 }
-function fermerConfirmation(){ confirmVoile.classList.remove('on'); actionEnCours = null; }
+function fermerConfirmation(){
+  confirmVoile.classList.remove('on'); actionEnCours = null; evalNote = null;
+  document.getElementById('confirm-eval').style.display = 'none';
+}
 
 document.getElementById('confirm-non').addEventListener('click', fermerConfirmation);
 confirmVoile.addEventListener('click', e => {
   if (e.target === confirmVoile) { fermerConfirmation(); return; }
+  const be = e.target.closest('button[data-eval]');
+  if (be) { evalNote = +be.dataset.eval; majEvaluation(); return; }
   const b = e.target.closest('button[data-confirm]');
   if (!b) return;
   /* Le bonus de quizz n'est pas rattaché à une révision : il doit
@@ -8934,52 +9028,37 @@ confirmVoile.addEventListener('click', e => {
   if (actionEnCours.veille) {
     /* Matière du programme « jour de classe suivant » : mêmes écrans,
        mais la révision n'existe pas encore — elle est créée ici. */
-    const v = actionEnCours.veille, t = b.dataset.confirm;
-    if (t === 'reussi') { fermerConfirmation(); validerVeille(v, 'reussi'); }
-    else if (t === 'a-revoir') {
-      document.getElementById('confirm-titre').textContent = 'Pose ta question';
-      document.getElementById('confirm-note-zone').style.display = '';
-      document.getElementById('confirm-actions').innerHTML =
-        '<button class="bouton principal" data-confirm="a-revoir-confirmer">Confirmer</button>';
-    }
-    else if (t === 'a-revoir-confirmer') {
-      const note = document.getElementById('confirm-note').value.trim();
-      fermerConfirmation(); validerVeille(v, 'partiel', note);
+    const v = actionEnCours.veille;
+    if (b.dataset.confirm === 'eval-valider') {
+      const ev = lireEvaluation();
+      if (!ev) return;
+      fermerConfirmation();
+      validerVeille(v, comprehensionDeNote(ev.note), ev.question, ev.note);
     }
     return;
   }
   const type = b.dataset.confirm;
   const revisionCible = DB.revisions.find(r => r.id === actionEnCours.id);
   if (modeLecture() || !revisionCible || !['aFaire','reportee'].includes(revisionCible.statut)) { fermerConfirmation(); return; }
-  if ((type === 'reussi' || type === 'a-revoir-confirmer') && !estValidable(revisionCible.date)) {
+  if (type === 'eval-valider' && !estValidable(revisionCible.date)) {
     toast('Date de session dépassée : reporte cette révision.'); fermerConfirmation(); rendre(); return;
   }
 
-  if (type === 'reussi') {
-    /* Tout retenu du premier coup : on valide directement, sans
-       étape supplémentaire. */
-    marquer(actionEnCours.id, 'faite');
+  if (type === 'eval-valider') {
+    /* v57.7 : note /20 et question de quizz obligatoires. Sous la
+       moyenne, la révision est « à revoir » ; dans l'ancien moteur,
+       un renfort à J+7 est alors programmé comme avant. */
+    const ev = lireEvaluation();
+    if (!ev) return;
+    const r = revisionCible, c = trouverCours(r.cours);
+    if (c) { c.commentaire = ev.question; completerRappels(); }
+    const comp = comprehensionDeNote(ev.note);
+    if (comp === 'partiel' && !regleVeilleActive()) assurerRenfortJ7(r.cours, r.date);
+    const id = actionEnCours.id;
     fermerConfirmation();
-  }
-  else if (type === 'a-revoir') {
-    /* Second écran, dans la même feuille : on révèle le champ de
-       points difficiles et on remplace les deux choix par un unique
-       bouton de confirmation. Le modal reste ouvert. */
-    document.getElementById('confirm-titre').textContent = 'Pose ta question';
-    document.getElementById('confirm-note-zone').style.display = '';
-    document.getElementById('confirm-actions').innerHTML =
-      '<button class="bouton principal" data-confirm="a-revoir-confirmer">Confirmer</button>';
-  }
-  else if (type === 'a-revoir-confirmer') {
-    const r = DB.revisions.find(x => x.id === actionEnCours.id);
-    const c = r && trouverCours(r.cours);
-    if (c) { c.commentaire = document.getElementById('confirm-note').value.trim(); completerRappels(); }
-    /* La révision a bien eu lieu — elle compte comme faite — mais
-       comme tout n'est pas retenu, un renfort à J+7 est programmé
-       d'office (sauf s'il en existe déjà un ce jour-là). */
-    if (r && !regleVeilleActive()) assurerRenfortJ7(r.cours, r.date);   // v57.2 : plus de renfort
-    marquer(actionEnCours.id, 'faite', 'partiel');
-    fermerConfirmation();
+    marquer(id, 'faite', comp);
+    const rf = DB.revisions.find(x => x.id === id);
+    if (rf && rf.statut === 'faite') { rf.note = ev.note; sauver(); }
   }
   else if (type === 'annulee-une') { marquer(actionEnCours.id, 'annulee'); fermerConfirmation(); }
 });
@@ -8994,7 +9073,7 @@ vue.addEventListener('click', e => {
   else if (act === 'note') { if (!modeLecture()) ouvrirNote(id); }
   else if (act === 'reactiver') {
     const r = DB.revisions.find(x => x.id === id);
-    if (r && !modeLecture()) { r.statut = 'aFaire'; delete r.faitLe; delete r.comprehension; sauver(); rendre(); toast('Révision remise en attente.'); }
+    if (r && !modeLecture()) { r.statut = 'aFaire'; delete r.faitLe; delete r.comprehension; delete r.note; sauver(); rendre(); toast('Révision remise en attente.'); }
   }
   else if (act === 'suppr-revision') {
     if (confirm('Supprimer définitivement cette révision ? Cette action est irréversible.')) supprimerRevision(id);
@@ -9246,7 +9325,7 @@ vue.addEventListener('click', e => {
     else if (r && !modeLecture()) {
       r.statut = 'aFaire';
       if (r.prevue) r.date = r.prevue;
-      delete r.faitLe; delete r.comprehension; delete r.actionLe;
+      delete r.faitLe; delete r.comprehension; delete r.note; delete r.actionLe;
       sauver(); rafraichirGamification(true); rendre();
       toast('Dernière action annulée : révision remise dans le flux.');
     }
