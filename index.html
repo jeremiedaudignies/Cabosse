@@ -1,5 +1,15 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.6 — v57.5 +
+H1 Agenda : historique limité aux 14 derniers jours.
+H2 Bouton « ➕ Ajouter une révision » sous le programme du jour : une
+   matière hors emploi du temps pour le jour visé (points normaux).
+H3 Lien « Cours annulé / Prof absent » sur chaque matière à réviser :
+   la matière n'est plus à faire (ni points ni malus), réversible ↺.
+   Sur une révision ajoutée à la main : « Retirer cette révision ».
+H4 Le fond « Travail terminé » (plage) n'apparaît plus tant qu'une
+   matière du jour de classe suivant reste à réviser.
+
 Cabosse v57.5 — v57.4 +
 E1 Réglages > matières : le ✎ permet aussi de modifier l'emploi du temps
    (jours et semaines A/B) en mode ÉLÈVE.
@@ -1327,6 +1337,15 @@ button.gal-case:active{transform:scale(.97)}
 .vl-valider{display:block;width:100%;margin:6px 0 3px;padding:5px 9px;border-radius:99px;background:var(--faite);color:#fff;
   font-size:14px;font-weight:800;line-height:1.3}
 .vl-valider.attente{background:var(--surface-2);color:var(--texte-3)}
+.vl-annule{display:block;margin:2px auto 2px;padding:4px 10px;background:none;border:0;color:var(--texte-3);
+  font-size:12.5px;font-weight:700;text-decoration:underline;text-underline-offset:2px}
+.vl-carte.absent{opacity:.7;background:var(--surface-2);box-shadow:none}
+.vl-retablir{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--surface);color:var(--texte-2);
+  font-size:15px;font-weight:800;border:1px solid var(--filet)}
+.vl-ajout{display:block;width:100%;margin:2px 0 4px;padding:9px;border-radius:var(--r-m);border:1.5px dashed var(--filet);
+  background:transparent;color:var(--accent);font-size:14px;font-weight:800}
+.vl-ajout-form{padding:10px 14px}
+.vl-ajout-form select{width:100%}
 .vl-aide{margin:0 0 4px;font-size:11.5px;color:var(--texte-3);text-align:center}
 details.pliable.vl-avance{border:1.5px dashed #E0A93B;background:#FFFBF0}
 details.pliable.vl-avance summary{color:#7A4B00;font-size:14.5px}
@@ -1744,7 +1763,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.5 · emploi du temps dans les réglages';
+const VERSION = 'v57.6 · ajouter une révision, cours annulé, historique 14 jours';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3410,6 +3429,7 @@ function entretenirPlanning(force){
          3 derniers cours (bascule automatique, une seule fois). */
       activerRegleVeille();
       purgerAnciennesRevisions();
+      nettoyerTablesVeille();
       appliquerReglesVacances();
     }
     reconcilierOccurrences();
@@ -3518,6 +3538,42 @@ function revisionVeille(dl, code, cible){
     return !!c && c.code === code;
   }) || null;
 }
+/* v57.6 — Ajouts et cours annulés, par jour de classe visé :
+     DB.reglages.veilleExtras   = { '2026-11-16': ['SVT'] }  matières ajoutées
+     DB.reglages.veilleAbsences = { '2026-11-16': ['HIS'] }  cours annulé / prof absent
+   Transmis aux appareils qui suivent, comme la date de bascule. */
+function tableVeille(cle){
+  let t;
+  if (modeLecture()) { const s = suiviActif(); t = (s && s.reglages && s.reglages[cle]) || {}; }
+  else { if (!DB.reglages[cle] || typeof DB.reglages[cle] !== 'object') DB.reglages[cle] = {}; t = DB.reglages[cle]; }
+  return t;
+}
+function listeVeille(cle, cible){
+  const l = tableVeille(cle)[cible];
+  return Array.isArray(l) ? l.filter(identifiantValide) : [];
+}
+function basculerListeVeille(cle, cible, code, present){
+  const t = tableVeille(cle);
+  const l = listeVeille(cle, cible).filter(c => c !== code);
+  if (present) l.push(code);
+  if (l.length) t[cible] = l; else delete t[cible];
+}
+/* Matières du jour visé : emploi du temps + ajouts manuels. */
+function codesVeille(cible){
+  const codes = matieresDuJour(cible);
+  listeVeille('veilleExtras', cible).forEach(c => { if (codes.indexOf(c) === -1) codes.push(c); });
+  return codes;
+}
+function estAbsentVeille(code, cible){ return listeVeille('veilleAbsences', cible).indexOf(code) !== -1; }
+/* Nettoyage : on oublie les jours passés depuis plus d'un mois. */
+function nettoyerTablesVeille(){
+  const borne = isoDe(plus(aujourdhui(), -31));
+  ['veilleExtras', 'veilleAbsences'].forEach(cle => {
+    const t = DB.reglages[cle];
+    if (t && typeof t === 'object') Object.keys(t).forEach(k => { if (k < borne) delete t[k]; });
+  });
+}
+
 /* Programme du jour : matières du prochain jour de classe, et
    matières « en avance » du jour de classe d'après (toutes, même
    celles qui ont aussi cours le jour visé — v57.4). Ancienne note : le cours à
@@ -3528,10 +3584,11 @@ function programmeVeille(ajISO){
   const cible = prochainJourClasse(ajISO);
   if (!cible) return null;
   const dl = donneesLecture();
-  const item = (code, jour, avance) => ({code: code, cible: jour, avance: avance, rev: revisionVeille(dl, code, jour)});
-  const codes = matieresDuJour(cible);
+  const item = (code, jour, avance) => ({code: code, cible: jour, avance: avance, rev: revisionVeille(dl, code, jour),
+    absent: estAbsentVeille(code, jour), ajout: listeVeille('veilleExtras', jour).indexOf(code) !== -1});
+  const codes = codesVeille(cible);
   const cibleAvance = prochainJourClasse(cible);
-  const codesAvance = cibleAvance ? matieresDuJour(cibleAvance) : [];   // v57.4 : toutes les matières du jour d'après
+  const codesAvance = cibleAvance ? codesVeille(cibleAvance) : [];   // v57.4 : toutes les matières du jour d'après
   return {
     cible: cible, items: codes.map(c => item(c, cible, false)),
     cibleAvance: cibleAvance, itemsAvance: codesAvance.map(c => item(c, cibleAvance, true))
@@ -3541,7 +3598,7 @@ function programmeVeille(ajISO){
    (l'avance, facultative, n'est jamais comptée). */
 function veilleAFaire(){
   const p = programmeVeille();
-  return p ? p.items.filter(i => !i.rev).length : 0;
+  return p ? p.items.filter(i => !i.rev && !i.absent).length : 0;
 }
 /* Ce qu'il reste à réviser d'ici `finISO` : matières non faites des
    jours de classe préparés entre aujourd'hui et cette date. Une
@@ -3557,7 +3614,7 @@ function resteVeille(debutISO, finISO){
     const cible = prochainJourClasse(veille);
     if (!cible || vus[cible]) continue;
     vus[cible] = true;
-    matieresDuJour(cible).forEach(code => { if (!revisionVeille(dl, code, cible)) n++; });
+    codesVeille(cible).forEach(code => { if (!revisionVeille(dl, code, cible) && !estAbsentVeille(code, cible)) n++; });
   }
   return n;
 }
@@ -3670,13 +3727,21 @@ function carteVeille(it){
         (it.rev.comprehension === 'partiel' ? ' · à revoir 🤔' : '') + '</p>' +
     '</article>';
   }
+  const cle = ech(cleVeille(it.code, it.cible));
+  if (it.absent) {
+    return '<article class="vl-carte absent"' + style + '>' +
+      '<div class="vl-carte-tete"><span class="vl-matiere">' + ech(m.nom) + '</span>' +
+        '<span class="vl-pastille">🚫 Cours annulé</span>' +
+        (modeLecture() ? '' : '<button type="button" class="vl-retablir" data-act="veille-retablir" data-cle="' + cle + '" ' +
+          'aria-label="Rétablir ' + ech(m.nom) + '">↺</button>') +
+      '</div></article>';
+  }
   if (modeLecture()) {
     return '<article class="vl-carte"' + style + '>' +
       '<div class="vl-carte-tete"><span class="vl-matiere">' + ech(m.nom) + '</span>' +
         '<span class="vl-pastille">À faire</span></div></article>';
   }
   const b = brouillonVeille(it.code, it.cible);
-  const cle = ech(cleVeille(it.code, it.cible));
   const choix = (val, texte) => '<button type="button" data-act="veille-devoir" data-cle="' + cle + '" data-val="' + val + '"' +
     (b.devoir === val ? ' class="choisi" aria-pressed="true"' : ' aria-pressed="false"') + '>' + texte + '</button>';
   return '<article class="vl-carte"' + style + '>' +
@@ -3689,22 +3754,43 @@ function carteVeille(it){
       choix('fait', 'Devoir fait ✅') + choix('aucun', 'Pas de devoir') + '</div></div>' +
     '<button type="button" class="vl-valider' + (b.devoir ? '' : ' attente') + '" data-act="veille-faite" data-cle="' + cle + '">' +
       'J’ai révisé mon dernier cours ! <span class="emo">😎</span></button>' +
+    '<button type="button" class="vl-annule" data-act="veille-absent" data-cle="' + cle + '">' +
+      (it.ajout ? 'Retirer cette révision' : 'Cours annulé / Prof absent') + '</button>' +
   '</article>';
+}
+/* Bouton « Ajouter une révision » : une matière hors emploi du temps
+   pour le jour visé (cours exceptionnel, rattrapage…). Points normaux. */
+var veilleAjoutOuvert = false;
+function blocAjoutVeille(cible){
+  if (modeLecture()) return '';
+  if (!veilleAjoutOuvert) {
+    return '<button type="button" class="vl-ajout" data-act="veille-ajout-ouvrir">➕ Ajouter une révision</button>';
+  }
+  const deja = codesVeille(cible);
+  const dispo = matieresAnnee(DB.reglages.derniereAnnee).filter(m => deja.indexOf(m.code) === -1);
+  if (!dispo.length) { veilleAjoutOuvert = false; return '<p class="aide-champ">Toutes les matières sont déjà au programme.</p>'; }
+  return '<div class="vl-carte vl-ajout-form">' +
+    '<select id="veille-ajout-mat" aria-label="Matière à ajouter">' +
+      dispo.map(m => '<option value="' + ech(m.code) + '">' + ech(m.nom) + '</option>').join('') + '</select>' +
+    '<div class="vl-choix" style="margin-top:6px">' +
+      '<button type="button" class="choisi" data-act="veille-ajout-ok" data-cible="' + ech(cible) + '">Ajouter</button>' +
+      '<button type="button" data-act="veille-ajout-fermer">Annuler</button></div>' +
+  '</div>';
 }
 function sectionVeille(){
   const p = programmeVeille();
   if (!p) return '';
-  const total = p.items.length, faits = p.items.filter(i => i.rev).length;
+  const total = p.items.length, faits = p.items.filter(i => i.rev || i.absent).length;
   let h = '<section class="jour vl">' +
     '<div class="vl-tete"><div><p class="vl-sur">À apprendre pour</p>' +
       '<h2 class="vl-titre">' + ech(libelleJour(p.cible)) + '</h2></div>' +
       '<div class="vl-score"><b>' + faits + '</b>/' + total + '</div></div>' +
-    '<div class="vl-barre"><i style="width:' + Math.round(100 * faits / total) + '%"></i></div>';
-  if (faits === total) {
+    '<div class="vl-barre"><i style="width:' + (total ? Math.round(100 * faits / total) : 100) + '%"></i></div>';
+  if (total && faits === total) {
     h += '<p class="vl-bravo">🎉 Tout est prêt pour ' + ech(JOURS[dDe(p.cible).getDay()]) + ' ! Cabosse est fier de toi.</p>';
   }
   p.items.forEach(it => { h += carteVeille(it); });
-  h += '</section>';
+  h += blocAjoutVeille(p.cible) + '</section>';
   if (p.itemsAvance.length) {
     const reste = p.itemsAvance.filter(i => !i.rev).length;
     h += '<details class="pliable vl-avance" data-cle="avance"' + ouvert('avance') + '>' +
@@ -4236,7 +4322,8 @@ function chargesSync(){
                gamification: DB.reglages.gamification,
                annulationsExcluesAvant: DB.reglages.annulationsExcluesAvant || '',
                /* Date de bascule vers la règle du jour de classe suivant. */
-               regleVeilleDepuis: DB.reglages.regleVeilleDepuis || ''},
+               regleVeilleDepuis: DB.reglages.regleVeilleDepuis || '',
+               veilleExtras: DB.reglages.veilleExtras || {}, veilleAbsences: DB.reglages.veilleAbsences || {}},
     anneeCourante: anneeCouranteCle(),
     anneesDisponibles: []
   };
@@ -5390,7 +5477,8 @@ function fondCabosseAuto(){
   const vac = vacancesPour(ajISO);
   if (vac) return CABOSSE_ASSETS.fonds['vacances-' + vac.cle] || CABOSSE_ASSETS.fonds.plage;
   const reste = (dl.revisions || []).some(r =>
-    (r.statut === 'aFaire' || r.statut === 'reportee') && r.date <= ajISO);
+    (r.statut === 'aFaire' || r.statut === 'reportee') && r.date <= ajISO) ||
+    veilleAFaire() > 0;   // v57.6 : matières du jour de classe suivant encore à réviser
   return reste ? CABOSSE_ASSETS.fonds.bibliotheque : CABOSSE_ASSETS.fonds.plage;
 }
 function vueCabosse(){
@@ -5834,9 +5922,12 @@ function vueAgenda(){
 function carteHistoriqueAgenda(){
   if (modeLecture()) return '';
   const dl = donneesLecture();
-  const traitees = dl.revisions.filter(r => r.statut === 'faite' || r.statut === 'reportee' || r.statut === 'annulee');
-  if (!traitees.length) return '';
   const quand = r => r.actionLe || Date.parse((r.faitLe || r.date || '2000-01-01') + 'T00:00:00') || 0;
+  /* v57.6 : seulement les deux dernières semaines. */
+  const depuis = aujourdhui().getTime() - 14 * 86400000;
+  const traitees = dl.revisions.filter(r => (r.statut === 'faite' || r.statut === 'reportee' || r.statut === 'annulee') &&
+    quand(r) >= depuis);
+  if (!traitees.length) return '';
   const ordre = traitees.slice().sort((a, b) => quand(b) - quand(a));
   const derniereId = ordre[0].id; // seule action annulable
   const MAX = 100;
@@ -9664,10 +9755,30 @@ vue.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]');
   if (!b || modeLecture()) return;
   const act = b.dataset.act;
-  if (act !== 'veille-devoir' && act !== 'veille-faite') return;
+  if (act === 'veille-ajout-ouvrir') { veilleAjoutOuvert = true; rendre(); return; }
+  if (act === 'veille-ajout-fermer') { veilleAjoutOuvert = false; rendre(); return; }
+  if (act === 'veille-ajout-ok') {
+    const sel = document.getElementById('veille-ajout-mat');
+    const cible = b.dataset.cible;
+    if (sel && identifiantValide(sel.value) && dateValide(cible)) {
+      basculerListeVeille('veilleExtras', cible, sel.value, true);
+      veilleAjoutOuvert = false; sauver(); rendre(); toast('Révision ajoutée.');
+    }
+    return;
+  }
+  if (act !== 'veille-devoir' && act !== 'veille-faite' && act !== 'veille-absent' && act !== 'veille-retablir') return;
   const parts = (b.dataset.cle || '').split('|');
   if (parts.length !== 2) return;
   if (act === 'veille-devoir') { brouillonVeille(parts[1], parts[0]).devoir = b.dataset.val === 'fait' ? 'fait' : 'aucun'; rendre(); }
+  else if (act === 'veille-absent') {
+    /* Une révision ajoutée à la main est simplement retirée ; une
+       matière de l'emploi du temps est marquée « cours annulé ». */
+    if (listeVeille('veilleExtras', parts[0]).indexOf(parts[1]) !== -1) {
+      basculerListeVeille('veilleExtras', parts[0], parts[1], false); toast('Révision retirée.');
+    } else { basculerListeVeille('veilleAbsences', parts[0], parts[1], true); toast('Cours annulé : rien à réviser.'); }
+    sauver(); rendre();
+  }
+  else if (act === 'veille-retablir') { basculerListeVeille('veilleAbsences', parts[0], parts[1], false); sauver(); rendre(); }
   else demanderConfirmationVeille(parts[1], parts[0]);
 });
 vue.addEventListener('input', e => {
