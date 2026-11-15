@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.1 — v57.0 +
+F1 Focus devient un chrono non contraignant : on peut changer d'onglet
+   ou quitter Cabosse, le chrono continue (heure de fin stockée, phases
+   rattrapées au retour). Plus de plein écran, plus de cabosse qui
+   tombe, plus d'appui long : un simple bouton « Arrêter ».
+F2 Nouvel écran Focus d'après la maquette : carte crème, singe et
+   cabosse (assets/focus/singe-cabosse.webp), durées en pastilles,
+   curseurs à fève de cacao, chrono et barre de progression.
+
 Cabosse v57.0 — v56.31 +
 M1 Mode ÉLÈVE, hors vacances : la règle des 3 derniers cours et les
    révisions « Encodage » / « Ancrage » sont remplacées par la règle du
@@ -1199,51 +1208,63 @@ button.gal-case:active{transform:scale(.97)}
   .quizz-c.archivee .quizz-acquis{background:var(--surface)}
   @media (min-width:560px){.quizz-filtres{grid-template-columns:repeat(2,minmax(0,1fr))}}
 }
-/* ===== Focus 🍫 (v56.31) — minuteur de travail / récupération ===== */
-body.focus-travail #entete,
-body.focus-travail #bascule-profil,
-body.focus-travail #barre{display:none !important}
-body.focus-travail #vue{padding:0;background:#0E3B30}
-.fx{text-align:center}
-.fx-titre{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:4px 0 2px}
-.fx-sous{font-size:13px;color:var(--texte-2);margin:0 0 10px}
-.fx-pod{display:block;width:150px;height:190px;margin:6px auto 4px}
-.fx-pod.balance{animation:fx-balance 4s ease-in-out infinite;transform-origin:50% 0}
-@keyframes fx-balance{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-.fx-pod.tombe{animation:fx-tombe 1.1s cubic-bezier(.5,0,.9,.6) forwards}
-@keyframes fx-tombe{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(140px) rotate(70deg);opacity:.35}}
-.fx-reglage{text-align:left;margin-top:12px}
-.fx-reglage .fx-ligne{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700}
-.fx-reglage .fx-ligne b{font-family:var(--mono);font-size:16px;color:var(--accent)}
-.fx-reglage input[type=range]{-webkit-appearance:auto;appearance:auto;display:block;width:100%;height:28px;
-  margin:6px 0 14px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;accent-color:var(--accent)}
-.fx-message{font-size:13.5px;font-weight:600;padding:10px 12px;border-radius:var(--r-m);margin:0 0 12px}
-.fx-message.oups{background:#FBE7DC;color:#8A3B12}
-.fx-message.bravo{background:#E3F0E9;color:#08583F}
-.fx-tablette{display:grid;gap:4px;justify-content:center;
-  padding:8px;margin:8px auto 0;background:#4A2A17;border-radius:8px;width:max-content}
+/* ===== Focus 🍫 (v57.1) — chrono libre travail / récupération ===== */
+.fx{position:relative;text-align:center;padding:22px 20px 20px;border-radius:26px;
+  background:linear-gradient(180deg,#FDF7EC 0%,#FBF0DF 100%);border:2px solid #EADCC0;
+  box-shadow:0 1px 2px rgba(74,42,23,.06),0 8px 24px rgba(74,42,23,.08);color:#1E3A2F}
+.fx-titre{position:relative;display:inline-block;margin:0;font-size:34px;font-weight:900;letter-spacing:-.03em;color:#0E4A38}
+.fx-titre::before,.fx-titre::after{content:"";position:absolute;top:2px;width:18px;height:22px;
+  background:linear-gradient(#F2B33D,#F2B33D) 0 100%/4px 10px no-repeat,
+             linear-gradient(#F2B33D,#F2B33D) 7px 30%/4px 12px no-repeat,
+             linear-gradient(#F2B33D,#F2B33D) 14px 100%/4px 10px no-repeat;border-radius:2px}
+.fx-titre::before{left:-30px;transform:rotate(-24deg)}
+.fx-titre::after{right:-30px;transform:rotate(24deg)}
+.fx-sous{margin:4px 0 0;font-size:15px;font-weight:600;color:#2E4A3F;line-height:1.35}
+.fx-illu{display:block;width:100%;max-width:300px;aspect-ratio:590/445;margin:6px auto 2px;object-fit:contain}
+.fx-illu.sans-image{display:none}
+.fx-reglage{text-align:left;margin-top:8px}
+.fx-ligne{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fx-ligne span{font-size:18px;font-weight:800;color:#0E4A38}
+.fx-pilule{font-size:17px;font-weight:800;color:#0E4A38;background:#FFF5DA;border:1.5px solid #ECCB7C;
+  border-radius:99px;padding:5px 16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fx-pilule small{font-size:14px;font-weight:700}
+.fx input[type=range]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:36px;margin:4px 0 14px;
+  padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;--p:50%;--c:#0E5A44}
+.fx input[type=range].recup{--c:#E8862E}
+.fx input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:99px;
+  background:linear-gradient(var(--c),var(--c)) 0/var(--p) 100% no-repeat,#E4DED2}
+.fx input[type=range]::-moz-range-track{height:10px;border-radius:99px;background:#E4DED2}
+.fx input[type=range]::-moz-range-progress{height:10px;border-radius:99px;background:var(--c)}
+.fx input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:34px;height:34px;margin-top:-12px;
+  border-radius:50%;border:2px solid #E3C27A;box-shadow:0 2px 6px rgba(74,42,23,.18);
+  background:#FFF8E8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cellipse cx='12' cy='12' rx='5.6' ry='8.6' transform='rotate(28 12 12)' fill='none' stroke='%23B07A3A' stroke-width='1.8'/%3E%3Cpath d='M8.6 17 C11.2 13.6 12.8 10.4 15.4 7' fill='none' stroke='%23B07A3A' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center/20px no-repeat}
+.fx input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;border:2px solid #E3C27A;background:#FFF8E8}
+.fx-separateur{display:flex;align-items:center;gap:12px;margin:2px 0 14px;color:#C9964A}
+.fx-separateur::before,.fx-separateur::after{content:"";flex:1;height:1.5px;background:linear-gradient(90deg,transparent,#E2C48E)}
+.fx-separateur::after{background:linear-gradient(90deg,#E2C48E,transparent)}
+.fx-separateur svg{width:18px;height:18px}
+.fx-go{display:block;width:100%;padding:16px;border-radius:99px;background:#0E4A38;color:#fff;font-size:17px;font-weight:800;
+  box-shadow:0 4px 12px rgba(14,74,56,.25)}
+.fx-stop{display:inline-block;margin-top:14px;padding:11px 26px;border-radius:99px;background:#FFF5DA;color:#7A4B00;
+  border:1.5px solid #ECCB7C;font-size:14px;font-weight:800}
+.fx-info{margin:10px 0 0;font-size:13.5px;color:#4E5F57;line-height:1.4}
+.fx-phase{display:inline-block;margin:4px 0 0;padding:5px 14px;border-radius:99px;font-size:13px;font-weight:800;
+  background:#E3F0E9;color:#0E4A38}
+.fx-phase.recup{background:#FDE9D4;color:#9A4A0C}
+.fx-chrono{font-size:62px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.05;
+  margin:6px 0 10px;color:#0E4A38}
+.fx-chrono.recup{color:#C2621A}
+.fx-progres{height:10px;border-radius:99px;background:#E4DED2;overflow:hidden}
+.fx-progres i{display:block;height:100%;border-radius:99px;background:#0E5A44;transition:width 1s linear}
+.fx-progres.recup i{background:#E8862E}
+.fx-conseil{font-size:15px;font-weight:700;background:#FFF5DA;color:#7A4B00;border-radius:16px;padding:11px 14px;margin:14px 0 0}
+.fx-message{font-size:14px;font-weight:700;padding:10px 12px;border-radius:14px;margin:12px 0 0;background:#E3F0E9;color:#0E4A38}
+.fx-tablette{display:grid;gap:4px;justify-content:center;padding:8px;margin:8px auto 0;background:#4A2A17;border-radius:8px;width:max-content}
 .fx-carre{width:34px;height:26px;border-radius:3px;background:#7B4A2A;
   box-shadow:inset 2px 2px 0 rgba(255,255,255,.18),inset -2px -2px 0 rgba(0,0,0,.28)}
-.fx-tablette-vide{font-size:12.5px;color:var(--texte-3);margin-top:6px}
-/* Phase de travail, plein écran */
-.fx-plein{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:calc(24px + var(--safe-t)) 20px calc(24px + var(--safe-b));color:#fff;box-sizing:border-box}
-.fx-plein .fx-sous{color:rgba(255,255,255,.75)}
-.fx-chrono{font-family:var(--mono);font-size:64px;font-weight:700;letter-spacing:-.03em;
-  font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 6px}
-.fx-abandon{position:relative;overflow:hidden;margin-top:28px;padding:12px 22px;border-radius:99px;
-  border:1.5px solid rgba(255,255,255,.35);color:rgba(255,255,255,.85);background:transparent;
-  font-size:13px;font-weight:700;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
-.fx-abandon::before{content:"";position:absolute;inset:0;background:rgba(255,255,255,.22);
-  transform:scaleX(0);transform-origin:left;transition:transform .15s}
-.fx-abandon.appui::before{transform:scaleX(1);transition:transform 1.5s linear}
-.fx-abandon span{position:relative}
-.fx-pause .fx-chrono{color:var(--accent)}
-.fx-conseil{font-size:15px;font-weight:700;background:var(--accent-doux);color:var(--accent);
-  border-radius:var(--r-m);padding:12px 14px;margin:6px 0 14px}
+.fx-tablette-titre{margin:16px 0 0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8A6A44}
 /* Statistiques : historique Focus */
-.fx-hist{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:7px 0;
-  border-bottom:1px solid var(--filet)}
+.fx-hist{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--filet)}
 .fx-hist:last-child{border-bottom:0}
 .fx-hist span:last-child{color:var(--texte-3);font-family:var(--mono);font-size:12px;white-space:nowrap}
 /* ===== Règle « jour de classe suivant » (v57.0) ===== */
@@ -1698,20 +1719,19 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.0 · cours du jour de classe suivant + « Je m\u2019avance ! »';
+const VERSION = 'v57.1 · Focus en chrono libre, nouvel écran';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
-var FOCUS_ABSENCE_MAX_S = 10;
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
+var FOCUS_ILLU = './assets/focus/singe-cabosse.webp';
 var FOCUS_CONSEILS = [
   'Bois un grand verre d’eau 💧', 'Étire-toi comme un singe 🐒', 'Regarde au loin par la fenêtre 🌳',
   'Lève-toi et marche un peu 🚶', 'Respire profondément 5 fois 🌬️', 'Range ton bureau en 1 minute 🧹',
   'Mange un fruit 🍎', 'Fais 10 sauts sur place 🤸'
 ];
-var focusCache = null, focusTick = null, focusVerrouEcran = null;
-var focusDernier = null;      // 'tombee' | 'abandon' | 'reussie' — message affiché au retour
-var focusConseil = 0, focusAppuiMinuteur = null;
-
+var focusCache = null, focusTick = null;
+var focusDernier = null;      // 'reussie' — message affiché après une pause terminée
+var focusConseil = 0;
 /* ============================================================
    Matières — liste par défaut au premier lancement, éditable
    ensuite depuis la vue Ajout (DB.matieres fait foi une fois créé).
@@ -4560,9 +4580,6 @@ function rendre(){
   /* Position de défilement à préserver : seul un changement d'onglet
      doit ramener en haut. Un re-rendu de la même vue (ouverture des
      boutons d'un quizz, action dans les réglages…) garde la position. */
-  /* Session Focus en cours de travail : vue imposée, plein écran. */
-  if (focusEnTravail()) vueActive = 'focus';
-  document.body.classList.toggle('focus-travail', focusEnTravail());
   document.body.classList.toggle('vue-cabosse', vueActive === 'cabosse');
   const memeVue = derniereVueRendue === vueActive;
   const scrollAvant = (memeVue && vue) ? vue.scrollTop : 0;
@@ -9274,24 +9291,20 @@ vue.addEventListener('click', e => {
 });
 
 /* ============================================================
-   FOCUS 🍫 (v56.31) — minuteur travail / récupération façon Pomodoro.
+   FOCUS 🍫 (v57.1) — chrono travail / récupération, non contraignant.
 
-   - Durées réglables de 15 à 55 min (pas de 5), mémorisées.
-   - Pendant le travail : plein écran, ni en-tête ni barre d'onglets.
-     Une cabosse mûrit (vert → jaune → orange). Quitter Cabosse plus
-     de FOCUS_ABSENCE_MAX_S secondes fait tomber la cabosse : session
-     perdue (sans malus de points). Abandon volontaire : appui long.
-   - Session menée au bout : 1 carré de chocolat = +1 🍫 Énergie,
+   - Durées réglables : travail 15 à 55 min, récupération 5 à 55 min
+     (pas de 5), mémorisées.
+   - Le chrono tourne en arrière-plan : on peut changer d'onglet ou
+     quitter Cabosse sans rien perdre. Il repose sur une heure de fin
+     stockée, donc il reste juste même si iOS suspend ou ferme l'app ;
+     au retour, les phases écoulées entre-temps sont rattrapées.
+   - Travail mené au bout : 1 carré de chocolat = +1 🍫 Énergie,
      réinjecté dans calculerGamification() comme les bonus de quizz.
-   - Données propres à l'appareil, dans une clé localStorage séparée
-     ('cabosse-focus') : jamais synchronisées vers Firestore. Seul
-     l'effet sur les points voyage, avec l'état RPG déjà partagé.
-   - Le minuteur repose sur une heure de fin stockée, pas sur un
-     compteur : il reste juste même si iOS suspend l'app.
+     Arrêt volontaire : aucun carré, aucun malus.
+   - Données propres à l'appareil (clé localStorage 'cabosse-focus'),
+     jamais synchronisées vers Firestore.
    ============================================================ */
-/* Constantes et état : déclarés en tête de script (donneesLecture()
-   peut être appelée dès le chargement). */
-
 function focusBornes(n, def, min){
   n = parseInt(n, 10);
   if (!Number.isFinite(n)) return def;
@@ -9327,24 +9340,6 @@ function focusCarresEntre(debutISO, finISO){
     return j >= debutISO && j <= finISO;
   }).length;
 }
-function focusEnTravail(){
-  const e = focusEtat().encours;
-  return !!(e && e.phase === 'travail');
-}
-
-/* --- Écran allumé (Wake Lock), au mieux ---------------------- */
-function focusGarderEcran(){
-  if (!focusEnTravail() || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
-  if (focusVerrouEcran) return;
-  navigator.wakeLock.request('screen').then(v => {
-    focusVerrouEcran = v;
-    v.addEventListener('release', () => { focusVerrouEcran = null; });
-  }).catch(() => {});
-}
-function focusLibererEcran(){
-  if (focusVerrouEcran) { try { focusVerrouEcran.release(); } catch (e) {} focusVerrouEcran = null; }
-}
-
 function focusSignal(son, vibration){
   jouerSonCabosse(son);
   try { if (navigator.vibrate) navigator.vibrate(vibration || [200, 100, 200]); } catch (e) {}
@@ -9354,75 +9349,65 @@ function focusSignal(son, vibration){
 function focusDemarrer(){
   const e = focusEtat(), maintenant = Date.now();
   e.encours = {phase:'travail', debut:maintenant, fin:maintenant + e.travail * 60000,
-               travail:e.travail, pause:e.pause, vu:maintenant, cache:null};
+               travail:e.travail, pause:e.pause};
   focusDernier = null;
   focusEcrire();
-  focusGarderEcran();
   focusLancerTick();
-  vueActive = 'focus';
   rendre();
 }
-function focusEchec(raison){
+/* Arrêt volontaire : pendant le travail, la session est notée comme
+   arrêtée (sans carré ni malus) ; pendant la pause, on la termine. */
+function focusArreter(){
   const e = focusEtat(), c = e.encours;
-  if (!c || c.phase !== 'travail') return;
-  e.sessions.push({d:c.debut, m:c.travail, ok:false, r:raison});
+  if (!c) return;
+  if (c.phase === 'travail') e.sessions.push({d:c.debut, m:c.travail, ok:false, r:'arret'});
   e.encours = null;
-  focusDernier = raison === 'abandon' ? 'abandon' : 'tombee';
   focusEcrire();
-  focusLibererEcran();
-  focusSignal('cancelled', [400]);
+  focusArreterTick();
   rendre();
-  if (raison !== 'abandon') {
-    const pod = document.getElementById('fx-pod');
-    if (pod) { pod.classList.remove('balance'); void pod.offsetWidth; pod.classList.add('tombe'); }
-  }
 }
-function focusReussite(){
+/* Fin du travail. `discret` : la phase s'est terminée pendant que
+   l'app était fermée depuis longtemps — pas de son ni de notification
+   hors de propos au retour. */
+function focusReussite(discret){
   const e = focusEtat(), c = e.encours;
   e.sessions.push({d:c.debut, m:c.travail, ok:true});
-  const maintenant = Date.now();
-  e.encours = {phase:'pause', debut:maintenant, fin:maintenant + c.pause * 60000,
-               travail:c.travail, pause:c.pause};
-  focusDernier = 'reussie';
+  e.encours = {phase:'pause', debut:c.fin, fin:c.fin + c.pause * 60000, travail:c.travail, pause:c.pause};
   focusConseil = Math.floor(Math.random() * FOCUS_CONSEILS.length);
   focusEcrire();
-  focusLibererEcran();
-  focusSignal('reward');
-  notifier('Cabosse', 'Bravo ! Un carré de chocolat gagné 🍫 C’est l’heure de la pause.', {tag:'focus'});
+  if (!discret) {
+    focusSignal('reward');
+    notifier('Cabosse', 'Bravo ! Un carré de chocolat gagné 🍫 C’est l’heure de la pause.', {tag:'focus'});
+  }
   rafraichirGamification(false);   // +1 Énergie, et annonce d'accessoire éventuelle
   toast('+1 carré de chocolat 🍫 (+1 Énergie)');
-  rendre();
 }
-function focusFinPause(){
+function focusFinPause(discret){
   focusEtat().encours = null;
+  focusDernier = 'reussie';
   focusEcrire();
   focusArreterTick();
-  focusSignal('happy');
-  notifier('Cabosse', 'Fin de la pause : prêt pour une nouvelle session ? 🍫', {tag:'focus'});
-  rendre();
-}
-function focusArreterPause(){
-  focusEtat().encours = null;
-  focusEcrire();
-  focusArreterTick();
-  rendre();
+  if (!discret) {
+    focusSignal('happy');
+    notifier('Cabosse', 'Fin de la pause : prêt pour une nouvelle session ? 🍫', {tag:'focus'});
+  }
 }
 
 /* --- Horloge -------------------------------------------------- */
-/* Contrôle commun au tic, au retour au premier plan et au lancement.
-   Pendant le travail, « vu » n'avance que si la page est visible :
-   un écart trop grand = l'enfant a quitté Cabosse. */
+/* Rattrape toutes les phases écoulées, puis met l'affichage à jour.
+   Appelée chaque seconde, au retour au premier plan et au lancement. */
 function focusVerifier(){
-  const e = focusEtat(), c = e.encours;
-  if (!c) { focusArreterTick(); return; }
-  const maintenant = Date.now();
-  if (c.phase === 'travail') {
-    const repere = c.cache || c.vu || c.debut;
-    if (maintenant - repere > FOCUS_ABSENCE_MAX_S * 1000 && repere < c.fin) { focusEchec('sortie'); return; }
-    if (document.visibilityState === 'visible') { c.vu = maintenant; c.cache = null; focusEcrire(); }
-    if (maintenant >= c.fin) { focusReussite(); return; }
-  } else if (maintenant >= c.fin) { focusFinPause(); return; }
-  focusMajAffichage();
+  const e = focusEtat();
+  let change = false;
+  for (let i = 0; i < 2 && e.encours && Date.now() >= e.encours.fin; i++) {
+    const discret = Date.now() - e.encours.fin > 60000;
+    if (e.encours.phase === 'travail') focusReussite(discret);
+    else focusFinPause(discret);
+    change = true;
+  }
+  if (!e.encours) focusArreterTick();
+  if (change) rendre();
+  else focusMajAffichage();
 }
 function focusLancerTick(){
   if (focusTick) return;
@@ -9431,87 +9416,70 @@ function focusLancerTick(){
 function focusArreterTick(){
   if (focusTick) { clearInterval(focusTick); focusTick = null; }
 }
-
-function focusCouleur(p){
-  /* Vert (110°) → jaune (50°) → orange (25°). */
-  const h = Math.round(110 - 85 * Math.min(1, Math.max(0, p)));
-  return 'hsl(' + h + ',62%,' + Math.round(44 + 8 * Math.sin(Math.PI * p)) + '%)';
-}
 function focusMajAffichage(){
   const c = focusEtat().encours;
-  if (!c) return;
+  if (!c || vueActive !== 'focus') return;
+  const total = (c.phase === 'travail' ? c.travail : c.pause) * 60;
   const reste = Math.max(0, Math.ceil((c.fin - Date.now()) / 1000));
   const ch = document.getElementById('fx-chrono');
   if (ch) ch.textContent = formatChrono(reste);
-  if (c.phase === 'travail') {
-    const p = 1 - reste / (c.travail * 60);
-    const f = document.getElementById('fx-pod-corps');
-    if (f) f.setAttribute('fill', focusCouleur(p));
-  }
+  const pr = document.getElementById('fx-progres');
+  if (pr) pr.style.width = Math.round(100 * (1 - reste / total)) + '%';
 }
 
 /* --- Vue ------------------------------------------------------ */
-function focusPodSVG(couleur, classe){
-  return '<svg id="fx-pod" class="fx-pod ' + (classe || '') + '" viewBox="0 0 150 190" aria-hidden="true">' +
-    '<path d="M75 4 L75 30" stroke="#5B3A1E" stroke-width="7" stroke-linecap="round"/>' +
-    '<path d="M75 22 C40 26 22 70 26 112 C30 154 54 184 75 186 C96 184 120 154 124 112 C128 70 110 26 75 22 Z" ' +
-      'id="fx-pod-corps" fill="' + couleur + '" stroke="rgba(0,0,0,.25)" stroke-width="2"/>' +
-    '<g fill="none" stroke="rgba(0,0,0,.2)" stroke-width="3" stroke-linecap="round">' +
-      '<path d="M75 28 C66 70 66 140 75 182"/><path d="M58 34 C44 76 46 146 63 178"/>' +
-      '<path d="M92 34 C106 76 104 146 87 178"/></g>' +
-    '<ellipse cx="55" cy="70" rx="9" ry="22" fill="rgba(255,255,255,.22)"/>' +
-  '</svg>';
+function focusIllu(){
+  return '<img class="fx-illu" src="' + FOCUS_ILLU + '" alt="" decoding="async" ' +
+    'onerror="this.classList.add(\'sans-image\')">';
 }
+var FOCUS_FEVE = '<svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="5.6" ry="8.6" transform="rotate(28 12 12)" ' +
+  'fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.6 17 C11.2 13.6 12.8 10.4 15.4 7" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 function focusTabletteDuJour(){
   const n = focusCarresEntre(isoDe(aujourdhui()), isoDe(aujourdhui()));
-  if (!n) return '<p class="fx-tablette-vide">Ta tablette du jour est vide : gagne ton premier carré !</p>';
-  let h = '<p class="etiquette" style="margin:16px 0 0">Ta tablette du jour · ' + n + ' carré' + (n > 1 ? 's' : '') + '</p>' +
+  if (!n) return '<p class="fx-info">Ta tablette du jour est vide : gagne ton premier carré !</p>';
+  let h = '<p class="fx-tablette-titre">Ta tablette du jour · ' + n + ' carré' + (n > 1 ? 's' : '') + '</p>' +
     '<div class="fx-tablette" style="grid-template-columns:repeat(' + Math.min(n, 4) + ',34px)">';
   for (let i = 0; i < n; i++) h += '<i class="fx-carre"></i>';
   return h + '</div>';
 }
+function focusCurseur(id, valeur, min, libelle, emoji, classe){
+  const p = Math.round(100 * (valeur - min) / (FOCUS_MAX - min));
+  return '<div class="fx-ligne"><span>' + emoji + ' ' + libelle + '</span>' +
+      '<b class="fx-pilule" id="fx-v-' + id + '">' + valeur + ' <small>min</small></b></div>' +
+    '<input type="range" id="fx-' + id + '" class="' + classe + '" min="' + min + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS +
+      '" value="' + valeur + '" style="--p:' + p + '%" aria-label="Durée de ' + libelle.toLowerCase() + '">';
+}
 function vueFocus(){
   const e = focusEtat(), c = e.encours;
-  if (c && c.phase === 'travail') {
+  let h = '<div class="fx"><h2 class="fx-titre">Focus 🍫</h2>';
+  if (c) {
+    const travail = c.phase === 'travail';
+    const total = (travail ? c.travail : c.pause) * 60;
     const reste = Math.max(0, Math.ceil((c.fin - Date.now()) / 1000));
-    const p = 1 - reste / (c.travail * 60);
-    return '<div class="fx fx-plein">' +
-      '<p class="fx-sous">Concentre-toi : ta cabosse mûrit 🌳</p>' +
-      focusPodSVG(focusCouleur(p), 'balance') +
-      '<div class="fx-chrono" id="fx-chrono">' + formatChrono(reste) + '</div>' +
-      '<p class="fx-sous">Si tu quittes Cabosse, elle tombe de l’arbre !</p>' +
-      '<button type="button" class="fx-abandon" data-focus-abandon="1"><span>Maintenir pour abandonner</span></button>' +
-    '</div>';
+    const cls = travail ? '' : ' recup';
+    h += focusIllu() +
+      '<span class="fx-phase' + cls + '">' + (travail ? '⏳ Travail' : '😌 Récupération') + '</span>' +
+      '<div class="fx-chrono' + cls + '" id="fx-chrono">' + formatChrono(reste) + '</div>' +
+      '<div class="fx-progres' + cls + '"><i id="fx-progres" style="width:' + Math.round(100 * (1 - reste / total)) + '%"></i></div>' +
+      (travail ? '' : '<div class="fx-conseil">' + ech(FOCUS_CONSEILS[focusConseil % FOCUS_CONSEILS.length]) + '</div>') +
+      '<button type="button" class="fx-stop" data-act="focus-stop">' + (travail ? 'Arrêter' : 'Arrêter la pause') + '</button>' +
+      '<div class="fx-separateur" style="margin-top:16px">' + FOCUS_FEVE + '</div>' +
+      focusTabletteDuJour() + '</div>';
+    return h;
   }
-  if (c && c.phase === 'pause') {
-    const reste = Math.max(0, Math.ceil((c.fin - Date.now()) / 1000));
-    return '<div class="carte fx fx-pause">' +
-      '<div class="fx-titre">Récupération 😌</div>' +
-      '<div class="fx-chrono" id="fx-chrono">' + formatChrono(reste) + '</div>' +
-      '<div class="fx-conseil">' + ech(FOCUS_CONSEILS[focusConseil % FOCUS_CONSEILS.length]) + '</div>' +
-      '<button type="button" class="bouton discret" data-act="focus-stop-pause">Arrêter la pause</button>' +
-      focusTabletteDuJour() +
-    '</div>';
-  }
-  let msg = '';
-  if (focusDernier === 'tombee') msg = '<p class="fx-message oups">Oups ! Tu as quitté Cabosse : ta cabosse est tombée de l’arbre 🍂</p>';
-  else if (focusDernier === 'abandon') msg = '<p class="fx-message oups">Session abandonnée. Ce n’est pas grave, on recommence ?</p>';
-  else if (focusDernier === 'reussie') msg = '<p class="fx-message bravo">Pause terminée. Prêt pour un nouveau carré ? 🍫</p>';
-  return '<div class="carte fx">' +
-    '<div class="fx-titre">Focus 🍫</div>' +
-    '<p class="fx-sous">Travaille sans quitter Cabosse et gagne un carré de chocolat.</p>' +
-    msg +
-    focusPodSVG(focusDernier === 'tombee' ? 'hsl(25,14%,48%)' : focusCouleur(0), '') +
+  h += '<p class="fx-sous">Lance le chrono et gagne un carré de chocolat.</p>' +
+    focusIllu() +
+    (focusDernier === 'reussie' ? '<p class="fx-message">Pause terminée. Prêt pour un nouveau carré ? 🍫</p>' : '') +
     '<div class="fx-reglage">' +
-      '<div class="fx-ligne"><span>⏳ Travail</span><b id="fx-v-travail">' + e.travail + ' min</b></div>' +
-      '<input type="range" id="fx-travail" min="' + FOCUS_MIN + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS + '" value="' + e.travail + '" aria-label="Durée de travail">' +
-      '<div class="fx-ligne"><span>😌 Récupération</span><b id="fx-v-pause">' + e.pause + ' min</b></div>' +
-      '<input type="range" id="fx-pause" min="' + FOCUS_MIN_PAUSE + '" max="' + FOCUS_MAX + '" step="' + FOCUS_PAS + '" value="' + e.pause + '" aria-label="Durée de récupération">' +
+      focusCurseur('travail', e.travail, FOCUS_MIN, 'Travail', '⏳', '') +
+      focusCurseur('pause', e.pause, FOCUS_MIN_PAUSE, 'Récupération', '😌', 'recup') +
     '</div>' +
-    '<button type="button" class="bouton principal" data-act="focus-lancer">C’est parti !</button>' +
-    (modeLecture() ? '<p class="aide-champ">Les carrés gagnés vont dans « Mes révisions » (cet appareil).</p>' : '') +
-    focusTabletteDuJour() +
-  '</div>';
+    '<button type="button" class="fx-go" data-act="focus-lancer">C’est parti !</button>' +
+    (modeLecture() ? '<p class="fx-info">Les carrés gagnés vont dans « Mes révisions » (cet appareil).</p>' : '') +
+    '<div class="fx-separateur" style="margin-top:16px">' + FOCUS_FEVE + '</div>' +
+    focusTabletteDuJour() + '</div>';
+  return h;
 }
 
 /* --- Statistiques (historique) ------------------------------- */
@@ -9530,7 +9498,7 @@ function focusBlocStats(periodes, labels, sel, dernier){
     '<div class="contenu-pliable">';
   liste.slice(0, 100).forEach(s => {
     const d = new Date(s.d);
-    const etat = s.ok ? '🍫 Réussie' : (s.r === 'abandon' ? '✋ Abandonnée' : '🍂 Cabosse tombée');
+    const etat = s.ok ? '🍫 Réussie' : (s.r === 'arret' || s.r === 'abandon' ? '⏹️ Arrêtée' : '🍂 Cabosse tombée');
     html += '<div class="fx-hist"><span>' + etat + ' · ' + s.m + ' min</span>' +
       '<span>' + libelleCourt(isoDe(d)) + ' ' + String(d.getHours()).padStart(2, '0') + ':' +
       String(d.getMinutes()).padStart(2, '0') + '</span></div>';
@@ -9551,51 +9519,25 @@ vue.addEventListener('click', e => {
   const b = e.target.closest('button[data-act]');
   if (!b) return;
   if (b.dataset.act === 'focus-lancer') focusDemarrer();
-  else if (b.dataset.act === 'focus-stop-pause') focusArreterPause();
+  else if (b.dataset.act === 'focus-stop') focusArreter();
 });
 vue.addEventListener('input', e => {
   if (e.target.id !== 'fx-travail' && e.target.id !== 'fx-pause') return;
   const st = focusEtat(), cle = e.target.id === 'fx-travail' ? 'travail' : 'pause';
-  st[cle] = focusBornes(e.target.value, st[cle], cle === 'pause' ? FOCUS_MIN_PAUSE : FOCUS_MIN);
+  const min = cle === 'pause' ? FOCUS_MIN_PAUSE : FOCUS_MIN;
+  st[cle] = focusBornes(e.target.value, st[cle], min);
+  e.target.style.setProperty('--p', Math.round(100 * (st[cle] - min) / (FOCUS_MAX - min)) + '%');
   const v = document.getElementById('fx-v-' + cle);
-  if (v) v.textContent = st[cle] + ' min';
+  if (v) v.innerHTML = st[cle] + ' <small>min</small>';
   focusEcrire();
 });
-/* Abandon : appui maintenu 1,5 s (évite l'abandon par mégarde). */
-function focusFinAppui(){
-  if (focusAppuiMinuteur) { clearTimeout(focusAppuiMinuteur); focusAppuiMinuteur = null; }
-  const b = document.querySelector('[data-focus-abandon]');
-  if (b) b.classList.remove('appui');
-}
-vue.addEventListener('pointerdown', e => {
-  const b = e.target.closest('[data-focus-abandon]');
-  if (!b) return;
-  e.preventDefault();
-  b.classList.add('appui');
-  focusAppuiMinuteur = setTimeout(() => { focusAppuiMinuteur = null; focusEchec('abandon'); }, 1500);
-});
-['pointerup', 'pointercancel', 'pointerleave'].forEach(t => vue.addEventListener(t, focusFinAppui));
-vue.addEventListener('contextmenu', e => { if (e.target.closest('[data-focus-abandon]')) e.preventDefault(); });
-
 document.addEventListener('visibilitychange', () => {
-  const c = focusEtat().encours;
-  if (!c) return;
-  if (document.visibilityState === 'hidden') {
-    if (c.phase === 'travail') { c.cache = Date.now(); focusEcrire(); }
-  } else {
-    focusVerifier();
-    focusGarderEcran();
-  }
-});
-window.addEventListener('pagehide', () => {
-  const c = focusEtat().encours;
-  if (c && c.phase === 'travail') { c.cache = Date.now(); focusEcrire(); }
+  if (document.visibilityState === 'visible' && focusEtat().encours) focusVerifier();
 });
 
 /* Reprise après relance de l'app (iOS a pu la fermer entre-temps). */
 if (focusEtat().encours) {
   focusLancerTick();
-  if (focusEnTravail()) vueActive = 'focus';
   setTimeout(focusVerifier, 0);
 }
 

@@ -3,7 +3,7 @@
    l'application s'ouvre hors connexion, et on rafraîchit en
    arrière-plan. Changer CACHE force la mise à jour. */
 const PREFIXE = 'cabosse-' + encodeURIComponent(self.registration.scope) + '-';
-const CACHE = PREFIXE + 'v57.0';
+const CACHE = PREFIXE + 'v57.1';
 const EXTERNES = [
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js',
@@ -37,6 +37,7 @@ const ASSETS_OPTIONNELS = [
   './assets/cabosse/fonds/noel.png',
   './assets/cabosse/fonds/vacs-hiver.png',
   './assets/cabosse/fonds/paques.png',
+  './assets/focus/singe-cabosse.webp',
   './assets/sons/reward_small.wav',
   './assets/sons/power_up.wav',
   './assets/sons/level_up_badge.wav',
