@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <!--
+Cabosse v57.8 — v57.7 +
+N3 Seuil « à revoir » porté à 14/20.
+N4 Comparaison des matières : la barre « Pas tout compris » est
+   remplacée par la moyenne d'auto-évaluation /20 (tri : la plus faible
+   en tête). Par matière : « Moyenne d'auto-évaluation », « 14/20 et
+   plus » et « Sous 14/20 » remplacent les anciens libellés.
+
 Cabosse v57.7 — v57.6 +
 N1 Validation d'une révision : les choix « tout récité » / « pas encore
    retenu » sont remplacés par une note d'auto-évaluation de 0 à 20 et
@@ -1789,7 +1796,7 @@ window.dispatchEvent(new Event('sabosse-sync-pret'));
 
 <script>
 'use strict';
-const VERSION = 'v57.7 · auto-évaluation /20 et question de quizz obligatoires';
+const VERSION = 'v57.8 · seuil 14/20, moyenne par matière';
 /* Focus 🍫 — voir le module FOCUS plus bas. */
 var FOCUS_CLE = 'cabosse-focus';
 var FOCUS_MIN = 15, FOCUS_MIN_PAUSE = 5, FOCUS_MAX = 55, FOCUS_PAS = 5;
@@ -3716,10 +3723,10 @@ function validerVeille(v, comprehension, note, noteEval){
 /* v57.7 — Validation par auto-évaluation : une note de 0 à 20 et une
    question de quizz, toutes deux obligatoires. Remplace les deux
    choix « tout récité » / « pas encore retenu ». La compréhension
-   enregistrée s'en déduit : sous 10/20, la révision est « à revoir ». */
-var EVAL_SEUIL = 10;
+   enregistrée s'en déduit : sous EVAL_SEUIL (14/20), « à revoir ». */
+var EVAL_SEUIL = 14;   // v57.8 : sous 14/20, la révision est « à revoir »
 var evalNote = null;
-function couleurEval(n){ return n < 10 ? 'var(--annulee)' : (n < 14 ? 'var(--reportee)' : 'var(--faite)'); }
+function couleurEval(n){ return n < 10 ? 'var(--annulee)' : (n < EVAL_SEUIL ? 'var(--reportee)' : 'var(--faite)'); }
 function comprehensionDeNote(n){ return n >= EVAL_SEUIL ? 'reussi' : 'partiel'; }
 function majEvaluation(){
   const v = document.getElementById('eval-val');
@@ -7328,25 +7335,26 @@ const LIMITES_PAR_UNITE = {semaine: limitesSemaine, mois: limitesMois, annee: li
 function graphiqueBenchmark(lignes){
   if (!lignes.length) return '';
   const maxVal = Math.max(1, Math.max.apply(null,
-    lignes.map(l => Math.max(l.quizz, l.pasCompris))));
+    lignes.map(l => l.quizz)));
   let html = '<div class="bench">';
   lignes.forEach(l => {
     const pq = Math.round(l.quizz / maxVal * 100);
-    const pp = Math.round(l.pasCompris / maxVal * 100);
+    const pm = l.moyenne === null ? 0 : Math.round(l.moyenne / 20 * 100);
     html += '<div class="bench-l">' +
       '<div class="bench-nom"><i class="puce" style="background:' + couleurSure(l.c) + '"></i>' +
         ech(l.nom) + '</div>' +
       '<div class="bench-barres">' +
         '<div class="bench-b"><i style="width:' + pq + '%;background:var(--accent)"></i>' +
           '<b>' + l.quizz + '</b></div>' +
-        '<div class="bench-b"><i style="width:' + pp + '%;background:var(--reportee)"></i>' +
-          '<b>' + l.pasCompris + '</b></div>' +
+        '<div class="bench-b"><i style="width:' + pm + '%;background:' +
+          (l.moyenne === null ? 'transparent' : couleurEval(l.moyenne)) + '"></i>' +
+          '<b>' + (l.moyenne === null ? '—' : String(l.moyenne).replace('.', ',') + '/20') + '</b></div>' +
       '</div></div>';
   });
   html += '</div>' +
     '<div class="bench-legende">' +
       '<span><i style="background:var(--accent)"></i> Quizz réalisés</span>' +
-      '<span><i style="background:var(--reportee)"></i> « Pas tout compris »</span>' +
+      '<span><i style="background:var(--faite)"></i> Moyenne /20</span>' +
     '</div>';
   return html;
 }
@@ -7838,14 +7846,16 @@ function vueStats(){
     if (!ids.length) return;
     let essais = 0;
     ids.forEach(id => { essais += quizzEtat(id).essais || 0; });
-    const pasCompris = dl.revisions.filter(r =>
-      ids.indexOf(r.cours) !== -1 && r.statut === 'faite' && r.comprehension === 'partiel').length;
-    if (essais || pasCompris) bench.push({nom: m.nom, c: m.c, quizz: essais, pasCompris: pasCompris});
+    /* v57.8 : moyenne d'auto-évaluation de la matière (/20). */
+    const notes = dl.revisions.filter(r => ids.indexOf(r.cours) !== -1 && r.statut === 'faite' &&
+      Number.isInteger(r.note)).map(r => r.note);
+    const moyenne = notes.length ? Math.round(10 * notes.reduce((a, b) => a + b, 0) / notes.length) / 10 : null;
+    if (essais || moyenne !== null) bench.push({nom: m.nom, c: m.c, quizz: essais, moyenne: moyenne});
   });
   if (bench.length) {
-    /* Trié par difficulté décroissante : la matière qui pose le plus
-       de problèmes remonte en tête. */
-    bench.sort((a, b) => (b.pasCompris + b.quizz) - (a.pasCompris + a.quizz));
+    /* Trié par moyenne croissante : la matière la plus fragile remonte
+       en tête ; sans note, en fin de liste. */
+    bench.sort((a, b) => (a.moyenne === null ? 99 : a.moyenne) - (b.moyenne === null ? 99 : b.moyenne));
     html += '<p class="etiquette" style="margin-top:20px">Comparaison des matières</p>' +
       '<div class="carte graf">' + graphiqueBenchmark(bench) + '</div>';
   }
@@ -7863,6 +7873,8 @@ function vueStats(){
     const pasCompris = faites.filter(r => r.comprehension === 'partiel').length;
     const toutCompris = faites.filter(r => r.comprehension === 'reussi').length;
     const inconnus = faites.length - pasCompris - toutCompris;
+    const notesM = faites.filter(r => Number.isInteger(r.note)).map(r => r.note);
+    const moyM = notesM.length ? Math.round(10 * notesM.reduce((a, b) => a + b, 0) / notesM.length) / 10 : null;
     let essais = 0, reussites = 0;
     ids.forEach(id => { const e = quizzEtat(id); essais += e.essais || 0; reussites += e.reussites || 0; });
     const quizzMoy = essais ? Math.round(reussites / essais * 100) : -1;
@@ -7874,8 +7886,10 @@ function vueStats(){
       '<div class="mat-stats-ligne"><span>Révisions réalisées</span><b>' + faites.length + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Reports</span><b>' + revs.filter(r => r.statut === 'reportee').length + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Annulations</span><b>' + revs.filter(r => r.statut === 'annulee').length + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>« J\u2019ai tout retenu »</span><b>' + toutCompris + '</b></div>' +
-      '<div class="mat-stats-ligne"><span>« Pas encore tout compris »</span><b>' + pasCompris + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Moyenne d\u2019auto-évaluation</span><b>' +
+        (moyM === null ? '—' : String(moyM).replace('.', ',') + '/20') + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>14/20 et plus</span><b>' + toutCompris + '</b></div>' +
+      '<div class="mat-stats-ligne"><span>Sous 14/20</span><b>' + pasCompris + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Compréhension non renseignée (historique)</span><b>' + inconnus + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Quizz réalisés</span><b>' + essais + '</b></div>' +
       '<div class="mat-stats-ligne"><span>Réussite moyenne au Quizz</span><b>' +
